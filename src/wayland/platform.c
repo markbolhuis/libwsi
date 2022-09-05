@@ -176,7 +176,16 @@ wsiDestroyPlatform(WsiPlatform platform)
     wsi_seat_destroy_all(platform);
     wsi_output_destroy_all(platform);
 
-    xdg_wm_base_destroy(platform->xdg_wm_base);
+    if (platform->xdg_decoration_manager_v1) {
+        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
+    }
+    if (platform->xdg_output_manager_v1) {
+        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
+    }
+    if (platform->xdg_wm_base) {
+        xdg_wm_base_destroy(platform->xdg_wm_base);
+    }
+
     wl_compositor_destroy(platform->wl_compositor);
 
     wl_registry_destroy(platform->wl_registry);
