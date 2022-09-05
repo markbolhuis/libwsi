@@ -3,7 +3,7 @@ dep_xcb = dependency('xcb')
 src_wsi_xcb = files(
   'platform.c',
   'window.c',
-  'vulkan.c',
+  'vulkan/vulkan.c',
 )
 
 lib_wsi_xcb = library('wsi-xcb',
