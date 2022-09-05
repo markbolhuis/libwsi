@@ -156,7 +156,7 @@ wsi_output_init_xdg(struct wsi_platform *platform, struct wsi_output *output)
 void
 wsi_output_init_xdg_all(struct wsi_platform *platform)
 {
-    assert(platform->xdg_decoration_manager_v1 != NULL);
+    assert(platform->xdg_output_manager_v1 != NULL);
 
     struct wsi_output *output;
     wl_list_for_each(output, &platform->output_list, link) {
