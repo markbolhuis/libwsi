@@ -78,7 +78,7 @@ wsiGetPhysicalDevicePresentationSupport(
         physicalDevice,
         queueFamilyIndex,
         platform->xcb_connection,
-        0); // TODO: Get xcb_visualid_t
+        platform->xcb_screen->root_visual);
 }
 
 WsiResult
