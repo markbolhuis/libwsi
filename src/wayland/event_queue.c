@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include <wayland-client.h>
+#include <wayland-client-core.h>
 
 #include "wsi/event_queue.h"
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include <wayland-client.h>
+#include <wayland-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
 
 #include "wsi/output.h"

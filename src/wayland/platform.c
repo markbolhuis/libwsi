@@ -3,7 +3,7 @@
 #include <memory.h>
 #include <poll.h>
 
-#include <wayland-client.h>
+#include <wayland-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>

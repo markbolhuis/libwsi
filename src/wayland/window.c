@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <wayland-client.h>
+#include <wayland-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
 
