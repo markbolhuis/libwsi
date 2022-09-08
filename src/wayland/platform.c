@@ -158,11 +158,17 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 err_registry:
     wsi_seat_destroy_all(platform);
     wsi_output_destroy_all(platform);
-    if (platform->xdg_wm_base != NULL) {
+    if (platform->wl_compositor) {
+        wl_compositor_destroy(platform->wl_compositor);
+    }
+    if (platform->xdg_wm_base) {
         xdg_wm_base_destroy(platform->xdg_wm_base);
     }
-    if (platform->wl_compositor != NULL) {
-        wl_compositor_destroy(platform->wl_compositor);
+    if (platform->xdg_decoration_manager_v1) {
+        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
+    }
+    if (platform->xdg_output_manager_v1) {
+        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
     }
     wl_display_disconnect(platform->wl_display);
 err_display:
