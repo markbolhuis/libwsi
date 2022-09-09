@@ -10,6 +10,11 @@
 #include "platform_priv.h"
 #include "window_priv.h"
 
+struct wsi_window_output {
+    struct wl_list link;
+    struct wl_output *wl_output;
+};
+
 // region XDG Toplevel Decoration
 
 static void
@@ -128,7 +133,29 @@ wl_surface_enter(
     struct wl_surface *wl_surface,
     struct wl_output *wl_output)
 {
+    struct wsi_window *window = data;
+    struct wl_list *output_list = &window->output_list;
 
+    bool found = false;
+    struct wsi_window_output *window_output;
+    wl_list_for_each(window_output, output_list, link) {
+        if (window_output->wl_output == wl_output) {
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        return;
+    }
+
+    window_output = calloc(1, sizeof(struct wsi_window_output));
+    if (!window_output) {
+        return;
+    }
+
+    window_output->wl_output = wl_output;
+    wl_list_insert(output_list, &window_output->link);
 }
 
 static void
@@ -137,7 +164,24 @@ wl_surface_leave(
     struct wl_surface *wl_surface,
     struct wl_output *wl_output)
 {
+    struct wsi_window *window = data;
+    struct wl_list *output_list = &window->output_list;
 
+    bool found = false;
+    struct wsi_window_output *window_output;
+    wl_list_for_each(window_output, output_list, link) {
+        if (window_output->wl_output == wl_output) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        return;
+    }
+
+    wl_list_remove(&window_output->link);
+    free(window_output);
 }
 
 static const struct wl_surface_listener wl_surface_listener = {
@@ -161,6 +205,8 @@ wsiCreateWindow(
     if (window == NULL) {
         return WSI_ERROR_OUT_OF_MEMORY;
     }
+
+    wl_list_init(&window->output_list);
 
     window->platform = platform;
 
