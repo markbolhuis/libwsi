@@ -14,6 +14,27 @@
 #include "seat_priv.h"
 #include "output_priv.h"
 
+struct wsi_wl_global {
+    struct wsi_platform *platform;
+    uint32_t name;
+};
+
+struct wsi_wl_global *
+wsi_wl_global_create(
+    struct wsi_platform *platform,
+    uint32_t name)
+{
+    struct wsi_wl_global *global = calloc(1, sizeof(struct wsi_wl_global));
+    if (!global) {
+        return NULL;
+    }
+
+    global->platform = platform;
+    global->name = name;
+
+    return global;
+}
+
 // region XDG WmBase
 
 static void
@@ -22,8 +43,6 @@ xdg_wm_base_ping(
     struct xdg_wm_base *xdg_wm_base,
     uint32_t serial)
 {
-    struct wsi_platform *platform = data;
-    assert(platform->xdg_wm_base == xdg_wm_base);
     xdg_wm_base_pong(xdg_wm_base, serial);
 }
 
@@ -47,11 +66,13 @@ wl_registry_global(
     assert(platform->wl_registry = wl_registry);
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
+        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
         platform->wl_compositor= wl_registry_bind(
             wl_registry,
             name,
             &wl_compositor_interface,
             wsi_wl_version(version, wl_compositor_interface.version));
+        wl_compositor_set_user_data(platform->wl_compositor, global);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
         wsi_seat_bind(platform, name, version);
@@ -60,6 +81,7 @@ wl_registry_global(
         wsi_output_bind(platform, name, version);
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
+        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
         platform->xdg_wm_base = wl_registry_bind(
             wl_registry,
             name,
@@ -68,21 +90,29 @@ wl_registry_global(
         xdg_wm_base_add_listener(
             platform->xdg_wm_base,
             &xdg_wm_base_listener,
-            platform);
+            global);
     }
     else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
+        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
         platform->xdg_decoration_manager_v1 = wl_registry_bind(
             wl_registry,
             name,
             &zxdg_decoration_manager_v1_interface,
             wsi_wl_version(version, zxdg_decoration_manager_v1_interface.version));
+        zxdg_decoration_manager_v1_set_user_data(
+            platform->xdg_decoration_manager_v1,
+            global);
     }
     else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
         platform->xdg_output_manager_v1 = wl_registry_bind(
             wl_registry,
             name,
             &zxdg_output_manager_v1_interface,
             wsi_wl_version(version, zxdg_output_manager_v1_interface.version));
+        zxdg_output_manager_v1_set_user_data(
+            platform->xdg_output_manager_v1,
+            global);
         wsi_output_init_xdg_all(platform);
     }
 }
@@ -110,10 +140,45 @@ wl_registry_global_remove(
         if (name == output->wl_global_name) {
             wl_list_remove(&output->link);
             wsi_output_destroy(output);
+            return;
         }
     }
 
-    // TODO: Handle more critical globals
+    struct wsi_wl_global *global;
+
+    global = zxdg_decoration_manager_v1_get_user_data(
+        platform->xdg_decoration_manager_v1);
+    if (global->name == name) {
+        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
+        platform->xdg_decoration_manager_v1 = NULL;
+        free(global);
+        return;
+    }
+
+    global = zxdg_output_manager_v1_get_user_data(
+        platform->xdg_output_manager_v1);
+    if (global->name == name) {
+        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
+        platform->xdg_output_manager_v1 = NULL;
+        free(global);
+        return;
+    }
+
+    global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
+    if (global->name == name) {
+        // TODO: Trigger a shutdown
+        xdg_wm_base_destroy(platform->xdg_wm_base);
+        free(global);
+        return;
+    }
+
+    global = wl_compositor_get_user_data(platform->wl_compositor);
+    if (global->name == name) {
+        // TODO: Trigger a shutdown
+        wl_compositor_destroy(platform->wl_compositor);
+        free(global);
+        return;
+    }
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
