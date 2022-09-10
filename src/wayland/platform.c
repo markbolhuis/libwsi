@@ -35,6 +35,24 @@ wsi_wl_global_create(
     return global;
 }
 
+void *
+wsi_platform_bind(
+    struct wsi_platform *platform,
+    uint32_t name,
+    const struct wl_interface *wl_interface,
+    uint32_t version)
+{
+    uint32_t v = wl_interface->version < version
+               ? wl_interface->version
+               : version;
+
+    return wl_registry_bind(
+        platform->wl_registry,
+        name,
+        wl_interface,
+        v);
+}
+
 // region XDG WmBase
 
 static void
@@ -67,11 +85,11 @@ wl_registry_global(
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
         struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
-        platform->wl_compositor= wl_registry_bind(
-            wl_registry,
+        platform->wl_compositor = wsi_platform_bind(
+            platform,
             name,
             &wl_compositor_interface,
-            wsi_wl_version(version, wl_compositor_interface.version));
+            version);
         wl_compositor_set_user_data(platform->wl_compositor, global);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
@@ -82,11 +100,11 @@ wl_registry_global(
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
         struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
-        platform->xdg_wm_base = wl_registry_bind(
-            wl_registry,
+        platform->xdg_wm_base = wsi_platform_bind(
+            platform,
             name,
             &xdg_wm_base_interface,
-            wsi_wl_version(version, xdg_wm_base_interface.version));
+            version);
         xdg_wm_base_add_listener(
             platform->xdg_wm_base,
             &xdg_wm_base_listener,
@@ -94,22 +112,22 @@ wl_registry_global(
     }
     else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
         struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
-        platform->xdg_decoration_manager_v1 = wl_registry_bind(
-            wl_registry,
+        platform->xdg_decoration_manager_v1 = wsi_platform_bind(
+            platform,
             name,
             &zxdg_decoration_manager_v1_interface,
-            wsi_wl_version(version, zxdg_decoration_manager_v1_interface.version));
+            version);
         zxdg_decoration_manager_v1_set_user_data(
             platform->xdg_decoration_manager_v1,
             global);
     }
     else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
         struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
-        platform->xdg_output_manager_v1 = wl_registry_bind(
-            wl_registry,
+        platform->xdg_output_manager_v1 = wsi_platform_bind(
+            platform,
             name,
             &zxdg_output_manager_v1_interface,
-            wsi_wl_version(version, zxdg_output_manager_v1_interface.version));
+            version);
         zxdg_output_manager_v1_set_user_data(
             platform->xdg_output_manager_v1,
             global);

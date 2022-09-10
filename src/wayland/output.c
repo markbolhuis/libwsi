@@ -174,8 +174,8 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
         return NULL;
     }
 
-    output->wl_output = wl_registry_bind(
-        platform->wl_registry,
+    output->wl_output = wsi_platform_bind(
+        platform,
         name,
         &wl_output_interface,
         version);

@@ -40,11 +40,11 @@ wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     seat->platform = platform;
     seat->wl_global_name = name;
 
-    seat->wl_seat = wl_registry_bind(
-        platform->wl_registry,
+    seat->wl_seat = wsi_platform_bind(
+        platform,
         name,
         &wl_seat_interface,
-        wsi_wl_version(version, wl_seat_interface.version));
+        version);
     wl_seat_add_listener(
         seat->wl_seat,
         &wl_seat_listener,

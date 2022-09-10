@@ -14,10 +14,11 @@ struct wsi_platform {
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
 };
 
-static inline uint32_t
-wsi_wl_version(uint32_t version, uint32_t interface)
-{
-    return version < interface ? version : interface;
-}
+void *
+wsi_platform_bind(
+    struct wsi_platform *platform,
+    uint32_t name,
+    const struct wl_interface *wl_interface,
+    uint32_t version);
 
 #endif
