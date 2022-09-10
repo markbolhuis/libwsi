@@ -70,6 +70,23 @@ static const struct xdg_wm_base_listener xdg_wm_base_listener = {
 
 // endregion
 
+// region WL Shm
+
+static void
+wl_shm_format(
+    void *data,
+    struct wl_shm *wl_shm,
+    uint32_t format)
+{
+
+}
+
+static const struct wl_shm_listener wl_shm_listener = {
+    .format = wl_shm_format,
+};
+
+// endregion
+
 // region WL Registry
 
 static void
@@ -91,6 +108,15 @@ wl_registry_global(
             &wl_compositor_interface,
             version);
         wl_compositor_set_user_data(platform->wl_compositor, global);
+    }
+    else if (strcmp(interface, wl_shm_interface.name) == 0) {
+        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
+        platform->wl_shm = wsi_platform_bind(
+            platform,
+            name,
+            &wl_shm_interface,
+            version);
+        wl_shm_add_listener(platform->wl_shm, &wl_shm_listener, global);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
         wsi_seat_bind(platform, name, version);
@@ -234,6 +260,10 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         result = WSI_ERROR_PLATFORM;
         goto err_registry;
     }
+    if (!platform->wl_shm) {
+        result = WSI_ERROR_PLATFORM;
+        goto err_registry;
+    }
 
     *pPlatform = platform;
     return WSI_SUCCESS;
@@ -243,6 +273,9 @@ err_registry:
     wsi_output_destroy_all(platform);
     if (platform->wl_compositor) {
         wl_compositor_destroy(platform->wl_compositor);
+    }
+    if (platform->wl_shm) {
+        wl_shm_destroy(platform->wl_shm);
     }
     if (platform->xdg_wm_base) {
         xdg_wm_base_destroy(platform->xdg_wm_base);
@@ -276,6 +309,7 @@ wsiDestroyPlatform(WsiPlatform platform)
     }
 
     wl_compositor_destroy(platform->wl_compositor);
+    wl_shm_destroy(platform->wl_shm);
 
     wl_registry_destroy(platform->wl_registry);
     wl_display_roundtrip(platform->wl_display);

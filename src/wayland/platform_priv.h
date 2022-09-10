@@ -9,6 +9,7 @@ struct wsi_platform {
     struct wl_list output_list;
 
     struct wl_compositor *wl_compositor;
+    struct wl_shm *wl_shm;
     struct xdg_wm_base *xdg_wm_base;
     struct zxdg_decoration_manager_v1 *xdg_decoration_manager_v1;
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
