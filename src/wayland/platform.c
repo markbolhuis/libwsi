@@ -19,7 +19,7 @@ struct wsi_wl_global {
     uint32_t name;
 };
 
-struct wsi_wl_global *
+static struct wsi_wl_global *
 wsi_wl_global_create(
     struct wsi_platform *platform,
     uint32_t name)
@@ -33,6 +33,40 @@ wsi_wl_global_create(
     global->name = name;
 
     return global;
+}
+
+static void
+wsi_platform_destroy_globals(
+    struct wsi_platform *platform)
+{
+    struct wsi_wl_global *global;
+    if (platform->wl_compositor) {
+        global = wl_compositor_get_user_data(platform->wl_compositor);
+        free(global);
+        wl_compositor_destroy(platform->wl_compositor);
+    }
+    if (platform->wl_shm) {
+        global = wl_shm_get_user_data(platform->wl_shm);
+        free(global);
+        wl_shm_destroy(platform->wl_shm);
+    }
+    if (platform->xdg_wm_base) {
+        global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
+        free(global);
+        xdg_wm_base_destroy(platform->xdg_wm_base);
+    }
+    if (platform->xdg_decoration_manager_v1) {
+        global = zxdg_decoration_manager_v1_get_user_data(
+            platform->xdg_decoration_manager_v1);
+        free(global);
+        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
+    }
+    if (platform->xdg_output_manager_v1) {
+        global = zxdg_output_manager_v1_get_user_data(
+            platform->xdg_output_manager_v1);
+        free(global);
+        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
+    }
 }
 
 void *
@@ -271,21 +305,8 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 err_registry:
     wsi_seat_destroy_all(platform);
     wsi_output_destroy_all(platform);
-    if (platform->wl_compositor) {
-        wl_compositor_destroy(platform->wl_compositor);
-    }
-    if (platform->wl_shm) {
-        wl_shm_destroy(platform->wl_shm);
-    }
-    if (platform->xdg_wm_base) {
-        xdg_wm_base_destroy(platform->xdg_wm_base);
-    }
-    if (platform->xdg_decoration_manager_v1) {
-        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
-    }
-    if (platform->xdg_output_manager_v1) {
-        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
-    }
+    wsi_platform_destroy_globals(platform);
+    wl_display_roundtrip(platform->wl_display);
     wl_display_disconnect(platform->wl_display);
 err_display:
     free(platform);
@@ -298,18 +319,7 @@ wsiDestroyPlatform(WsiPlatform platform)
     wsi_seat_destroy_all(platform);
     wsi_output_destroy_all(platform);
 
-    if (platform->xdg_decoration_manager_v1) {
-        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
-    }
-    if (platform->xdg_output_manager_v1) {
-        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
-    }
-    if (platform->xdg_wm_base) {
-        xdg_wm_base_destroy(platform->xdg_wm_base);
-    }
-
-    wl_compositor_destroy(platform->wl_compositor);
-    wl_shm_destroy(platform->wl_shm);
+    wsi_platform_destroy_globals(platform);
 
     wl_registry_destroy(platform->wl_registry);
     wl_display_roundtrip(platform->wl_display);
