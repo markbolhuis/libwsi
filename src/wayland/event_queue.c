@@ -35,3 +35,10 @@ wsiDestroyEventQueue(
     wl_event_queue_destroy(eventQueue->wl_event_queue);
     free(eventQueue);
 }
+
+WsiResult
+wsiPollEventQueue(
+    WsiEventQueue eventQueue)
+{
+    return WSI_ERROR_NOT_IMPLEMENTED;
+}

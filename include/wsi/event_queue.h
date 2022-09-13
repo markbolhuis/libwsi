@@ -14,7 +14,7 @@ void
 wsiDestroyEventQueue(WsiPlatform platform, WsiEventQueue eventQueue);
 
 WsiResult
-wsiPollEventQueue(WsiPlatform platform, WsiEventQueue eventQueue);
+wsiPollEventQueue(WsiEventQueue eventQueue);
 
 #ifdef __cplusplus
 }
