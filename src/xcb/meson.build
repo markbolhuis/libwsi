@@ -2,6 +2,7 @@ dep_xcb = dependency('xcb')
 
 src_wsi_xcb = files(
   'platform.c',
+  'event_queue.c',
   'window.c',
   'vulkan/vulkan.c',
 )
