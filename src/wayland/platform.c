@@ -306,6 +306,7 @@ err_registry:
     wsi_seat_destroy_all(platform);
     wsi_output_destroy_all(platform);
     wsi_platform_destroy_globals(platform);
+    wl_registry_destroy(platform->wl_registry);
     wl_display_roundtrip(platform->wl_display);
     wl_display_disconnect(platform->wl_display);
 err_display:
