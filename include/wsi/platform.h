@@ -7,14 +7,14 @@
 extern "C" {
 #endif
 
-typedef struct WsiPlatformFeatures {
+typedef struct wsi_platform_features {
     bool windowing;
     bool overlay;
     bool background;
     bool fullscreen;
 } WsiPlatformFeatures;
 
-typedef struct WsiPlatformLimits {
+typedef struct wsi_platform_limits {
     uint32_t maxEventQueueCount;
     uint32_t maxSeatCount;
     uint32_t maxWindowWidth;
