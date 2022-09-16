@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 
 #include <xcb/xcb.h>
 
@@ -6,6 +7,21 @@
 
 #include "platform_priv.h"
 #include "window_priv.h"
+
+static inline struct wsi_xcb_extent
+wsi_extent_to_xcb(
+    struct wsi_extent extent)
+{
+    assert(extent.width <= UINT16_MAX);
+    assert(extent.height <= UINT16_MAX);
+
+    struct wsi_xcb_extent xcb = {
+        .width = (uint16_t)extent.width,
+        .height = (uint16_t)extent.height,
+    };
+
+    return xcb;
+}
 
 WsiResult
 wsiCreateWindow(
@@ -20,8 +36,8 @@ wsiCreateWindow(
 
     window->platform = platform;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
-    window->width = (uint16_t)pCreateInfo->width;
-    window->height = (uint16_t)pCreateInfo->height;
+
+    window->extent = wsi_extent_to_xcb(pCreateInfo->extent);
 
     uint32_t value_list[2];
     uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK ;
@@ -37,8 +53,8 @@ wsiCreateWindow(
         window->xcb_window,
         platform->xcb_screen->root,
         0, 0,
-        window->width,
-        window->height,
+        window->extent.width,
+        window->extent.height,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
         platform->xcb_screen->root_visual,
@@ -89,11 +105,10 @@ wsiSetWindowParent(
 void
 wsiGetWindowExtent(
     WsiWindow window,
-    uint32_t *width,
-    uint32_t *height)
+    WsiExtent *pExtent)
 {
-    *width = window->width;
-    *height = window->height;
+    pExtent->width = window->extent.width;
+    pExtent->height = window->extent.height;
 }
 
 WsiResult

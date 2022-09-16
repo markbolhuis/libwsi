@@ -38,6 +38,11 @@ typedef enum wsi_result {
     WSI_ERROR_ENUM_MAX = 0x7fffffff,
 } WsiResult;
 
+typedef struct wsi_extent {
+    uint32_t width;
+    uint32_t height;
+} WsiExtent;
+
 #ifdef __cplusplus
 }
 #endif

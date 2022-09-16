@@ -17,6 +17,21 @@ struct wsi_window_output {
     struct wl_output *wl_output;
 };
 
+static inline struct wsi_xdg_extent
+wsi_extent_to_xdg(
+    struct wsi_extent extent)
+{
+    assert(extent.width <= INT32_MAX);
+    assert(extent.height <= INT32_MAX);
+
+    struct wsi_xdg_extent xdg = {
+        .width = (int32_t)extent.width,
+        .height = (int32_t)extent.height,
+    };
+
+    return xdg;
+}
+
 // region XDG Toplevel Decoration
 
 static void
@@ -266,9 +281,7 @@ wsiCreateWindow(
     wl_list_init(&window->output_list);
 
     window->platform = platform;
-
-    window->user_extent.width = (int32_t)pCreateInfo->width;
-    window->user_extent.height = (int32_t)pCreateInfo->height;
+    window->user_extent = wsi_extent_to_xdg(pCreateInfo->extent);
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
     wl_surface_add_listener(window->wl_surface, &wl_surface_listener, window);
@@ -349,14 +362,13 @@ wsiSetWindowParent(
 void
 wsiGetWindowExtent(
     WsiWindow window,
-    uint32_t *width,
-    uint32_t *height)
+    WsiExtent *pExtent)
 {
     assert(window->current.extent.width > 0);
     assert(window->current.extent.height > 0);
 
-    *width = (uint32_t)window->current.extent.width;
-    *height = (uint32_t)window->current.extent.height;
+    pExtent->width = (uint32_t)window->current.extent.width;
+    pExtent->height = (uint32_t)window->current.extent.height;
 }
 
 WsiResult

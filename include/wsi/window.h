@@ -19,8 +19,7 @@ typedef struct wsi_window_features {
 typedef struct wsi_window_create_info {
     WsiEventQueue eventQueue;
     WsiWindow parent;
-    uint32_t width;
-    uint32_t height;
+    WsiExtent extent;
     const char *pTitle;
 } WsiWindowCreateInfo;
 
@@ -40,7 +39,7 @@ WsiResult
 wsiSetWindowParent(WsiWindow window, WsiWindow parent);
 
 void
-wsiGetWindowExtent(WsiWindow window, uint32_t *width, uint32_t *height);
+wsiGetWindowExtent(WsiWindow window, WsiExtent *pExtent);
 
 WsiResult
 wsiSetWindowTitle(WsiWindow window, const char *pTitle);
