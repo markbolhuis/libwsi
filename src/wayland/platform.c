@@ -257,6 +257,14 @@ wl_registry_global_remove(
         free(global);
         return;
     }
+
+    global = wl_shm_get_user_data(platform->wl_shm);
+    if (global->name == name) {
+        // TODO: Trigger a shutdown
+        wl_shm_destroy(platform->wl_shm);
+        free(global);
+        return;
+    }
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
