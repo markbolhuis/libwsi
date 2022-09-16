@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include <memory.h>
 #include <assert.h>
 
 #include <wayland-client-protocol.h>
@@ -21,9 +23,12 @@ static void
 xdg_toplevel_decoration_v1_configure(
     void *data,
     struct zxdg_toplevel_decoration_v1 *xdg_toplevel_decoration,
-    uint32_t name)
+    uint32_t mode)
 {
+    struct wsi_window *window = data;
 
+    window->event_mask |= WSI_XDG_EVENT_DECORATION;
+    window->pending.decoration = mode;
 }
 
 static const struct zxdg_toplevel_decoration_v1_listener xdg_toplevel_decoration_v1_listener = {
@@ -43,31 +48,51 @@ xdg_toplevel_configure(
     struct wl_array *states)
 {
     struct wsi_window *window = data;
-    assert(window->xdg_toplevel == xdg_toplevel);
 
-    int32_t user_width = window->user_extent.width;
-    int32_t user_height = window->user_extent.height;
-
-    if (user_width == 0) {
-        user_width = 640;
+    if (width == 0) {
+        width = window->user_extent.width;
     }
-    if (user_height == 0) {
-        user_height = 360;
+    if (height == 0) {
+        height = window->user_extent.height;
     }
 
-    if (width == 0 && height == 0) {
-        width = user_width;
-        height = user_height;
-    }
-    else if (width == 0) {
-        width = (int32_t)(((int64_t)height * (int64_t)user_width) / (int64_t)user_height);
-    }
-    else if (height == 0) {
-        height = (int32_t)(((int64_t)width * (int64_t)user_height) / (int64_t)user_width);
+    window->event_mask |= WSI_XDG_EVENT_CONFIGURE;
+    window->pending.extent.width = width;
+    window->pending.extent.height = height;
+
+    struct wsi_xdg_state pending = {0};
+
+    uint32_t *state = NULL;
+    wl_array_for_each(state, states) {
+        switch (*state) {
+            case XDG_TOPLEVEL_STATE_MAXIMIZED:
+                pending.maximized = true;
+                break;
+            case XDG_TOPLEVEL_STATE_FULLSCREEN:
+                pending.fullscreen = true;
+                break;
+            case XDG_TOPLEVEL_STATE_RESIZING:
+                pending.resizing = true;
+                break;
+            case XDG_TOPLEVEL_STATE_ACTIVATED:
+                pending.activated = true;
+                break;
+            case XDG_TOPLEVEL_STATE_TILED_LEFT:
+                pending.tiled_left = true;
+                break;
+            case XDG_TOPLEVEL_STATE_TILED_RIGHT:
+                pending.tiled_right = true;
+                break;
+            case XDG_TOPLEVEL_STATE_TILED_TOP:
+                pending.tiled_top = true;
+                break;
+            case XDG_TOPLEVEL_STATE_TILED_BOTTOM:
+                pending.tiled_bottom = true;
+                break;
+        }
     }
 
-    window->extent.width = width;
-    window->extent.height = height;
+    window->pending.state = pending;
 }
 
 static void
@@ -85,7 +110,11 @@ xdg_toplevel_configure_bounds(
     int32_t max_width,
     int32_t max_height)
 {
+    struct wsi_window *window = data;
 
+    window->event_mask |= WSI_XDG_EVENT_BOUNDS;
+    window->pending.bounds.width = max_width;
+    window->pending.bounds.height = max_height;
 }
 
 static void
@@ -94,7 +123,30 @@ xdg_toplevel_wm_capabilities(
     struct xdg_toplevel *xdg_toplevel,
     struct wl_array *capabilities)
 {
+    struct wsi_window *window = data;
 
+    struct wsi_xdg_capabilities pending = {0};
+
+    uint32_t *cap = NULL;
+    wl_array_for_each(cap, capabilities) {
+        switch (*cap) {
+            case XDG_TOPLEVEL_WM_CAPABILITIES_WINDOW_MENU:
+                pending.window_menu = true;
+                break;
+            case XDG_TOPLEVEL_WM_CAPABILITIES_MAXIMIZE:
+                pending.maximize;
+                break;
+            case XDG_TOPLEVEL_WM_CAPABILITIES_FULLSCREEN:
+                pending.fullscreen = true;
+                break;
+            case XDG_TOPLEVEL_WM_CAPABILITIES_MINIMIZE:
+                pending.minimize = true;
+                break;
+        }
+    }
+
+    window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
+    window->pending.capabilities = pending;
 }
 
 static const struct xdg_toplevel_listener xdg_toplevel_listener = {
@@ -115,7 +167,12 @@ xdg_surface_configure(
     uint32_t serial)
 {
     struct wsi_window *window = data;
-    assert(window->xdg_surface == xdg_surface);
+
+    // TODO: Handle this properly
+    window->current = window->pending;
+    memset(&window->pending, 0, sizeof(struct wsi_window_state));
+
+    window->event_mask = WSI_XDG_EVENT_NONE;
     xdg_surface_ack_configure(xdg_surface, serial);
 }
 
@@ -295,11 +352,11 @@ wsiGetWindowExtent(
     uint32_t *width,
     uint32_t *height)
 {
-    assert(window->extent.width > 0);
-    assert(window->extent.height > 0);
+    assert(window->current.extent.width > 0);
+    assert(window->current.extent.height > 0);
 
-    *width = (uint32_t)window->extent.width;
-    *height = (uint32_t)window->extent.height;
+    *width = (uint32_t)window->current.extent.width;
+    *height = (uint32_t)window->current.extent.height;
 }
 
 WsiResult
