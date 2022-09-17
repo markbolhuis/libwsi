@@ -149,7 +149,7 @@ xdg_toplevel_wm_capabilities(
                 pending.window_menu = true;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_MAXIMIZE:
-                pending.maximize;
+                pending.maximize = true;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_FULLSCREEN:
                 pending.fullscreen = true;
