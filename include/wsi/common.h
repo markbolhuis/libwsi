@@ -22,6 +22,7 @@ typedef enum wsi_result {
     WSI_TIMEOUT = 2,
     WSI_EVENT_SET = 3,
     WSI_EVENT_UNSET = 4,
+    WSI_SKIPPED = 5,
     WSI_ERROR_UNKNOWN = -1,
     WSI_ERROR_EGL = -2,
     WSI_ERROR_VULKAN = -3,

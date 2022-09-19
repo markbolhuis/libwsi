@@ -9,6 +9,7 @@ src_wsi_wl = files(
   'seat.c',
   'window.c',
   'output.c',
+  'egl/egl.c',
   'vulkan/vulkan.c',
 )
 

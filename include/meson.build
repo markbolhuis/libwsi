@@ -4,6 +4,7 @@ hdr_wsi = files(
   'wsi/window.h',
   'wsi/seat.h',
   'wsi/output.h',
+  'wsi/egl/egl.h',
   'wsi/vulkan/vulkan.h',
 )
 

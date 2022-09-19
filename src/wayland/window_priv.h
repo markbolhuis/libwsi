@@ -47,6 +47,7 @@ struct wsi_window {
     struct wsi_xdg_extent user_extent;
 
     struct wl_surface     *wl_surface;
+    struct wl_egl_window  *wl_egl_window; // Temporary
     struct xdg_surface    *xdg_surface;
     struct xdg_toplevel   *xdg_toplevel;
     struct zxdg_toplevel_decoration_v1 *xdg_toplevel_decoration_v1;

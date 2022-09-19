@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <memory.h>
 #include <poll.h>
@@ -11,8 +12,10 @@
 #include "wsi/platform.h"
 
 #include "platform_priv.h"
+#include "window_priv.h"
 #include "seat_priv.h"
 #include "output_priv.h"
+#include "egl/egl_priv.h"
 
 struct wsi_wl_global {
     struct wsi_platform *platform;
@@ -293,6 +296,11 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     wl_list_init(&platform->seat_list);
     wl_list_init(&platform->output_list);
 
+    result = wsi_egl_load(platform);
+    if (result != WSI_SUCCESS && result != WSI_SKIPPED) {
+        return result;
+    }
+
     platform->wl_registry = wl_display_get_registry(platform->wl_display);
     wl_registry_add_listener(platform->wl_registry, &wl_registry_listener, platform);
 
@@ -315,6 +323,7 @@ err_registry:
     wsi_output_destroy_all(platform);
     wsi_platform_destroy_globals(platform);
     wl_registry_destroy(platform->wl_registry);
+    wsi_egl_unload(platform);
     wl_display_roundtrip(platform->wl_display);
     wl_display_disconnect(platform->wl_display);
 err_display:
@@ -331,6 +340,9 @@ wsiDestroyPlatform(WsiPlatform platform)
     wsi_platform_destroy_globals(platform);
 
     wl_registry_destroy(platform->wl_registry);
+
+    wsi_egl_unload(platform);
+
     wl_display_roundtrip(platform->wl_display);
 
     wl_display_disconnect(platform->wl_display);
