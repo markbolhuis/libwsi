@@ -44,6 +44,9 @@ wsiGetWindowExtent(WsiWindow window, WsiExtent *pExtent);
 WsiResult
 wsiSetWindowTitle(WsiWindow window, const char *pTitle);
 
+bool
+wsiShouldCloseWindow(WsiWindow window);
+
 #ifdef __cplusplus
 }
 #endif

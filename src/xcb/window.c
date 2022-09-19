@@ -129,3 +129,11 @@ wsiSetWindowTitle(
 
     return WSI_SUCCESS;
 }
+
+bool
+wsiShouldCloseWindow(
+    WsiWindow window)
+{
+    // TODO: Implement this
+    return false;
+}

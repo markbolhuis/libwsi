@@ -115,7 +115,8 @@ xdg_toplevel_close(
     void *data,
     struct xdg_toplevel *xdg_toplevel)
 {
-
+    struct wsi_window *window = data;
+    window->closed = true;
 }
 
 static void
@@ -390,3 +391,11 @@ wsiGetWindowFeatures(
     pFeatures->decoration = window->xdg_toplevel_decoration_v1 != NULL;
 }
 
+bool
+wsiShouldCloseWindow(
+    WsiWindow window)
+{
+    bool closed =  window->closed;
+    window->closed = false;
+    return closed;
+}

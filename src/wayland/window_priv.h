@@ -55,6 +55,8 @@ struct wsi_window {
     struct wsi_window_state pending;
     struct wsi_window_state current;
     struct wl_list output_list;
+
+    bool closed;
 };
 
 struct wsi_vk_window {
