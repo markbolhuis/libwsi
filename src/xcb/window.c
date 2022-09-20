@@ -126,15 +126,22 @@ wsiSetWindowTitle(
     WsiWindow window,
     const char *pTitle)
 {
-    xcb_change_property(
-        window->platform->xcb_connection,
-        XCB_PROP_MODE_REPLACE,
-        window->xcb_window,
-        XCB_ATOM_WM_NAME,
-        XCB_ATOM_STRING,
-        8,
-        strlen(pTitle),
-        pTitle);
+    if (pTitle) {
+        xcb_change_property(
+            window->platform->xcb_connection,
+            XCB_PROP_MODE_REPLACE,
+            window->xcb_window,
+            XCB_ATOM_WM_NAME,
+            XCB_ATOM_STRING,
+            8,
+            strlen(pTitle),
+            pTitle);
+    } else {
+        xcb_delete_property(
+           window->platform->xcb_connection,
+           window->xcb_window,
+           XCB_ATOM_WM_NAME);
+    }
 
     return WSI_SUCCESS;
 }
