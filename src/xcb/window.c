@@ -92,7 +92,24 @@ wsiSetWindowParent(
     WsiWindow window,
     WsiWindow parent)
 {
-    return WSI_ERROR_NOT_IMPLEMENTED;
+    if (parent) {
+        xcb_change_property(
+           window->platform->xcb_connection,
+           XCB_PROP_MODE_REPLACE,
+           window->xcb_window,
+           XCB_ATOM_WM_TRANSIENT_FOR,
+           XCB_ATOM_WINDOW,
+           32,
+           1,
+           &parent->xcb_window);
+    } else {
+        xcb_delete_property(
+           window->platform->xcb_connection,
+           window->xcb_window,
+           XCB_ATOM_WM_TRANSIENT_FOR);
+    }
+
+    return WSI_SUCCESS;
 }
 
 void
