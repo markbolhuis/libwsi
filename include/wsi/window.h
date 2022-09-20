@@ -33,9 +33,6 @@ void
 wsiGetWindowFeatures(WsiWindow window, WsiWindowFeatures *pFeatures);
 
 WsiResult
-wsiGetWindowParent(WsiWindow window, WsiWindow *pParent);
-
-WsiResult
 wsiSetWindowParent(WsiWindow window, WsiWindow parent);
 
 void

@@ -88,14 +88,6 @@ wsiGetWindowFeatures(
 }
 
 WsiResult
-wsiGetWindowParent(
-    WsiWindow window,
-    WsiWindow *pParent)
-{
-    return WSI_ERROR_NOT_IMPLEMENTED;
-}
-
-WsiResult
 wsiSetWindowParent(
     WsiWindow window,
     WsiWindow parent)

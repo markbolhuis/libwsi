@@ -349,15 +349,6 @@ wsiDestroyWindow(
 }
 
 WsiResult
-wsiGetWindowParent(
-    WsiWindow window,
-    WsiWindow *pParent)
-{
-    *pParent = window->parent;
-    return WSI_SUCCESS;
-}
-
-WsiResult
 wsiSetWindowParent(
     WsiWindow window,
     WsiWindow parent)
