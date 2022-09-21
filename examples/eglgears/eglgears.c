@@ -243,13 +243,21 @@ draw()
 static void
 reshape(WsiExtent extent)
 {
-    GLfloat h = (GLfloat)extent.width / (GLfloat)extent.height;
-
-    glViewport(0, 0, (GLint)extent.width, (GLint)extent.height);
+    glViewport(0, 0, (GLsizei)extent.width, (GLsizei)extent.height);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-h, h, -1.0, 1.0, 5.0, 60.0);
+
+    GLfloat hf = (GLfloat)extent.height;
+    GLfloat wf = (GLfloat)extent.width;
+
+    if (hf > wf) {
+        GLfloat aspect = hf / wf;
+        glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+    } else {
+        GLfloat aspect = wf / hf;
+        glFrustum(-aspect, aspect, -1.0, 1.0, 5.0, 60.0);
+    }
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
