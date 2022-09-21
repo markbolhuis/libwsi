@@ -18,19 +18,19 @@ struct wsi_window_output {
     struct wl_output *wl_output;
 };
 
-static inline struct wsi_xdg_extent
-wsi_extent_to_xdg(
+static inline struct wsi_wl_extent
+wsi_extent_to_wl(
     struct wsi_extent extent)
 {
     assert(extent.width <= INT32_MAX);
     assert(extent.height <= INT32_MAX);
 
-    struct wsi_xdg_extent xdg = {
+    struct wsi_wl_extent wl = {
         .width = (int32_t)extent.width,
         .height = (int32_t)extent.height,
     };
 
-    return xdg;
+    return wl;
 }
 
 // region XDG Toplevel Decoration
@@ -293,7 +293,7 @@ wsiCreateWindow(
     wl_list_init(&window->output_list);
 
     window->platform = platform;
-    window->user_extent = wsi_extent_to_xdg(pCreateInfo->extent);
+    window->user_extent = wsi_extent_to_wl(pCreateInfo->extent);
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
     wl_surface_add_listener(window->wl_surface, &wl_surface_listener, window);

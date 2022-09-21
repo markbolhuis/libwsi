@@ -54,7 +54,7 @@ struct wsi_egl {
 void
 wsi_window_egl_configure(
     struct wsi_window *window,
-    struct wsi_xdg_extent extent)
+    struct wsi_wl_extent extent)
 {
     struct wsi_egl *egl = window->platform->egl;
 

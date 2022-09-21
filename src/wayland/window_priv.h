@@ -1,7 +1,7 @@
 #ifndef WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 #define WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 
-struct wsi_xdg_extent {
+struct wsi_wl_extent {
     int32_t width;
     int32_t height;
 };
@@ -33,8 +33,8 @@ struct wsi_xdg_state {
 };
 
 struct wsi_window_state {
-    struct wsi_xdg_extent extent;             // xdg_toplevel.configure
-    struct wsi_xdg_extent bounds;             // xdg_toplevel.configure_bounds
+    struct wsi_wl_extent extent;              // xdg_toplevel.configure
+    struct wsi_wl_extent bounds;              // xdg_toplevel.configure_bounds
     struct wsi_xdg_state state;               // xdg_toplevel.configure
     struct wsi_xdg_capabilities capabilities; // xdg_toplevel.wm_capabilities
     int32_t scale;                            // wl_surface.{enter.leave}
@@ -44,7 +44,7 @@ struct wsi_window_state {
 struct wsi_window {
     struct wsi_platform   *platform;
     struct wsi_window     *parent;
-    struct wsi_xdg_extent user_extent;
+    struct wsi_wl_extent  user_extent;
 
     struct wl_surface     *wl_surface;
     struct wl_egl_window  *wl_egl_window; // Temporary
