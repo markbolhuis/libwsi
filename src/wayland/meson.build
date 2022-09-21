@@ -1,6 +1,7 @@
 wl_mod = import('unstable-wayland')
 
 dep_wl_client = dependency('wayland-client')
+dep_wl_egl    = dependency('wayland-egl')
 dep_xkbcommon = dependency('xkbcommon')
 
 src_wsi_wl = files(
@@ -26,7 +27,9 @@ lib_wsi_wl = library('wsi-wl',
   install : true,
   dependencies : [
     dep_vulkan,
+    dep_egl,
     dep_wl_client,
+    dep_wl_egl,
     dep_xkbcommon,
   ],
 )

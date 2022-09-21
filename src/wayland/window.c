@@ -208,11 +208,9 @@ xdg_surface_configure(
     //       surfaces that are either vulkan or egl.
     //       Maybe use two different listeners, depending
     //       if the surface is vulkan or egl.
-    if (window->platform->egl) {
-        wsi_window_egl_configure(
-            window,
-            window->current.extent);
-    }
+    wsi_window_egl_configure(
+        window,
+        window->current.extent);
 
     window->event_mask = WSI_XDG_EVENT_NONE;
     xdg_surface_ack_configure(xdg_surface, serial);
