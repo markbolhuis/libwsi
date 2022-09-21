@@ -11,7 +11,7 @@ struct wsi_window {
 
     xcb_window_t xcb_window;
 
-    struct wsi_xcb_extent extent;
+    struct wsi_xcb_extent user_extent;
 };
 
 #endif

@@ -38,7 +38,7 @@ wsiCreateWindow(
     window->platform = platform;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
 
-    window->extent = wsi_extent_to_xcb(pCreateInfo->extent);
+    window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
 
     uint32_t value_list[2];
     uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK ;
@@ -54,8 +54,8 @@ wsiCreateWindow(
         window->xcb_window,
         platform->xcb_screen->root,
         0, 0,
-        window->extent.width,
-        window->extent.height,
+        window->user_extent.width,
+        window->user_extent.height,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
         platform->xcb_screen->root_visual,
@@ -117,8 +117,8 @@ wsiGetWindowExtent(
     WsiWindow window,
     WsiExtent *pExtent)
 {
-    pExtent->width = window->extent.width;
-    pExtent->height = window->extent.height;
+    pExtent->width = window->user_extent.width;
+    pExtent->height = window->user_extent.height;
 }
 
 WsiResult
