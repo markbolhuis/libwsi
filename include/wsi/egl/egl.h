@@ -3,6 +3,10 @@
 
 #include "../common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void *EGLDisplay;
 typedef void *EGLConfig;
 typedef void *EGLSurface;
@@ -18,5 +22,9 @@ wsiCreateWindowEglSurface(
     EGLDisplay dpy,
     EGLConfig config,
     EGLSurface *pSurface);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
