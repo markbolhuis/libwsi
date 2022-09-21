@@ -1,5 +1,5 @@
-#ifndef WSI_SRC_WSI_HANDLE_H
-#define WSI_SRC_WSI_HANDLE_H
+#ifndef WSI_SRC_WSI_PLATFORM_PRIVATE_H
+#define WSI_SRC_WSI_PLATFORM_PRIVATE_H
 
 struct wsi_platform {
     void *handle;
