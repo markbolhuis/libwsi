@@ -33,6 +33,21 @@ wsi_extent_to_wl(
     return wl;
 }
 
+static inline struct wsi_extent
+wsi_extent_from_wl(
+    struct wsi_wl_extent wl)
+{
+    assert(wl.width > 0);
+    assert(wl.height > 0);
+
+    struct wsi_extent extent = {
+        .width = (uint32_t)wl.width,
+        .height = (uint32_t)wl.height,
+    };
+
+    return extent;
+}
+
 // region XDG Toplevel Decoration
 
 static void
@@ -367,11 +382,7 @@ wsiGetWindowExtent(
     WsiWindow window,
     WsiExtent *pExtent)
 {
-    assert(window->current.extent.width > 0);
-    assert(window->current.extent.height > 0);
-
-    pExtent->width = (uint32_t)window->current.extent.width;
-    pExtent->height = (uint32_t)window->current.extent.height;
+    *pExtent = wsi_extent_from_wl(window->current.extent);
 }
 
 WsiResult
