@@ -4,6 +4,7 @@ src_wsi_xcb = files(
   'platform.c',
   'event_queue.c',
   'window.c',
+  'egl/egl.c',
   'vulkan/vulkan.c',
 )
 
@@ -12,6 +13,7 @@ lib_wsi_xcb = library('wsi-xcb',
   include_directories : inc_wsi,
   install : true,
   dependencies : [
+    dep_egl,
     dep_vulkan,
     dep_xcb,
   ],
