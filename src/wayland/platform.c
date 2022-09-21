@@ -298,7 +298,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 
     result = wsi_egl_load(platform);
     if (result != WSI_SUCCESS && result != WSI_SKIPPED) {
-        return result;
+        goto err_egl;
     }
 
     platform->wl_registry = wl_display_get_registry(platform->wl_display);
@@ -326,6 +326,7 @@ err_registry:
     wsi_egl_unload(platform);
     wl_display_roundtrip(platform->wl_display);
     wl_display_disconnect(platform->wl_display);
+err_egl:
 err_display:
     free(platform);
     return result;
