@@ -1,5 +1,6 @@
 src_wsi = files(
   'platform.c',
+  'event_queue.c',
   'seat.c',
   'window.c',
   'egl/egl.c',
