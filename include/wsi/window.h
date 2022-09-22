@@ -13,7 +13,6 @@ typedef struct wsi_window_features {
     bool maximize;
     bool resize;
     bool move;
-    bool decoration;
 } WsiWindowFeatures;
 
 typedef struct wsi_window_create_info {
