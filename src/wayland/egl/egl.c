@@ -4,32 +4,11 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include "wsi/window.h"
 #include "wsi/egl/egl.h"
 
 #include "../platform_priv.h"
 #include "../window_priv.h"
-#include "egl_priv.h"
-
-void
-wsi_window_egl_configure(
-    struct wsi_window *window,
-    struct wsi_wl_extent extent)
-{
-    if (window->wl_egl_window) {
-        wl_egl_window_resize(
-            window->wl_egl_window,
-            window->current.extent.width,
-            window->current.extent.height,
-            0,
-            0);
-    }
-    else {
-        window->wl_egl_window = wl_egl_window_create(
-            window->wl_surface,
-            window->current.extent.width,
-            window->current.extent.height);
-    }
-}
 
 WsiResult
 wsiGetEglDisplay(
@@ -58,6 +37,18 @@ wsiCreateWindowEglSurface(
     EGLConfig config,
     EGLSurface *pSurface)
 {
+    if (window->api != WSI_API_NONE) {
+        return WSI_ERROR_WINDOW_IN_USE;
+    }
+
+    window->wl_egl_window = wl_egl_window_create(
+        window->wl_surface,
+        window->current.extent.width,
+        window->current.extent.height);
+    if (window->wl_egl_window == NULL) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
     EGLAttrib attrs[] = {
         EGL_NONE,
     };
@@ -71,6 +62,7 @@ wsiCreateWindowEglSurface(
         return WSI_ERROR_EGL;
     }
 
+    window->api = WSI_API_EGL;
     return WSI_SUCCESS;
 }
 

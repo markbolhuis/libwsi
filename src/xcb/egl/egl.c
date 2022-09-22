@@ -36,6 +36,10 @@ wsiCreateWindowEglSurface(
     EGLConfig config,
     EGLSurface *pSurface)
 {
+    if (window->api != WSI_API_NONE) {
+        return WSI_ERROR_WINDOW_IN_USE;
+    }
+
     struct wsi_platform *platform = window->platform;
 
     xcb_visualid_t visualid = 0;
@@ -76,5 +80,6 @@ wsiCreateWindowEglSurface(
         return WSI_ERROR_EGL;
     }
 
+    window->api = WSI_API_EGL;
     return WSI_SUCCESS;
 }

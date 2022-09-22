@@ -36,6 +36,7 @@ typedef enum wsi_result {
     WSI_ERROR_SEAT_DISCONNECTED = -11,
     WSI_ERROR_NOT_IMPLEMENTED = -12,
     WSI_ERROR_UNINITIALIZED = -13,
+    WSI_ERROR_WINDOW_IN_USE = -14,
     WSI_ERROR_ENUM_MAX = 0x7fffffff,
 } WsiResult;
 
@@ -43,6 +44,13 @@ typedef struct wsi_extent {
     uint32_t width;
     uint32_t height;
 } WsiExtent;
+
+typedef enum wsi_api {
+    WSI_API_NONE = 0,
+    WSI_API_EGL = 1,
+    WSI_API_VULKAN = 2,
+    WSI_API_ENUM_MAX = 0x7fffffff,
+} WsiApi;
 
 #ifdef __cplusplus
 }

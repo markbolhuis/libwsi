@@ -6,6 +6,7 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_wayland.h>
 
+#include "wsi/window.h"
 #include "wsi/vulkan/vulkan.h"
 
 #include "../platform_priv.h"
@@ -90,6 +91,10 @@ wsiCreateWindowSurface(
 {
     assert(window->platform == platform);
 
+    if (window->api != WSI_API_NONE) {
+        return WSI_ERROR_WINDOW_IN_USE;
+    }
+
     VkWaylandSurfaceCreateInfoKHR wlInfo = {0};
     wlInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
     wlInfo.pNext = NULL;
@@ -107,6 +112,7 @@ wsiCreateWindowSurface(
     enum wsi_result res;
     if (vres == VK_SUCCESS) {
         res = WSI_SUCCESS;
+        window->api = WSI_API_VULKAN;
         *pSurface = surface;
     } else {
         res = WSI_ERROR_VULKAN;

@@ -36,6 +36,7 @@ wsiCreateWindow(
     }
 
     window->platform = platform;
+    window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
 
     window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
