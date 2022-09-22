@@ -4,6 +4,7 @@ src_wsi = files(
   'seat.c',
   'window.c',
   'egl/egl.c',
+  'vulkan/vulkan.c',
 )
 
 lib_wsi = library('wsi', src_wsi,
