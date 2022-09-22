@@ -9,6 +9,8 @@ struct wsi_xcb_extent {
 struct wsi_window {
     struct wsi_platform *platform;
 
+    enum wsi_api api;
+
     xcb_window_t xcb_window;
 
     struct wsi_xcb_extent user_extent;

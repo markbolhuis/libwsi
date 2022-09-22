@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include <wayland-client-protocol.h>
+#include <wayland-egl-core.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
 
@@ -11,7 +12,6 @@
 
 #include "platform_priv.h"
 #include "window_priv.h"
-#include "egl/egl_priv.h"
 
 struct wsi_window_output {
     struct wl_list link;
@@ -208,9 +208,14 @@ xdg_surface_configure(
     //       surfaces that are either vulkan or egl.
     //       Maybe use two different listeners, depending
     //       if the surface is vulkan or egl.
-    wsi_window_egl_configure(
-        window,
-        window->current.extent);
+    if (window->wl_egl_window) {
+        wl_egl_window_resize(
+            window->wl_egl_window,
+            window->current.extent.width,
+            window->current.extent.height,
+            0,
+            0);
+    }
 
     window->event_mask = WSI_XDG_EVENT_NONE;
     xdg_surface_ack_configure(xdg_surface, serial);
@@ -306,6 +311,7 @@ wsiCreateWindow(
     wl_list_init(&window->output_list);
 
     window->platform = platform;
+    window->api = WSI_API_NONE;
     window->user_extent = wsi_extent_to_wl(pCreateInfo->extent);
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
