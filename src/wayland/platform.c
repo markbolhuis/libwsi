@@ -216,7 +216,6 @@ wl_registry_global_remove(
     struct wsi_output *output, *output_tmp;
     wl_list_for_each_safe(output, output_tmp, &platform->output_list, link) {
         if (name == output->wl_global_name) {
-            wl_list_remove(&output->link);
             wsi_output_destroy(output);
             return;
         }

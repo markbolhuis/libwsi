@@ -207,6 +207,7 @@ wsi_output_destroy(struct wsi_output *output)
         wl_output_destroy(output->wl_output);
     }
 
+    wl_list_remove(&output->link);
     free(output);
 }
 
@@ -215,7 +216,6 @@ wsi_output_destroy_all(struct wsi_platform *platform)
 {
     struct wsi_output *output, *output_tmp;
     wl_list_for_each_safe(output, output_tmp, &platform->output_list, link) {
-        wl_list_remove(&output->link);
         wsi_output_destroy(output);
     }
 }
