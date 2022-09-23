@@ -19,11 +19,17 @@ wsi_platform_dlsym(struct wsi_platform *platform, const char *symbol)
     return dlsym(platform->handle, symbol);
 }
 
-static enum wsi_result
-wsi_create_platform(struct wsi_platform *platform)
+WsiResult
+wsiCreatePlatform(WsiPlatform *pPlatform)
 {
+    struct wsi_platform *platform = calloc(1, sizeof(struct wsi_platform));
+    if (!platform) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
     const char *session = getenv("XDG_SESSION_TYPE");
     if (!session) {
+        free(platform);
         return WSI_ERROR_PLATFORM;
     }
 
@@ -32,34 +38,14 @@ wsi_create_platform(struct wsi_platform *platform)
     } else if (strcmp(session, "x11") == 0) {
         platform->handle = dlopen("libwsi-xcb.so", RTLD_NOW);
     } else {
-        return WSI_ERROR_PLATFORM;
-    }
-
-    if (!platform->handle) {
-        fprintf(stderr, "dlopen failed: %s\n", dlerror());
-        return WSI_ERROR_PLATFORM;
-    }
-
-    return WSI_SUCCESS;
-}
-
-WsiResult
-wsiCreatePlatform(WsiPlatform *pPlatform)
-{
-    struct wsi_platform *platform = malloc(sizeof(struct wsi_platform));
-    if (!platform) {
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
-
-    enum wsi_result result = wsi_create_platform(platform);
-    if (result != WSI_SUCCESS) {
         free(platform);
-        return result;
+        return WSI_ERROR_PLATFORM;
     }
 
     PFN_wsiCreatePlatform sym = wsi_platform_dlsym(platform, "wsiCreatePlatform");
-    result = sym(&platform->platform);
+    enum wsi_result result = sym(&platform->platform);
     if (result != WSI_SUCCESS) {
+        dlclose(platform->handle);
         free(platform);
         return result;
     }
@@ -73,6 +59,7 @@ wsiDestroyPlatform(WsiPlatform platform)
 {
     PFN_wsiDestroyPlatform sym = wsi_platform_dlsym(platform, "wsiDestroyPlatform");
     sym(platform->platform);
+    dlclose(platform->handle);
     free(platform);
 }
 
