@@ -27,8 +27,11 @@
  *
  */
 
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #include <wsi/platform.h>
 #include <wsi/window.h>
@@ -56,6 +59,23 @@ static GLuint g_gear1;
 static GLuint g_gear2;
 static GLuint g_gear3;
 static GLfloat g_angle = 0.0f;
+
+static const EGLint g_config_attribs[] = {
+    EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
+    EGL_RED_SIZE,        8,
+    EGL_GREEN_SIZE,      8,
+    EGL_BLUE_SIZE,       8,
+    EGL_ALPHA_SIZE,      8,
+    EGL_DEPTH_SIZE,      24,
+    EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+    EGL_NONE
+};
+
+static const EGLint g_context_attribs[] = {
+    EGL_CONTEXT_MAJOR_VERSION, 2,
+    EGL_CONTEXT_MINOR_VERSION, 0,
+    EGL_NONE
+};
 
 static void
 gear(GLfloat inner_radius,
@@ -224,22 +244,6 @@ draw()
     }
 }
 
-// static void
-// idle(void)
-// {
-//     static double t0 = -1.;
-//     double dt, t = eglutGet(EGLUT_ELAPSED_TIME) / 1000.0;
-//     if (t0 < 0.0)
-//         t0 = t;
-//     dt = t - t0;
-//     t0 = t;
-//
-//     angle += 70.0 * dt;  /* 70 degrees per second */
-//     angle = fmod(angle, 360.0); /* prevents eventual overflow */
-//
-//     eglutPostRedisplay();
-// }
-
 static void
 reshape(WsiExtent extent)
 {
@@ -303,6 +307,8 @@ create_gears()
 int
 main(int argc, char *argv[])
 {
+    int ret = EXIT_FAILURE;
+
     WsiResult res = wsiCreatePlatform(&g_platform);
     if (res != WSI_SUCCESS) {
         fprintf(stderr, "wsiCreatePlatform failed: %d\n", res);
@@ -311,7 +317,7 @@ main(int argc, char *argv[])
 
     res = wsiGetEglDisplay(g_platform, &g_display);
     if (res != WSI_SUCCESS) {
-        fprintf(stderr, "wsiGetEglDisplay failed: 0x%08x", res);
+        fprintf(stderr, "wsiGetEglDisplay failed: %d", res);
         if (res == WSI_ERROR_EGL) {
             fprintf(stderr, " 0x%08x", eglGetError());
         }
@@ -322,7 +328,7 @@ main(int argc, char *argv[])
     EGLint major, minor;
     EGLBoolean ok = eglInitialize(g_display, &major, &minor);
     if (ok == EGL_FALSE) {
-        fprintf(stderr, "eglInitialize failed %08x\n", eglGetError());
+        fprintf(stderr, "eglInitialize failed: 0x%08x\n", eglGetError());
         goto err_egl_init;
     }
 
@@ -337,21 +343,10 @@ main(int argc, char *argv[])
         goto err_egl_bind;
     }
 
-    const EGLint config_attribs[] = {
-        EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
-        EGL_RED_SIZE,        8,
-        EGL_GREEN_SIZE,      8,
-        EGL_BLUE_SIZE,       8,
-        EGL_ALPHA_SIZE,      8,
-        EGL_DEPTH_SIZE,      24,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-        EGL_NONE
-    };
-
     EGLint num_configs = 1;
-    ok = eglChooseConfig(g_display, config_attribs, &g_config, 1, &num_configs);
+    ok = eglChooseConfig(g_display, g_config_attribs, &g_config, 1, &num_configs);
     if (ok == EGL_FALSE) {
-        fprintf(stderr, "eglChooseConfig failed: 0x%x08\n", eglGetError());
+        fprintf(stderr, "eglChooseConfig failed: 0x%08x\n", eglGetError());
         goto err_egl_config;
     }
 
@@ -360,19 +355,13 @@ main(int argc, char *argv[])
         goto err_egl_config;
     }
 
-    EGLint context_attribs[] = {
-        EGL_CONTEXT_MAJOR_VERSION, 2,
-        EGL_CONTEXT_MINOR_VERSION, 0,
-        EGL_NONE
-    };
-
     g_context = eglCreateContext(
         g_display,
         g_config,
         EGL_NO_CONTEXT,
-        context_attribs);
+        g_context_attribs);
     if (g_context == EGL_NO_CONTEXT) {
-        fprintf(stderr, "eglCreateContext failed: 0x%d\n", eglGetError());
+        fprintf(stderr, "eglCreateContext failed: 0x%08x\n", eglGetError());
         goto err_egl_context;
     }
 
@@ -387,36 +376,35 @@ main(int argc, char *argv[])
         goto err_wsi_window;
     }
 
-    res = wsiCreateWindowEglSurface(
-        g_window,
-        g_display,
-        g_config,
-        &g_surface);
+    res = wsiCreateWindowEglSurface(g_window, g_display, g_config, &g_surface);
     if (res != WSI_SUCCESS) {
         fprintf(stderr, "wsiCreateWindowEglSurface failed: %d", res);
         if (res == WSI_ERROR_EGL) {
-            fprintf(stderr, " %d", eglGetError());
+            fprintf(stderr, " 0x%08x", eglGetError());
         }
         fprintf(stderr, "\n");
         goto err_wsi_surface;
     }
 
-    ok = eglMakeCurrent(
-        g_display,
-        g_surface,
-        g_surface,
-        g_context);
+    ok = eglMakeCurrent(g_display, g_surface, g_surface, g_context);
     if (ok == EGL_FALSE) {
-        fprintf(stderr, "eglMakeCurrent failed: %d\n", eglGetError());
+        fprintf(stderr, "eglMakeCurrent failed: 0x%08x\n", eglGetError());
         goto err_egl_current;
+    }
+
+    ok = eglSwapInterval(g_display, 0);
+    if (ok == EGL_FALSE) {
+        fprintf(stderr, "eglSwapInterval failed: 0x%08x\n", eglGetError());
+        goto err_egl_interval;
     }
 
     create_gears();
 
-    WsiExtent extent;
-    wsiGetWindowExtent(g_window, &extent);
-    reshape(extent);
+    struct timespec epoch;
+    clock_gettime(CLOCK_MONOTONIC, &epoch);
+    float epoch_d = (float)epoch.tv_sec + (float)epoch.tv_nsec / 1000000000.0f;
 
+    WsiExtent extent;
     while(true) {
         wsiPoll(g_platform);
 
@@ -432,9 +420,16 @@ main(int argc, char *argv[])
         }
 
         draw();
-        g_angle += 1.0f;
+
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        float now_d = (float)now.tv_sec + (float)now.tv_nsec / 1000000000.0f;
+
+        g_angle = fmodf(70.0f * (now_d - epoch_d), 360.0f);
     }
 
+    ret = EXIT_SUCCESS;
+err_egl_interval:
 err_egl_current:
     eglDestroySurface(g_display, g_surface);
 err_wsi_surface:
