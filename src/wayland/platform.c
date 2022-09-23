@@ -207,7 +207,6 @@ wl_registry_global_remove(
     struct wsi_seat *seat, *seat_tmp;
     wl_list_for_each_safe(seat, seat_tmp, &platform->seat_list, link) {
         if (name == seat->wl_global_name) {
-            wl_list_remove(&seat->link);
             wsi_seat_destroy(seat);
             return;
         }

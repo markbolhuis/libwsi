@@ -71,6 +71,7 @@ wsi_seat_destroy(struct wsi_seat *seat)
         free(seat->name);
     }
 
+    wl_list_remove(&seat->link);
     free(seat);
 }
 
@@ -79,7 +80,6 @@ wsi_seat_destroy_all(struct wsi_platform *platform)
 {
     struct wsi_seat *seat, *seat_tmp;
     wl_list_for_each_safe(seat, seat_tmp, &platform->seat_list, link) {
-        wl_list_remove(&seat->link);
         wsi_seat_destroy(seat);
     }
 }
