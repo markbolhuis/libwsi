@@ -24,6 +24,18 @@ wsi_extent_to_xcb(
     return xcb;
 }
 
+static inline struct wsi_extent
+    wsi_extent_from_xcb(
+    struct wsi_xcb_extent extent)
+{
+    struct wsi_extent xcb = {
+        .width = extent.width,
+        .height = extent.height,
+    };
+
+    return xcb;
+}
+
 WsiResult
 wsiCreateWindow(
     WsiPlatform platform,
@@ -118,8 +130,7 @@ wsiGetWindowExtent(
     WsiWindow window,
     WsiExtent *pExtent)
 {
-    pExtent->width = window->user_extent.width;
-    pExtent->height = window->user_extent.height;
+    *pExtent = wsi_extent_from_xcb(window->user_extent);
 }
 
 WsiResult

@@ -405,7 +405,6 @@ wsiGetWindowFeatures(
 {
     pFeatures->move = true;
     pFeatures->resize = true;
-    pFeatures->decoration = window->xdg_toplevel_decoration_v1 != NULL;
     pFeatures->maximize = window->current.capabilities.maximize;
     pFeatures->minimize = window->current.capabilities.minimize;
     pFeatures->fullscreen = window->current.capabilities.fullscreen;
