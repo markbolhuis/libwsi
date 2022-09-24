@@ -6,6 +6,37 @@
 
 #include "platform_priv.h"
 
+void
+wsi_get_xcb_atoms(
+    struct wsi_platform *platform,
+    const char *const *names,
+    size_t count,
+    xcb_atom_t *atoms)
+{
+    struct xcb_connection_t *connection = platform->xcb_connection;
+
+    xcb_intern_atom_cookie_t *cookies
+        = calloc(count, sizeof(xcb_intern_atom_cookie_t));
+
+    for (size_t i = 0; i < count; ++i) {
+        cookies[i] = xcb_intern_atom(connection, 0, strlen(names[i]), names[i]);
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(
+            connection, cookies[i], NULL);
+
+        if (reply) {
+            atoms[i] = reply->atom;
+            free(reply);
+        } else {
+            atoms[i] = XCB_ATOM_NONE;
+        }
+    }
+
+    free(cookies);
+}
+
 WsiResult
 wsiCreatePlatform(WsiPlatform *pPlatform)
 {

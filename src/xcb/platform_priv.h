@@ -7,4 +7,11 @@ struct wsi_platform {
     int              xcb_screen_id;
 };
 
+void
+wsi_get_xcb_atoms(
+    struct wsi_platform *platform,
+    const char *const *names,
+    size_t count,
+    xcb_atom_t *atoms);
+
 #endif
