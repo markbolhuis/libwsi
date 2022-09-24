@@ -1,4 +1,5 @@
-#include <wayland-util.h>
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
 #include <wayland-egl-core.h>
 
 #include <EGL/egl.h>
@@ -47,6 +48,18 @@ wsiCreateWindowEglSurface(
         window->current.extent.height);
     if (window->wl_egl_window == NULL) {
         return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    EGLint alpha;
+    eglGetConfigAttrib(dpy, config, EGL_ALPHA_SIZE, &alpha);
+    if (alpha == 0) {
+        struct wl_region *wl_region = wl_compositor_create_region(
+            window->platform->wl_compositor);
+        wl_region_add(wl_region, 0, 0,
+                      window->current.extent.width,
+                      window->current.extent.height);
+        wl_surface_set_opaque_region(window->wl_surface, wl_region);
+        wl_region_destroy(wl_region);
     }
 
     EGLAttrib attrs[] = {
