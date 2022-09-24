@@ -55,9 +55,7 @@ wsiCreateWindowEglSurface(
     if (alpha == 0) {
         struct wl_region *wl_region = wl_compositor_create_region(
             window->platform->wl_compositor);
-        wl_region_add(wl_region, 0, 0,
-                      window->current.extent.width,
-                      window->current.extent.height);
+        wl_region_add(wl_region, 0, 0, INT32_MAX, INT32_MAX);
         wl_surface_set_opaque_region(window->wl_surface, wl_region);
         wl_region_destroy(wl_region);
     }
