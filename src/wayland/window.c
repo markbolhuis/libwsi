@@ -208,7 +208,8 @@ xdg_surface_configure(
     //       surfaces that are either vulkan or egl.
     //       Maybe use two different listeners, depending
     //       if the surface is vulkan or egl.
-    if (window->wl_egl_window) {
+    if (window->api == WSI_API_EGL) {
+        assert(window->wl_egl_window != NULL);
         wl_egl_window_resize(
             window->wl_egl_window,
             window->current.extent.width,
