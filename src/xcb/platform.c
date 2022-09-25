@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <xcb/xcb.h>
 
@@ -13,7 +14,7 @@ wsi_get_xcb_atoms(
     size_t count,
     xcb_atom_t *atoms)
 {
-    struct xcb_connection_t *connection = platform->xcb_connection;
+    xcb_connection_t *connection = platform->xcb_connection;
 
     xcb_intern_atom_cookie_t *cookies
         = calloc(count, sizeof(xcb_intern_atom_cookie_t));
@@ -37,37 +38,55 @@ wsi_get_xcb_atoms(
     free(cookies);
 }
 
+static xcb_screen_t *
+wsi_xcb_get_screen(
+    const xcb_setup_t *setup,
+    int screen)
+{
+    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+    for (; iter.rem; --screen, xcb_screen_next(&iter))
+    {
+        if (screen == 0) {
+            return iter.data;
+        }
+    }
+
+    return NULL;
+}
+
 WsiResult
 wsiCreatePlatform(WsiPlatform *pPlatform)
 {
+    enum wsi_result result;
+
     struct wsi_platform *platform = calloc(1, sizeof(struct wsi_platform));
     if (!platform) {
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    int screen = 0;
-    platform->xcb_connection = xcb_connect(NULL, &screen);
+    platform->xcb_connection = xcb_connect(NULL, &platform->xcb_screen_id);
     int err = xcb_connection_has_error(platform->xcb_connection);
     if (err > 0) {
-        free(platform);
-        return WSI_ERROR_PLATFORM;
+        result = WSI_ERROR_PLATFORM;
+        goto err_connect;
     }
 
-    platform->xcb_screen_id = screen;
-
     const xcb_setup_t *setup = xcb_get_setup(platform->xcb_connection);
-    for (xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
-         iter.rem;
-         --screen, xcb_screen_next (&iter))
-    {
-        if (screen == 0) {
-            platform->xcb_screen = iter.data;
-            break;
-        }
+
+    platform->xcb_screen = wsi_xcb_get_screen(setup, platform->xcb_screen_id);
+    if (!platform->xcb_screen) {
+        result = WSI_ERROR_PLATFORM;
+        goto err_screen;
     }
 
     *pPlatform = platform;
     return WSI_SUCCESS;
+
+err_screen:
+    xcb_disconnect(platform->xcb_connection);
+err_connect:
+    free(platform);
+    return result;
 }
 
 void
