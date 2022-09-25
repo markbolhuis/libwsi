@@ -105,23 +105,17 @@ wsiSetWindowParent(
     WsiWindow window,
     WsiWindow parent)
 {
+    struct wsi_platform *platform = window->platform;
     if (parent) {
-        xcb_change_property(
-           window->platform->xcb_connection,
-           XCB_PROP_MODE_REPLACE,
-           window->xcb_window,
-           XCB_ATOM_WM_TRANSIENT_FOR,
-           XCB_ATOM_WINDOW,
-           32,
-           1,
-           &parent->xcb_window);
+        window->xcb_parent = parent->xcb_window;
     } else {
-        xcb_delete_property(
-           window->platform->xcb_connection,
-           window->xcb_window,
-           XCB_ATOM_WM_TRANSIENT_FOR);
+        window->xcb_parent = platform->xcb_screen->root;
     }
-
+    xcb_reparent_window(
+        platform->xcb_connection,
+        window->xcb_window,
+        parent->xcb_window,
+        0, 0);
     return WSI_SUCCESS;
 }
 
