@@ -59,6 +59,14 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 {
     enum wsi_result result;
 
+    const char *const atom_names[] = {
+        "WM_PROTOCOLS",
+        "WM_DELETE_WINDOW",
+    };
+
+    const int atom_count = wsi_array_length(atom_names);
+    xcb_atom_t atoms[atom_count];
+
     struct wsi_platform *platform = calloc(1, sizeof(struct wsi_platform));
     if (!platform) {
         return WSI_ERROR_OUT_OF_MEMORY;
@@ -78,6 +86,10 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         result = WSI_ERROR_PLATFORM;
         goto err_screen;
     }
+
+    wsi_get_xcb_atoms(platform, atom_names, atom_count, atoms);
+    platform->xcb_atom_wm_protocols = atoms[0];
+    platform->xcb_atom_wm_delete_window = atoms[1];
 
     *pPlatform = platform;
     return WSI_SUCCESS;

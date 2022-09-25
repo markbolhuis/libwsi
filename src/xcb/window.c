@@ -80,6 +80,21 @@ wsiCreateWindow(
         value_mask,
         value_list);
 
+    xcb_atom_t properties[] = {
+        platform->xcb_atom_wm_protocols,
+        platform->xcb_atom_wm_delete_window,
+    };
+
+    xcb_change_property(
+        platform->xcb_connection,
+        XCB_PROP_MODE_REPLACE,
+        window->xcb_window,
+        platform->xcb_atom_wm_protocols,
+        XCB_ATOM_ATOM,
+        32,
+        wsi_array_length(properties),
+        properties);
+
     xcb_map_window(platform->xcb_connection, window->xcb_window);
 
     *pWindow = window;

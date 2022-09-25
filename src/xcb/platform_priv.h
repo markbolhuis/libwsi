@@ -5,7 +5,12 @@ struct wsi_platform {
     xcb_connection_t *xcb_connection;
     xcb_screen_t     *xcb_screen;
     int              xcb_screen_id;
+
+    xcb_atom_t       xcb_atom_wm_protocols;
+    xcb_atom_t       xcb_atom_wm_delete_window;
 };
+
+#define wsi_array_length(array) (sizeof(array) / sizeof((array)[0]))
 
 void
 wsi_get_xcb_atoms(
