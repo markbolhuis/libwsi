@@ -11,8 +11,8 @@ project('libwsi', 'c',
 cc = meson.get_compiler('c')
 lib_m = cc.find_library('m')
 
-dep_egl    = dependency('egl')
-dep_vulkan = dependency('vulkan')
+dep_egl    = dependency('egl', version : '>=1.4.0')
+dep_vulkan = dependency('vulkan', version : '>=1.0.0')
 
 inc_wsi = include_directories('include')
 

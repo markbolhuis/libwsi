@@ -1,8 +1,8 @@
 wl_mod = import('unstable-wayland')
 
-dep_wl_client = dependency('wayland-client')
-dep_wl_egl    = dependency('wayland-egl')
-dep_xkbcommon = dependency('xkbcommon')
+dep_wl_client = dependency('wayland-client', version: '>= 1.21.0')
+dep_wl_egl    = dependency('wayland-egl', version: '>= 1.21.0')
+dep_xkbcommon = dependency('xkbcommon', version: '>= 1.4.0')
 
 src_wsi_wl = files(
   'platform.c',
