@@ -50,8 +50,13 @@ wsiCreateWindow(
     window->platform = platform;
     window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
-
     window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
+
+    if (pCreateInfo->parent) {
+        window->xcb_parent = pCreateInfo->parent->xcb_window;
+    } else {
+        window->xcb_parent = platform->xcb_screen->root;
+    }
 
     uint32_t value_list[2];
     uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK ;
@@ -65,13 +70,13 @@ wsiCreateWindow(
         platform->xcb_connection,
         XCB_COPY_FROM_PARENT,
         window->xcb_window,
-        platform->xcb_screen->root,
+        window->xcb_parent,
         0, 0,
         window->user_extent.width,
         window->user_extent.height,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
-        platform->xcb_screen->root_visual,
+        XCB_COPY_FROM_PARENT,
         value_mask,
         value_list);
 
