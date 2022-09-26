@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <memory.h>
 #include <assert.h>
 
@@ -12,6 +11,7 @@
 
 #include "platform_priv.h"
 #include "window_priv.h"
+#include "output_priv.h"
 
 struct wsi_window_output {
     struct wl_list link;
@@ -19,8 +19,7 @@ struct wsi_window_output {
 };
 
 static inline struct wsi_wl_extent
-wsi_extent_to_wl(
-    struct wsi_extent extent)
+wsi_extent_to_wl(struct wsi_extent extent)
 {
     assert(extent.width <= INT32_MAX);
     assert(extent.height <= INT32_MAX);
@@ -34,8 +33,7 @@ wsi_extent_to_wl(
 }
 
 static inline struct wsi_extent
-wsi_extent_from_wl(
-    struct wsi_wl_extent wl)
+wsi_extent_from_wl(struct wsi_wl_extent wl)
 {
     assert(wl.width > 0);
     assert(wl.height > 0);
@@ -46,6 +44,123 @@ wsi_extent_from_wl(
     };
 
     return extent;
+}
+
+static bool
+wsi_wl_extent_equal(struct wsi_wl_extent a, struct wsi_wl_extent b)
+{
+    return a.width == b.width && a.height == b.height;
+}
+
+static int32_t
+wsi_window_get_max_scale(struct wsi_window *window)
+{
+    int32_t max_scale = 1;
+
+    struct wsi_window_output *wo;
+    wl_list_for_each(wo, &window->output_list, link) {
+        struct wsi_output *output = wl_output_get_user_data(wo->wl_output);
+        if (output->scale > max_scale) {
+            max_scale = output->scale;
+        }
+    }
+
+    return max_scale;
+}
+
+static struct wsi_window_output *
+wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
+{
+    struct wsi_window_output *wo;
+    wl_list_for_each(wo, &window->output_list, link) {
+        if (wo->wl_output == wl_output) {
+            return wo;
+        }
+    }
+
+    return NULL;
+}
+
+static void
+wsi_window_configure(struct wsi_window *window)
+{
+    // TODO: This is a bit basic, but works for now.
+
+    uint32_t mask = window->event_mask;
+
+    bool resized = false;
+    if (mask & WSI_XDG_EVENT_CONFIGURE) {
+        if (!wsi_wl_extent_equal(
+            window->pending.extent,
+            window->current.extent))
+        {
+            window->current.extent = window->pending.extent;
+            resized = true;
+        }
+
+        window->current.state = window->pending.state;
+    }
+
+    if (mask & WSI_XDG_EVENT_BOUNDS) {
+        window->current.bounds = window->pending.bounds;
+    }
+
+    if (mask & WSI_XDG_EVENT_WM_CAPABILITIES) {
+        window->current.capabilities = window->pending.capabilities;
+    }
+
+    if (mask & WSI_XDG_EVENT_DECORATION) {
+        window->current.decoration = window->pending.decoration;
+    }
+
+    window->event_mask = WSI_XDG_EVENT_NONE;
+
+    bool rescaled = window->pending.scale != window->current.scale;
+    if (rescaled) {
+        window->current.scale = window->pending.scale;
+    }
+
+    // TODO: Decide how best to handle Vulkan or EGL windows.
+    if (window->api == WSI_API_EGL && (rescaled || resized)) {
+        assert(window->wl_egl_window != NULL);
+
+        // These two functions MUST be called in this order.
+        wl_egl_window_resize(
+            window->wl_egl_window,
+            window->current.extent.width * window->current.scale,
+            window->current.extent.height * window->current.scale,
+            0, 0);
+
+        if (wl_surface_get_version(window->wl_surface) >=
+            WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+        {
+            wl_surface_set_buffer_scale(
+                window->wl_surface,
+                window->current.scale);
+        }
+    }
+
+    if (window->serial != 0) {
+        xdg_surface_ack_configure(window->xdg_surface, window->serial);
+        window->serial = 0;
+    }
+}
+
+static void
+wsi_window_set_initial_state(struct wsi_window *window)
+{
+    window->pending.scale = 1;
+
+    if (xdg_toplevel_get_version(window->xdg_toplevel) <
+        XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
+    {
+        window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
+
+        window->pending.capabilities.window_menu = true;
+        window->pending.capabilities.maximize = true;
+        window->pending.capabilities.fullscreen = true;
+        window->pending.capabilities.minimize = true;
+    }
 }
 
 // region XDG Toplevel Decoration
@@ -199,27 +314,8 @@ xdg_surface_configure(
     uint32_t serial)
 {
     struct wsi_window *window = data;
-
-    // TODO: Handle this properly
-    window->current = window->pending;
-    memset(&window->pending, 0, sizeof(struct wsi_window_state));
-
-    // TODO: Decide on a better way to handle
-    //       surfaces that are either vulkan or egl.
-    //       Maybe use two different listeners, depending
-    //       if the surface is vulkan or egl.
-    if (window->api == WSI_API_EGL) {
-        assert(window->wl_egl_window != NULL);
-        wl_egl_window_resize(
-            window->wl_egl_window,
-            window->current.extent.width,
-            window->current.extent.height,
-            0,
-            0);
-    }
-
-    window->event_mask = WSI_XDG_EVENT_NONE;
-    xdg_surface_ack_configure(xdg_surface, serial);
+    window->serial = serial;
+    wsi_window_configure(window);
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
@@ -237,28 +333,26 @@ wl_surface_enter(
     struct wl_output *wl_output)
 {
     struct wsi_window *window = data;
-    struct wl_list *output_list = &window->output_list;
 
-    bool found = false;
-    struct wsi_window_output *window_output;
-    wl_list_for_each(window_output, output_list, link) {
-        if (window_output->wl_output == wl_output) {
-            found = true;
-            break;
-        }
-    }
-
-    if (found) {
+    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
+    if (wo) {
         return;
     }
 
-    window_output = calloc(1, sizeof(struct wsi_window_output));
-    if (!window_output) {
+    wo = calloc(1, sizeof(struct wsi_window_output));
+    if (!wo) {
         return;
     }
 
-    window_output->wl_output = wl_output;
-    wl_list_insert(output_list, &window_output->link);
+    wo->wl_output = wl_output;
+    wl_list_insert(&window->output_list, &wo->link);
+
+    if (wl_surface_get_version(wl_surface) >=
+        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    {
+        window->pending.scale = wsi_window_get_max_scale(window);
+        wsi_window_configure(window);
+    }
 }
 
 static void
@@ -270,21 +364,20 @@ wl_surface_leave(
     struct wsi_window *window = data;
     struct wl_list *output_list = &window->output_list;
 
-    bool found = false;
-    struct wsi_window_output *window_output;
-    wl_list_for_each(window_output, output_list, link) {
-        if (window_output->wl_output == wl_output) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
+    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
+    if (!wo) {
         return;
     }
 
-    wl_list_remove(&window_output->link);
-    free(window_output);
+    wl_list_remove(&wo->link);
+    free(wo);
+
+    if (wl_surface_get_version(wl_surface) >=
+        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    {
+        window->pending.scale = wsi_window_get_max_scale(window);
+        wsi_window_configure(window);
+    }
 }
 
 static const struct wl_surface_listener wl_surface_listener = {
@@ -341,6 +434,8 @@ wsiCreateWindow(
         xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
     }
 
+    wsi_window_set_initial_state(window);
+
     wl_surface_commit(window->wl_surface);
 
     wl_display_roundtrip(platform->wl_display);
@@ -387,7 +482,10 @@ wsiGetWindowExtent(
     WsiWindow window,
     WsiExtent *pExtent)
 {
-    *pExtent = wsi_extent_from_wl(window->current.extent);
+    struct wsi_wl_extent extent = window->current.extent;
+    extent.width *= window->current.scale;
+    extent.height *= window->current.scale;
+    *pExtent = wsi_extent_from_wl(extent);
 }
 
 WsiResult

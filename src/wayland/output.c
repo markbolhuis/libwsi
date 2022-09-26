@@ -109,6 +109,9 @@ wl_output_scale(
     struct wl_output *wl_output,
     int32_t scale)
 {
+    // TODO: This is temporary
+    struct wsi_output *output = data;
+    output->scale = scale;
 }
 
 static void

@@ -44,8 +44,17 @@ wsiCreateWindowEglSurface(
 
     window->wl_egl_window = wl_egl_window_create(
         window->wl_surface,
-        window->current.extent.width,
-        window->current.extent.height);
+        window->current.extent.width * window->current.scale,
+        window->current.extent.height * window->current.scale);
+
+    if (wl_surface_get_version(window->wl_surface) >=
+        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    {
+        wl_surface_set_buffer_scale(
+            window->wl_surface,
+            window->current.scale);
+    }
+
     if (window->wl_egl_window == NULL) {
         return WSI_ERROR_OUT_OF_MEMORY;
     }
