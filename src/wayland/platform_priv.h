@@ -15,11 +15,25 @@ struct wsi_platform {
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
 };
 
+struct wsi_global {
+    struct wsi_platform *platform;
+    uint32_t name;
+};
+
 void *
 wsi_platform_bind(
     struct wsi_platform *platform,
     uint32_t name,
     const struct wl_interface *wl_interface,
     uint32_t version);
+
+struct wsi_global *
+wsi_global_create(
+    struct wsi_platform *platform,
+    uint32_t name);
+
+void
+wsi_global_destroy(
+    struct wsi_global *global);
 
 #endif

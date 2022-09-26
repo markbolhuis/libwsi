@@ -14,17 +14,10 @@
 #include "seat_priv.h"
 #include "output_priv.h"
 
-struct wsi_wl_global {
-    struct wsi_platform *platform;
-    uint32_t name;
-};
-
-static struct wsi_wl_global *
-wsi_wl_global_create(
-    struct wsi_platform *platform,
-    uint32_t name)
+struct wsi_global *
+wsi_global_create(struct wsi_platform *platform, uint32_t name)
 {
-    struct wsi_wl_global *global = calloc(1, sizeof(struct wsi_wl_global));
+    struct wsi_global *global = calloc(1, sizeof(struct wsi_global));
     if (!global) {
         return NULL;
     }
@@ -35,36 +28,42 @@ wsi_wl_global_create(
     return global;
 }
 
-static void
-wsi_platform_destroy_globals(
-    struct wsi_platform *platform)
+void
+wsi_global_destroy(struct wsi_global *global)
 {
-    struct wsi_wl_global *global;
+    assert(global);
+    free(global);
+}
+
+static void
+wsi_platform_destroy_globals(struct wsi_platform *platform)
+{
+    struct wsi_global *global;
     if (platform->wl_compositor) {
         global = wl_compositor_get_user_data(platform->wl_compositor);
-        free(global);
+        wsi_global_destroy(global);
         wl_compositor_destroy(platform->wl_compositor);
     }
     if (platform->wl_shm) {
         global = wl_shm_get_user_data(platform->wl_shm);
-        free(global);
+        wsi_global_destroy(global);
         wl_shm_destroy(platform->wl_shm);
     }
     if (platform->xdg_wm_base) {
         global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
-        free(global);
+        wsi_global_destroy(global);
         xdg_wm_base_destroy(platform->xdg_wm_base);
     }
     if (platform->xdg_decoration_manager_v1) {
         global = zxdg_decoration_manager_v1_get_user_data(
             platform->xdg_decoration_manager_v1);
-        free(global);
+        wsi_global_destroy(global);
         zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
     }
     if (platform->xdg_output_manager_v1) {
         global = zxdg_output_manager_v1_get_user_data(
             platform->xdg_output_manager_v1);
-        free(global);
+        wsi_global_destroy(global);
         zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
     }
 }
@@ -135,7 +134,7 @@ wl_registry_global(
     assert(platform->wl_registry = wl_registry);
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
-        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
+        struct wsi_global *global = wsi_global_create(platform, name);
         platform->wl_compositor = wsi_platform_bind(
             platform,
             name,
@@ -144,7 +143,7 @@ wl_registry_global(
         wl_compositor_set_user_data(platform->wl_compositor, global);
     }
     else if (strcmp(interface, wl_shm_interface.name) == 0) {
-        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
+        struct wsi_global *global = wsi_global_create(platform, name);
         platform->wl_shm = wsi_platform_bind(
             platform,
             name,
@@ -159,7 +158,7 @@ wl_registry_global(
         wsi_output_bind(platform, name, version);
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
+        struct wsi_global *global = wsi_global_create(platform, name);
         platform->xdg_wm_base = wsi_platform_bind(
             platform,
             name,
@@ -171,7 +170,7 @@ wl_registry_global(
             global);
     }
     else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
-        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
+        struct wsi_global *global = wsi_global_create(platform, name);
         platform->xdg_decoration_manager_v1 = wsi_platform_bind(
             platform,
             name,
@@ -182,7 +181,7 @@ wl_registry_global(
             global);
     }
     else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
-        struct wsi_wl_global *global = wsi_wl_global_create(platform, name);
+        struct wsi_global *global = wsi_global_create(platform, name);
         platform->xdg_output_manager_v1 = wsi_platform_bind(
             platform,
             name,
@@ -220,14 +219,14 @@ wl_registry_global_remove(
         }
     }
 
-    struct wsi_wl_global *global;
+    struct wsi_global *global;
 
     global = zxdg_decoration_manager_v1_get_user_data(
         platform->xdg_decoration_manager_v1);
     if (global->name == name) {
         zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
         platform->xdg_decoration_manager_v1 = NULL;
-        free(global);
+        wsi_global_destroy(global);
         return;
     }
 
@@ -236,7 +235,7 @@ wl_registry_global_remove(
     if (global->name == name) {
         zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
         platform->xdg_output_manager_v1 = NULL;
-        free(global);
+        wsi_global_destroy(global);
         return;
     }
 
@@ -244,7 +243,7 @@ wl_registry_global_remove(
     if (global->name == name) {
         // TODO: Trigger a shutdown
         xdg_wm_base_destroy(platform->xdg_wm_base);
-        free(global);
+        wsi_global_destroy(global);
         return;
     }
 
@@ -252,7 +251,7 @@ wl_registry_global_remove(
     if (global->name == name) {
         // TODO: Trigger a shutdown
         wl_compositor_destroy(platform->wl_compositor);
-        free(global);
+        wsi_global_destroy(global);
         return;
     }
 
@@ -260,7 +259,7 @@ wl_registry_global_remove(
     if (global->name == name) {
         // TODO: Trigger a shutdown
         wl_shm_destroy(platform->wl_shm);
-        free(global);
+        wsi_global_destroy(global);
         return;
     }
 }
