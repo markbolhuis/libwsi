@@ -74,4 +74,9 @@ struct wsi_egl_window {
     struct wl_egl_window *wl_egl_window;
 };
 
+void
+wsi_window_handle_output_destroyed(
+    struct wsi_window *window,
+    struct wsi_output *output);
+
 #endif

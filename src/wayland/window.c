@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <memory.h>
 #include <assert.h>
 
@@ -160,6 +161,36 @@ wsi_window_set_initial_state(struct wsi_window *window)
         window->pending.capabilities.maximize = true;
         window->pending.capabilities.fullscreen = true;
         window->pending.capabilities.minimize = true;
+    }
+}
+
+void
+wsi_window_handle_output_destroyed(
+    struct wsi_window *window,
+    struct wsi_output *output)
+{
+    bool found = false;
+
+    struct wsi_window_output *wo;
+    wl_list_for_each(wo, &window->output_list, link) {
+        if (wo->wl_output == output->wl_output) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        return;
+    }
+
+    wl_list_remove(&wo->link);
+    free(wo);
+
+    if (wl_surface_get_version(window->wl_surface) >=
+        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    {
+        window->pending.scale = wsi_window_get_max_scale(window);
+        wsi_window_configure(window);
     }
 }
 
@@ -460,7 +491,13 @@ wsiDestroyWindow(
 
     wl_surface_destroy(window->wl_surface);
 
-    wl_display_flush(platform->wl_display);
+    wl_display_roundtrip(platform->wl_display);
+
+    struct wsi_window_output *wo, *wm_tmp;
+    wl_list_for_each_safe(wo, wm_tmp, &window->output_list, link) {
+        wl_list_remove(&wo->link);
+        free(wo);
+    }
 
     free(window);
 }
