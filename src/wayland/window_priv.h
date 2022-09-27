@@ -46,6 +46,8 @@ struct wsi_window {
     struct wsi_window     *parent;
     struct wsi_wl_extent  user_extent;
 
+    struct wl_list link;
+
     enum wsi_api          api;
 
     struct wl_surface     *wl_surface;

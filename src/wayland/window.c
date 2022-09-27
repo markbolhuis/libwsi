@@ -439,6 +439,7 @@ wsiCreateWindow(
 
     wl_display_roundtrip(platform->wl_display);
 
+    wl_list_insert(&platform->window_list, &window->link);
     *pWindow = window;
     return WSI_SUCCESS;
 }
@@ -448,6 +449,8 @@ wsiDestroyWindow(
     WsiPlatform platform,
     WsiWindow window)
 {
+    wl_list_remove(&window->link);
+
     if (window->xdg_toplevel_decoration_v1) {
         zxdg_toplevel_decoration_v1_destroy(window->xdg_toplevel_decoration_v1);
     }

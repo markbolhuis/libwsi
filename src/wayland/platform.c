@@ -289,6 +289,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 
     wl_list_init(&platform->seat_list);
     wl_list_init(&platform->output_list);
+    wl_list_init(&platform->window_list);
 
     platform->wl_registry = wl_display_get_registry(platform->wl_display);
     wl_registry_add_listener(platform->wl_registry, &wl_registry_listener, platform);

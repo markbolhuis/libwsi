@@ -7,6 +7,7 @@ struct wsi_platform {
 
     struct wl_list seat_list;
     struct wl_list output_list;
+    struct wl_list window_list;
 
     struct wl_compositor *wl_compositor;
     struct wl_shm *wl_shm;
