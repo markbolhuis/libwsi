@@ -362,7 +362,6 @@ wl_surface_leave(
     struct wl_output *wl_output)
 {
     struct wsi_window *window = data;
-    struct wl_list *output_list = &window->output_list;
 
     struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
     if (!wo) {
