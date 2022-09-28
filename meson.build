@@ -18,4 +18,7 @@ inc_wsi = include_directories('include')
 
 subdir('include')
 subdir('src')
-subdir('examples')
+
+if get_option('examples')
+  subdir('examples')
+endif
