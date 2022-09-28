@@ -1,11 +1,6 @@
 #ifndef WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 #define WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 
-struct wsi_wl_extent {
-    int32_t width;
-    int32_t height;
-};
-
 enum wsi_xdg_event {
     WSI_XDG_EVENT_NONE = 0,
     WSI_XDG_EVENT_CONFIGURE = 1,

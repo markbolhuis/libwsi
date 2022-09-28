@@ -10,6 +10,7 @@
 
 #include "wsi/window.h"
 
+#include "common_priv.h"
 #include "platform_priv.h"
 #include "window_priv.h"
 #include "output_priv.h"
@@ -18,34 +19,6 @@ struct wsi_window_output {
     struct wl_list link;
     struct wl_output *wl_output;
 };
-
-static inline struct wsi_wl_extent
-wsi_extent_to_wl(struct wsi_extent extent)
-{
-    assert(extent.width <= INT32_MAX);
-    assert(extent.height <= INT32_MAX);
-
-    struct wsi_wl_extent wl = {
-        .width = (int32_t)extent.width,
-        .height = (int32_t)extent.height,
-    };
-
-    return wl;
-}
-
-static inline struct wsi_extent
-wsi_extent_from_wl(struct wsi_wl_extent wl)
-{
-    assert(wl.width > 0);
-    assert(wl.height > 0);
-
-    struct wsi_extent extent = {
-        .width = (uint32_t)wl.width,
-        .height = (uint32_t)wl.height,
-    };
-
-    return extent;
-}
 
 static bool
 wsi_wl_extent_equal(struct wsi_wl_extent a, struct wsi_wl_extent b)

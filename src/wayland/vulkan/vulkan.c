@@ -9,6 +9,7 @@
 #include "wsi/window.h"
 #include "wsi/vulkan/vulkan.h"
 
+#include "../common_priv.h"
 #include "../platform_priv.h"
 #include "../window_priv.h"
 
