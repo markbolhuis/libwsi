@@ -20,6 +20,15 @@ struct wsi_window_output {
     struct wl_output *wl_output;
 };
 
+struct wsi_wl_extent
+wsi_window_get_buffer_extent(struct wsi_window *window)
+{
+    struct wsi_wl_extent extent = window->current.extent;
+    extent.width *= window->current.scale;
+    extent.height *= window->current.scale;
+    return extent;
+}
+
 static bool
 wsi_wl_extent_equal(struct wsi_wl_extent a, struct wsi_wl_extent b)
 {
@@ -98,11 +107,13 @@ wsi_window_configure(struct wsi_window *window)
     if (window->api == WSI_API_EGL && (rescaled || resized)) {
         assert(window->wl_egl_window != NULL);
 
+        struct wsi_wl_extent buf_extent = wsi_window_get_buffer_extent(window);
+
         // These two functions MUST be called in this order.
         wl_egl_window_resize(
             window->wl_egl_window,
-            window->current.extent.width * window->current.scale,
-            window->current.extent.height * window->current.scale,
+            buf_extent.width,
+            buf_extent.height,
             0, 0);
 
         if (wl_surface_get_version(window->wl_surface) >=
@@ -494,9 +505,7 @@ wsiGetWindowExtent(
     WsiWindow window,
     WsiExtent *pExtent)
 {
-    struct wsi_wl_extent extent = window->current.extent;
-    extent.width *= window->current.scale;
-    extent.height *= window->current.scale;
+    struct wsi_wl_extent extent = wsi_window_get_buffer_extent(window);
     *pExtent = wsi_extent_from_wl(extent);
 }
 

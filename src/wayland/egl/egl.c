@@ -45,21 +45,20 @@ wsiCreateWindowEglSurface(
         return WSI_ERROR_WINDOW_IN_USE;
     }
 
+    struct wsi_wl_extent extent = wsi_window_get_buffer_extent(window);
+
     window->wl_egl_window = wl_egl_window_create(
         window->wl_surface,
-        window->current.extent.width * window->current.scale,
-        window->current.extent.height * window->current.scale);
+        extent.width,
+        extent.height);
+    if (window->wl_egl_window == NULL) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
 
     if (wl_surface_get_version(window->wl_surface) >=
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
-        wl_surface_set_buffer_scale(
-            window->wl_surface,
-            window->current.scale);
-    }
-
-    if (window->wl_egl_window == NULL) {
-        return WSI_ERROR_OUT_OF_MEMORY;
+        wl_surface_set_buffer_scale(window->wl_surface, window->current.scale);
     }
 
     EGLint alpha;
