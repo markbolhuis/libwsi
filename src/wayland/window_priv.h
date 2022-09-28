@@ -65,15 +65,6 @@ struct wsi_window {
     bool closed;
 };
 
-struct wsi_vk_window {
-    struct wsi_window base;
-};
-
-struct wsi_egl_window {
-    struct wsi_window base;
-    struct wl_egl_window *wl_egl_window;
-};
-
 void
 wsi_window_handle_output_destroyed(
     struct wsi_window *window,
