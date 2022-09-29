@@ -7,8 +7,10 @@
 
 #include "wsi/output.h"
 
+#include "common_priv.h"
 #include "platform_priv.h"
 #include "output_priv.h"
+#include "window_priv.h"
 
 // region XDG Output V1
 
@@ -109,6 +111,9 @@ wl_output_scale(
     struct wl_output *wl_output,
     int32_t scale)
 {
+    // TODO: This is temporary
+    struct wsi_output *output = data;
+    output->scale = scale;
 }
 
 static void
@@ -174,6 +179,9 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
         return NULL;
     }
 
+    output->platform = platform;
+    output->wl_global_name = name;
+
     output->wl_output = wsi_platform_bind(
         platform,
         name,
@@ -195,18 +203,26 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
 void
 wsi_output_destroy(struct wsi_output *output)
 {
-    assert(output->wl_output);
+    struct wsi_platform *platform = output->platform;
+
+    struct wsi_window *window;
+    wl_list_for_each(window, &platform->window_list, link) {
+        wsi_window_handle_output_destroyed(window, output);
+    }
 
     if (output->xdg_output_v1) {
         zxdg_output_v1_destroy(output->xdg_output_v1);
     }
 
-    if (wl_output_get_version(output->wl_output) >= WL_OUTPUT_RELEASE_SINCE_VERSION) {
+    if (wl_output_get_version(output->wl_output) >=
+        WL_OUTPUT_RELEASE_SINCE_VERSION)
+    {
         wl_output_release(output->wl_output);
     } else {
         wl_output_destroy(output->wl_output);
     }
 
+    wl_list_remove(&output->link);
     free(output);
 }
 
@@ -215,7 +231,6 @@ wsi_output_destroy_all(struct wsi_platform *platform)
 {
     struct wsi_output *output, *output_tmp;
     wl_list_for_each_safe(output, output_tmp, &platform->output_list, link) {
-        wl_list_remove(&output->link);
         wsi_output_destroy(output);
     }
 }

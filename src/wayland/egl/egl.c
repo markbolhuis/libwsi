@@ -1,4 +1,7 @@
-#include <wayland-util.h>
+#include <assert.h>
+
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
 #include <wayland-egl-core.h>
 
 #include <EGL/egl.h>
@@ -7,6 +10,7 @@
 #include "wsi/window.h"
 #include "wsi/egl/egl.h"
 
+#include "../common_priv.h"
 #include "../platform_priv.h"
 #include "../window_priv.h"
 
@@ -41,12 +45,30 @@ wsiCreateWindowEglSurface(
         return WSI_ERROR_WINDOW_IN_USE;
     }
 
+    struct wsi_wl_extent extent = wsi_window_get_buffer_extent(window);
+
     window->wl_egl_window = wl_egl_window_create(
         window->wl_surface,
-        window->current.extent.width,
-        window->current.extent.height);
+        extent.width,
+        extent.height);
     if (window->wl_egl_window == NULL) {
         return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    if (wl_surface_get_version(window->wl_surface) >=
+        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    {
+        wl_surface_set_buffer_scale(window->wl_surface, window->current.scale);
+    }
+
+    EGLint alpha;
+    eglGetConfigAttrib(dpy, config, EGL_ALPHA_SIZE, &alpha);
+    if (alpha == 0) {
+        struct wl_region *wl_region = wl_compositor_create_region(
+            window->platform->wl_compositor);
+        wl_region_add(wl_region, 0, 0, INT32_MAX, INT32_MAX);
+        wl_surface_set_opaque_region(window->wl_surface, wl_region);
+        wl_region_destroy(wl_region);
     }
 
     EGLAttrib attrs[] = {

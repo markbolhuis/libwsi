@@ -10,6 +10,8 @@ struct wsi_output {
 
     struct wl_output *wl_output;
     struct zxdg_output_v1 *xdg_output_v1;
+
+    int32_t scale;
 };
 
 void

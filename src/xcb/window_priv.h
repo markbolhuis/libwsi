@@ -12,6 +12,7 @@ struct wsi_window {
     enum wsi_api api;
 
     xcb_window_t xcb_window;
+    xcb_window_t xcb_parent;
 
     struct wsi_xcb_extent user_extent;
 };

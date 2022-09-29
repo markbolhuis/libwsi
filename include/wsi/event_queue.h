@@ -11,7 +11,7 @@ WsiResult
 wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue);
 
 void
-wsiDestroyEventQueue(WsiPlatform platform, WsiEventQueue eventQueue);
+wsiDestroyEventQueue(WsiEventQueue eventQueue);
 
 WsiResult
 wsiPollEventQueue(WsiEventQueue eventQueue);

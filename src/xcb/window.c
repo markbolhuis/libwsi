@@ -50,8 +50,13 @@ wsiCreateWindow(
     window->platform = platform;
     window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
-
     window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
+
+    if (pCreateInfo->parent) {
+        window->xcb_parent = pCreateInfo->parent->xcb_window;
+    } else {
+        window->xcb_parent = platform->xcb_screen->root;
+    }
 
     uint32_t value_list[2];
     uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK ;
@@ -65,15 +70,30 @@ wsiCreateWindow(
         platform->xcb_connection,
         XCB_COPY_FROM_PARENT,
         window->xcb_window,
-        platform->xcb_screen->root,
+        window->xcb_parent,
         0, 0,
         window->user_extent.width,
         window->user_extent.height,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
-        platform->xcb_screen->root_visual,
+        XCB_COPY_FROM_PARENT,
         value_mask,
         value_list);
+
+    xcb_atom_t properties[] = {
+        platform->xcb_atom_wm_protocols,
+        platform->xcb_atom_wm_delete_window,
+    };
+
+    xcb_change_property(
+        platform->xcb_connection,
+        XCB_PROP_MODE_REPLACE,
+        window->xcb_window,
+        platform->xcb_atom_wm_protocols,
+        XCB_ATOM_ATOM,
+        32,
+        wsi_array_length(properties),
+        properties);
 
     xcb_map_window(platform->xcb_connection, window->xcb_window);
 
@@ -83,9 +103,10 @@ wsiCreateWindow(
 
 void
 wsiDestroyWindow(
-    WsiPlatform platform,
     WsiWindow window)
 {
+    struct wsi_platform *platform = window->platform;
+
     xcb_unmap_window(platform->xcb_connection, window->xcb_window);
     xcb_destroy_window(platform->xcb_connection, window->xcb_window);
 
@@ -105,23 +126,17 @@ wsiSetWindowParent(
     WsiWindow window,
     WsiWindow parent)
 {
+    struct wsi_platform *platform = window->platform;
     if (parent) {
-        xcb_change_property(
-           window->platform->xcb_connection,
-           XCB_PROP_MODE_REPLACE,
-           window->xcb_window,
-           XCB_ATOM_WM_TRANSIENT_FOR,
-           XCB_ATOM_WINDOW,
-           32,
-           1,
-           &parent->xcb_window);
+        window->xcb_parent = parent->xcb_window;
     } else {
-        xcb_delete_property(
-           window->platform->xcb_connection,
-           window->xcb_window,
-           XCB_ATOM_WM_TRANSIENT_FOR);
+        window->xcb_parent = platform->xcb_screen->root;
     }
-
+    xcb_reparent_window(
+        platform->xcb_connection,
+        window->xcb_window,
+        parent->xcb_window,
+        0, 0);
     return WSI_SUCCESS;
 }
 

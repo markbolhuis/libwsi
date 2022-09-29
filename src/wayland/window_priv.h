@@ -1,11 +1,6 @@
 #ifndef WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 #define WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 
-struct wsi_wl_extent {
-    int32_t width;
-    int32_t height;
-};
-
 enum wsi_xdg_event {
     WSI_XDG_EVENT_NONE = 0,
     WSI_XDG_EVENT_CONFIGURE = 1,
@@ -46,6 +41,8 @@ struct wsi_window {
     struct wsi_window     *parent;
     struct wsi_wl_extent  user_extent;
 
+    struct wl_list link;
+
     enum wsi_api          api;
 
     struct wl_surface     *wl_surface;
@@ -55,6 +52,7 @@ struct wsi_window {
     struct zxdg_toplevel_decoration_v1 *xdg_toplevel_decoration_v1;
 
     enum wsi_xdg_event event_mask;
+    uint32_t serial;
     struct wsi_window_state pending;
     struct wsi_window_state current;
     struct wl_list output_list;
@@ -62,13 +60,12 @@ struct wsi_window {
     bool closed;
 };
 
-struct wsi_vk_window {
-    struct wsi_window base;
-};
+void
+wsi_window_handle_output_destroyed(
+    struct wsi_window *window,
+    struct wsi_output *output);
 
-struct wsi_egl_window {
-    struct wsi_window base;
-    struct wl_egl_window *wl_egl_window;
-};
+struct wsi_wl_extent
+wsi_window_get_buffer_extent(struct wsi_window *window);
 
 #endif

@@ -1,4 +1,4 @@
-dep_xcb = dependency('xcb')
+dep_xcb = dependency('xcb', version : '>=1.15')
 
 src_wsi_xcb = files(
   'platform.c',

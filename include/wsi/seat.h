@@ -25,7 +25,7 @@ WsiResult
 wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSeat *pSeat);
 
 void
-wsiDestroySeat(WsiPlatform platform, WsiSeat seat);
+wsiDestroySeat(WsiSeat seat);
 
 WsiResult
 wsiEnumerateNativeSeats(WsiPlatform platform, uint32_t *pNativeSeatCount, WsiNativeSeat *pNativeSeats);

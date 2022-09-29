@@ -26,7 +26,7 @@ WsiResult
 wsiCreateWindow(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
 
 void
-wsiDestroyWindow(WsiPlatform platform, WsiWindow window);
+wsiDestroyWindow(WsiWindow window);
 
 void
 wsiGetWindowFeatures(WsiWindow window, WsiWindowFeatures *pFeatures);
