@@ -6,7 +6,7 @@
 #include "window_priv.h"
 
 typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
-typedef void (*PFN_wsiDestroyWindow)(WsiPlatform platform, WsiWindow window);
+typedef void (*PFN_wsiDestroyWindow)(WsiWindow window);
 typedef void (*PFN_wsiGetWindowExtent)(WsiWindow window, WsiExtent *pExtent);
 typedef void (*PFN_wsiGetWindowFeatures)(WsiWindow window, WsiWindowFeatures *pFeatures);
 typedef WsiResult (*PFN_wsiSetWindowParent)(WsiWindow window, WsiWindow parent);
@@ -49,11 +49,10 @@ wsiCreateWindow(
 
 void
 wsiDestroyWindow(
-    WsiPlatform platform,
     WsiWindow window)
 {
-    PFN_wsiDestroyWindow sym = wsi_platform_dlsym(platform, "wsiDestroyWindow");
-    sym(platform->platform, window->window);
+    PFN_wsiDestroyWindow sym = wsi_window_dlsym(window, "wsiDestroyWindow");
+    sym(window->window);
     free(window);
 }
 

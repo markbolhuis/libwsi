@@ -6,7 +6,7 @@
 #include "seat_priv.h"
 
 typedef WsiResult (*PFN_wsiCreateSeat)(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSeat *pSeat);
-typedef void (*PFN_wsiDestroySeat)(WsiPlatform platform, WsiSeat seat);
+typedef void (*PFN_wsiDestroySeat)(WsiSeat seat);
 typedef WsiResult (*PFN_wsiEnumerateNativeSeats)(WsiPlatform platform, uint32_t *pSeatCount, WsiNativeSeat *pSeats);
 
 void *
@@ -37,10 +37,10 @@ wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSea
 }
 
 void
-wsiDestroySeat(WsiPlatform platform, WsiSeat seat)
+wsiDestroySeat(WsiSeat seat)
 {
-    PFN_wsiDestroySeat sym = wsi_platform_dlsym(platform, "wsiDestroySeat");
-    sym(platform->platform, seat->seat);
+    PFN_wsiDestroySeat sym = wsi_seat_dlsym(seat, "wsiDestroySeat");
+    sym(seat->seat);
     free(seat);
 }
 

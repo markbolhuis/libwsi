@@ -6,7 +6,7 @@
 #include "event_queue_priv.h"
 
 typedef WsiResult (*PFN_wsiCreateEventQueue)(WsiPlatform platform, WsiEventQueue *pEventQueue);
-typedef void (*PFN_wsiDestroyEventQueue)(WsiPlatform platform, WsiEventQueue eventQueue);
+typedef void (*PFN_wsiDestroyEventQueue)(WsiEventQueue eventQueue);
 typedef WsiResult (*PFN_wsiPollEventQueue)(WsiEventQueue eventQueue);
 
 void *
@@ -36,10 +36,10 @@ wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
 }
 
 void
-wsiDestroyEventQueue(WsiPlatform platform, WsiEventQueue eventQueue)
+wsiDestroyEventQueue(WsiEventQueue eventQueue)
 {
-    PFN_wsiDestroyEventQueue sym = wsi_platform_dlsym(platform, "wsiDestroyEventQueue");
-    sym(platform->platform, eventQueue->event_queue);
+    PFN_wsiDestroyEventQueue sym = wsi_event_queue_dlsym(eventQueue, "wsiDestroyEventQueue");
+    sym(eventQueue->event_queue);
     free(eventQueue);
 }
 
