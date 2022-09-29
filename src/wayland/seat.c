@@ -40,17 +40,14 @@ wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     seat->platform = platform;
     seat->wl_global_name = name;
 
-    seat->wl_seat = wsi_platform_bind(
-        platform,
-        name,
-        &wl_seat_interface,
-        version);
-    wl_seat_add_listener(
-        seat->wl_seat,
-        &wl_seat_listener,
-        seat);
+    seat->wl_seat = wsi_platform_bind(platform, name, &wl_seat_interface, version);
+    wl_seat_add_listener(seat->wl_seat, &wl_seat_listener, seat);
 
     wl_list_insert(&platform->seat_list, &seat->link);
+
+    seat->id = wsi_platform_new_id(platform);
+    seat->ref_count = 1;
+
     return seat;
 }
 
@@ -58,21 +55,31 @@ void
 wsi_seat_destroy(struct wsi_seat *seat)
 {
     assert(seat);
+    assert(seat->ref_count > 0);
+    assert(seat->wl_seat != NULL);
 
-    if (seat->wl_seat) {
-        if (wl_seat_get_version(seat->wl_seat) >= WL_SEAT_RELEASE_SINCE_VERSION) {
-            wl_seat_release(seat->wl_seat);
-        } else {
-            wl_seat_destroy(seat->wl_seat);
-        }
+    wl_list_remove(&seat->link);
+
+    if (wl_seat_get_version(seat->wl_seat) >=
+        WL_SEAT_RELEASE_SINCE_VERSION)
+    {
+        wl_seat_release(seat->wl_seat);
+    } else {
+        wl_seat_destroy(seat->wl_seat);
     }
+
+    seat->wl_seat = NULL;
+    seat->capabilities = 0;
+    seat->wl_global_name = 0;
 
     if (seat->name) {
         free(seat->name);
+        seat->name = NULL;
     }
 
-    wl_list_remove(&seat->link);
-    free(seat);
+    if (--seat->ref_count == 0) {
+        free(seat);
+    }
 }
 
 void
@@ -97,7 +104,7 @@ wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSea
 
     struct wsi_seat *seat;
     wl_list_for_each(seat, &platform->seat_list, link) {
-        if (seat->wl_global_name == native_seat) {
+        if (seat->id == native_seat) {
             found = true;
             break;
         }
@@ -107,12 +114,50 @@ wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSea
         return WSI_ERROR_NATIVE_SEAT_LOST;
     }
 
+    assert(seat->wl_seat != NULL);
+    assert(seat->ref_count == 1);
+
+    seat->ref_count++;
     *pSeat = seat;
+
     return WSI_SUCCESS;
 }
 
 void
 wsiDestroySeat(WsiSeat seat)
 {
-    wsi_seat_destroy(seat);
+    assert(seat->ref_count > 0);
+    if (--seat->ref_count == 0) {
+        assert(seat->wl_seat == NULL);
+        free(seat);
+    }
+}
+
+WsiResult
+wsiEnumerateNativeSeats(
+    WsiPlatform platform,
+    uint32_t *pNativeSeatCount,
+    WsiNativeSeat *pNativeSeats)
+{
+    uint32_t count = 0;
+
+    struct wsi_seat *seat;
+    wl_list_for_each_reverse(seat, &platform->seat_list, link) {
+        if (pNativeSeats && count < *pNativeSeatCount) {
+            pNativeSeats[count] = seat->id;
+        }
+        count++;
+    }
+
+    if (!pNativeSeats) {
+        *pNativeSeatCount = count;
+        return WSI_SUCCESS;
+    }
+
+    if (count > *pNativeSeatCount) {
+        return WSI_INCOMPLETE;
+    }
+
+    *pNativeSeatCount = count;
+    return WSI_SUCCESS;
 }

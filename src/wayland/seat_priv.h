@@ -5,7 +5,9 @@ struct wsi_seat {
     struct wsi_platform *platform;
 
     struct wl_list     link;
+    uint64_t           id;
     uint32_t           wl_global_name;
+    int                ref_count;
 
     struct wl_seat     *wl_seat;
     uint32_t           capabilities;
