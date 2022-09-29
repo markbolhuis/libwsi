@@ -71,36 +71,36 @@ wsi_window_configure(struct wsi_window *window)
 
     uint32_t mask = window->event_mask;
 
+    struct wsi_window_state *pending = &window->pending;
+    struct wsi_window_state *current = &window->current;
+
     bool resized = false;
     if (mask & WSI_XDG_EVENT_CONFIGURE) {
-        if (!wsi_wl_extent_equal(
-            window->pending.extent,
-            window->current.extent))
-        {
-            window->current.extent = window->pending.extent;
-            resized = true;
+        resized = !wsi_wl_extent_equal(current->extent, pending->extent);
+        if (resized) {
+            current->extent = pending->extent;
         }
 
-        window->current.state = window->pending.state;
+        current->state = pending->state;
     }
 
     if (mask & WSI_XDG_EVENT_BOUNDS) {
-        window->current.bounds = window->pending.bounds;
+        current->bounds = pending->bounds;
     }
 
     if (mask & WSI_XDG_EVENT_WM_CAPABILITIES) {
-        window->current.capabilities = window->pending.capabilities;
+        current->capabilities = pending->capabilities;
     }
 
     if (mask & WSI_XDG_EVENT_DECORATION) {
-        window->current.decoration = window->pending.decoration;
+        current->decoration = pending->decoration;
     }
 
     window->event_mask = WSI_XDG_EVENT_NONE;
 
-    bool rescaled = window->pending.scale != window->current.scale;
+    bool rescaled = pending->scale != current->scale;
     if (rescaled) {
-        window->current.scale = window->pending.scale;
+        current->scale = pending->scale;
     }
 
     // TODO: Decide how best to handle Vulkan or EGL windows.
@@ -116,12 +116,9 @@ wsi_window_configure(struct wsi_window *window)
             buf_extent.height,
             0, 0);
 
-        if (wl_surface_get_version(window->wl_surface) >=
-            WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
-        {
-            wl_surface_set_buffer_scale(
-                window->wl_surface,
-                window->current.scale);
+        uint32_t version = wl_surface_get_version(window->wl_surface);
+        if (version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
+            wl_surface_set_buffer_scale(window->wl_surface, current->scale);
         }
     }
 
