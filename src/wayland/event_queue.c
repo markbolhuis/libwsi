@@ -29,7 +29,6 @@ wsiCreateEventQueue(
 
 void
 wsiDestroyEventQueue(
-    WsiPlatform platform,
     WsiEventQueue eventQueue)
 {
     wl_event_queue_destroy(eventQueue->wl_event_queue);
