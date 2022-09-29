@@ -433,7 +433,7 @@ err_egl_interval:
 err_egl_current:
     eglDestroySurface(g_display, g_surface);
 err_wsi_surface:
-    wsiDestroyWindow(g_platform, g_window);
+    wsiDestroyWindow(g_window);
 err_wsi_window:
     eglDestroyContext(g_display, g_context);
 err_egl_context:

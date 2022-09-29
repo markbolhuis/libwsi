@@ -458,9 +458,10 @@ wsiCreateWindow(
 
 void
 wsiDestroyWindow(
-    WsiPlatform platform,
     WsiWindow window)
 {
+    struct wsi_platform *platform = window->platform;
+
     wl_list_remove(&window->link);
 
     if (window->xdg_toplevel_decoration_v1) {

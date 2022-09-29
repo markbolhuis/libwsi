@@ -103,9 +103,10 @@ wsiCreateWindow(
 
 void
 wsiDestroyWindow(
-    WsiPlatform platform,
     WsiWindow window)
 {
+    struct wsi_platform *platform = window->platform;
+
     xcb_unmap_window(platform->xcb_connection, window->xcb_window);
     xcb_destroy_window(platform->xcb_connection, window->xcb_window);
 
