@@ -112,7 +112,7 @@ wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSea
 }
 
 void
-wsiDestroySeat(WsiPlatform platform, WsiSeat seat)
+wsiDestroySeat(WsiSeat seat)
 {
     wsi_seat_destroy(seat);
 }
