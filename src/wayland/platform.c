@@ -14,6 +14,16 @@
 #include "seat_priv.h"
 #include "output_priv.h"
 
+uint64_t
+wsi_platform_new_id(struct wsi_platform *platform)
+{
+    uint64_t id = ++platform->id;
+    if (id == 0) {
+        id++;
+    }
+    return id;
+}
+
 struct wsi_global *
 wsi_global_create(struct wsi_platform *platform, uint32_t name)
 {

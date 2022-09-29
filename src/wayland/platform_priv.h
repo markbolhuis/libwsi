@@ -9,6 +9,8 @@ struct wsi_platform {
     struct wl_list output_list;
     struct wl_list window_list;
 
+    uint64_t id;
+
     struct wl_compositor *wl_compositor;
     struct wl_shm *wl_shm;
     struct xdg_wm_base *xdg_wm_base;
@@ -20,6 +22,9 @@ struct wsi_global {
     struct wsi_platform *platform;
     uint32_t name;
 };
+
+uint64_t
+wsi_platform_new_id(struct wsi_platform *platform);
 
 void *
 wsi_platform_bind(
