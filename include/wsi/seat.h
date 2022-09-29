@@ -9,13 +9,6 @@ extern "C" {
 
 typedef uint64_t WsiNativeSeat;
 
-typedef struct wsi_seat_features {
-    bool pointer;
-    bool keyboard;
-    bool touch;
-    bool gamepad;
-} WsiSeatFeatures;
-
 typedef struct wsi_seat_create_info {
     WsiEventQueue eventQueue;
     WsiNativeSeat nativeSeat;
