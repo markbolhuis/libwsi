@@ -12,6 +12,8 @@
 #include "output_priv.h"
 #include "window_priv.h"
 
+#define WSI_WL_OUTPUT_VERSION 4
+
 // region XDG Output V1
 
 static void
@@ -186,7 +188,8 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
         platform,
         name,
         &wl_output_interface,
-        version);
+        version,
+        WSI_WL_OUTPUT_VERSION);
     wl_output_add_listener(
         output->wl_output,
         &wl_output_listener,

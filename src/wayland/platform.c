@@ -14,6 +14,12 @@
 #include "seat_priv.h"
 #include "output_priv.h"
 
+#define WSI_WL_COMPOSITOR_VERSION 5
+#define WSI_WL_SHM_VERSION 1
+#define WSI_XDG_WM_BASE_VERSION 5
+#define WSI_XDG_OUTPUT_MANAGER_V1_VERSION 3
+#define WSI_XDG_DECORATION_MANAGER_V1_VERSION 1
+
 uint64_t
 wsi_platform_new_id(struct wsi_platform *platform)
 {
@@ -83,17 +89,22 @@ wsi_platform_bind(
     struct wsi_platform *platform,
     uint32_t name,
     const struct wl_interface *wl_interface,
-    uint32_t version)
+    uint32_t version,
+    uint32_t max_version)
 {
-    uint32_t v = wl_interface->version < version
-               ? wl_interface->version
-               : version;
+    if (max_version > wl_interface->version) {
+        max_version = wl_interface->version;
+    }
+
+    if (version > max_version) {
+        version = max_version;
+    }
 
     return wl_registry_bind(
         platform->wl_registry,
         name,
         wl_interface,
-        v);
+        version);
 }
 
 // region XDG WmBase
@@ -149,7 +160,8 @@ wl_registry_global(
             platform,
             name,
             &wl_compositor_interface,
-            version);
+            version,
+            WSI_WL_COMPOSITOR_VERSION);
         wl_compositor_set_user_data(platform->wl_compositor, global);
     }
     else if (strcmp(interface, wl_shm_interface.name) == 0) {
@@ -158,7 +170,8 @@ wl_registry_global(
             platform,
             name,
             &wl_shm_interface,
-            version);
+            version,
+            WSI_WL_SHM_VERSION);
         wl_shm_add_listener(platform->wl_shm, &wl_shm_listener, global);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
@@ -173,7 +186,8 @@ wl_registry_global(
             platform,
             name,
             &xdg_wm_base_interface,
-            version);
+            version,
+            WSI_XDG_WM_BASE_VERSION);
         xdg_wm_base_add_listener(
             platform->xdg_wm_base,
             &xdg_wm_base_listener,
@@ -185,7 +199,8 @@ wl_registry_global(
             platform,
             name,
             &zxdg_decoration_manager_v1_interface,
-            version);
+            version,
+            WSI_XDG_DECORATION_MANAGER_V1_VERSION);
         zxdg_decoration_manager_v1_set_user_data(
             platform->xdg_decoration_manager_v1,
             global);
@@ -196,7 +211,8 @@ wl_registry_global(
             platform,
             name,
             &zxdg_output_manager_v1_interface,
-            version);
+            version,
+            WSI_XDG_OUTPUT_MANAGER_V1_VERSION);
         zxdg_output_manager_v1_set_user_data(
             platform->xdg_output_manager_v1,
             global);

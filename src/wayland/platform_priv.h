@@ -31,7 +31,8 @@ wsi_platform_bind(
     struct wsi_platform *platform,
     uint32_t name,
     const struct wl_interface *wl_interface,
-    uint32_t version);
+    uint32_t version,
+    uint32_t max_version);
 
 struct wsi_global *
 wsi_global_create(

@@ -8,6 +8,8 @@
 #include "platform_priv.h"
 #include "seat_priv.h"
 
+#define WSI_WL_SEAT_VERSION 7
+
 // region WL Seat
 
 static void
@@ -40,7 +42,12 @@ wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     seat->platform = platform;
     seat->wl_global_name = name;
 
-    seat->wl_seat = wsi_platform_bind(platform, name, &wl_seat_interface, version);
+    seat->wl_seat = wsi_platform_bind(
+        platform,
+        name,
+        &wl_seat_interface,
+        version,
+        WSI_WL_SEAT_VERSION);
     wl_seat_add_listener(seat->wl_seat, &wl_seat_listener, seat);
 
     wl_list_insert(&platform->seat_list, &seat->link);
