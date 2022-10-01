@@ -107,6 +107,41 @@ wsi_platform_bind(
         version);
 }
 
+static void *
+wsi_platform_bind_global(
+    struct wsi_platform *platform,
+    uint32_t name,
+    const struct wl_interface *wl_interface,
+    const void *listener,
+    uint32_t version,
+    uint32_t max_version)
+{
+    struct wsi_global *global = wsi_global_create(platform, name);
+    if (!global) {
+        return NULL;
+    }
+
+    struct wl_proxy *proxy = wsi_platform_bind(
+        platform,
+        name,
+        wl_interface,
+        version,
+        max_version);
+    if (!proxy) {
+        wsi_global_destroy(global);
+        return NULL;
+    }
+
+    if (listener) {
+        assert(wl_interface->event_count > 0);
+        wl_proxy_add_listener(proxy, (void (**)(void))listener, global);
+    } else {
+        wl_proxy_set_user_data(proxy, global);
+    }
+
+    return proxy;
+}
+
 // region XDG WmBase
 
 static void
@@ -155,24 +190,22 @@ wl_registry_global(
     assert(platform->wl_registry = wl_registry);
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
-        struct wsi_global *global = wsi_global_create(platform, name);
-        platform->wl_compositor = wsi_platform_bind(
+        platform->wl_compositor = wsi_platform_bind_global(
             platform,
             name,
             &wl_compositor_interface,
+            NULL,
             version,
             WSI_WL_COMPOSITOR_VERSION);
-        wl_compositor_set_user_data(platform->wl_compositor, global);
     }
     else if (strcmp(interface, wl_shm_interface.name) == 0) {
-        struct wsi_global *global = wsi_global_create(platform, name);
-        platform->wl_shm = wsi_platform_bind(
+        platform->wl_shm = wsi_platform_bind_global(
             platform,
             name,
             &wl_shm_interface,
+            &wl_shm_listener,
             version,
             WSI_WL_SHM_VERSION);
-        wl_shm_add_listener(platform->wl_shm, &wl_shm_listener, global);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
         wsi_seat_bind(platform, name, version);
@@ -181,41 +214,31 @@ wl_registry_global(
         wsi_output_bind(platform, name, version);
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-        struct wsi_global *global = wsi_global_create(platform, name);
-        platform->xdg_wm_base = wsi_platform_bind(
+        platform->xdg_wm_base = wsi_platform_bind_global(
             platform,
             name,
             &xdg_wm_base_interface,
+            &xdg_wm_base_listener,
             version,
             WSI_XDG_WM_BASE_VERSION);
-        xdg_wm_base_add_listener(
-            platform->xdg_wm_base,
-            &xdg_wm_base_listener,
-            global);
     }
     else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
-        struct wsi_global *global = wsi_global_create(platform, name);
-        platform->xdg_decoration_manager_v1 = wsi_platform_bind(
+        platform->xdg_decoration_manager_v1 = wsi_platform_bind_global(
             platform,
             name,
             &zxdg_decoration_manager_v1_interface,
+            NULL,
             version,
             WSI_XDG_DECORATION_MANAGER_V1_VERSION);
-        zxdg_decoration_manager_v1_set_user_data(
-            platform->xdg_decoration_manager_v1,
-            global);
     }
     else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
-        struct wsi_global *global = wsi_global_create(platform, name);
-        platform->xdg_output_manager_v1 = wsi_platform_bind(
+        platform->xdg_output_manager_v1 = wsi_platform_bind_global(
             platform,
             name,
             &zxdg_output_manager_v1_interface,
+            NULL,
             version,
             WSI_XDG_OUTPUT_MANAGER_V1_VERSION);
-        zxdg_output_manager_v1_set_user_data(
-            platform->xdg_output_manager_v1,
-            global);
         wsi_output_init_xdg_all(platform);
     }
 }
@@ -387,8 +410,9 @@ wsiPoll(WsiPlatform platform)
 {
     struct wl_display *wl_display = platform->wl_display;
 
-    while (wl_display_prepare_read(wl_display) == -1) {
+    if (wl_display_prepare_read(wl_display) == -1) {
         wl_display_dispatch_pending(wl_display);
+        return;
     }
 
     wl_display_flush(wl_display);
