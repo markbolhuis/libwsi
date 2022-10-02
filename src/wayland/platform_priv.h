@@ -27,7 +27,7 @@ uint64_t
 wsi_platform_new_id(struct wsi_platform *platform);
 
 void *
-wsi_platform_bind(
+wsi_bind(
     struct wsi_platform *platform,
     uint32_t name,
     const struct wl_interface *wl_interface,

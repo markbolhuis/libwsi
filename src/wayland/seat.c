@@ -42,7 +42,7 @@ wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     seat->platform = platform;
     seat->wl_global_name = name;
 
-    seat->wl_seat = wsi_platform_bind(
+    seat->wl_seat = wsi_bind(
         platform,
         name,
         &wl_seat_interface,

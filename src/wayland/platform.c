@@ -85,7 +85,7 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
 }
 
 void *
-wsi_platform_bind(
+wsi_bind(
     struct wsi_platform *platform,
     uint32_t name,
     const struct wl_interface *wl_interface,
@@ -121,7 +121,7 @@ wsi_platform_bind_global(
         return NULL;
     }
 
-    struct wl_proxy *proxy = wsi_platform_bind(
+    struct wl_proxy *proxy = wsi_bind(
         platform,
         name,
         wl_interface,

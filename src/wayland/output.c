@@ -186,7 +186,7 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     output->platform = platform;
     output->wl_global_name = name;
 
-    output->wl_output = wsi_platform_bind(
+    output->wl_output = wsi_bind(
         platform,
         name,
         &wl_output_interface,
