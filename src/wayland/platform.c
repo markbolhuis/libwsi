@@ -108,7 +108,7 @@ wsi_bind(
 }
 
 static void *
-wsi_platform_bind_global(
+wsi_global_bind(
     struct wsi_platform *platform,
     uint32_t name,
     const struct wl_interface *wl_interface,
@@ -190,7 +190,7 @@ wl_registry_global(
     assert(platform->wl_registry = wl_registry);
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
-        platform->wl_compositor = wsi_platform_bind_global(
+        platform->wl_compositor = wsi_global_bind(
             platform,
             name,
             &wl_compositor_interface,
@@ -199,7 +199,7 @@ wl_registry_global(
             WSI_WL_COMPOSITOR_VERSION);
     }
     else if (strcmp(interface, wl_shm_interface.name) == 0) {
-        platform->wl_shm = wsi_platform_bind_global(
+        platform->wl_shm = wsi_global_bind(
             platform,
             name,
             &wl_shm_interface,
@@ -214,7 +214,7 @@ wl_registry_global(
         wsi_output_bind(platform, name, version);
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-        platform->xdg_wm_base = wsi_platform_bind_global(
+        platform->xdg_wm_base = wsi_global_bind(
             platform,
             name,
             &xdg_wm_base_interface,
@@ -223,7 +223,7 @@ wl_registry_global(
             WSI_XDG_WM_BASE_VERSION);
     }
     else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
-        platform->xdg_decoration_manager_v1 = wsi_platform_bind_global(
+        platform->xdg_decoration_manager_v1 = wsi_global_bind(
             platform,
             name,
             &zxdg_decoration_manager_v1_interface,
@@ -232,7 +232,7 @@ wl_registry_global(
             WSI_XDG_DECORATION_MANAGER_V1_VERSION);
     }
     else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
-        platform->xdg_output_manager_v1 = wsi_platform_bind_global(
+        platform->xdg_output_manager_v1 = wsi_global_bind(
             platform,
             name,
             &zxdg_output_manager_v1_interface,
