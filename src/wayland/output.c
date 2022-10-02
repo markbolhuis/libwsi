@@ -146,8 +146,10 @@ static const struct wl_output_listener wl_output_listener = {
 // endregion
 
 void
-wsi_output_init_xdg(struct wsi_platform *platform, struct wsi_output *output)
+wsi_output_init_xdg(struct wsi_output *output)
 {
+    struct wsi_platform *platform = output->platform;
+
     assert(platform->xdg_output_manager_v1 != NULL);
     assert(output->xdg_output_v1 == NULL);
 
@@ -168,7 +170,7 @@ wsi_output_init_xdg_all(struct wsi_platform *platform)
     struct wsi_output *output;
     wl_list_for_each(output, &platform->output_list, link) {
         if (output->xdg_output_v1 == NULL) {
-            wsi_output_init_xdg(platform, output);
+            wsi_output_init_xdg(output);
         }
     }
 }
@@ -196,7 +198,7 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
         output);
 
     if (platform->xdg_output_manager_v1 != NULL) {
-        wsi_output_init_xdg(platform, output);
+        wsi_output_init_xdg(output);
     }
 
     wl_list_insert(&platform->output_list, &output->link);

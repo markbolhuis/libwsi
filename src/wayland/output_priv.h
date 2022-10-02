@@ -15,7 +15,7 @@ struct wsi_output {
 };
 
 void
-wsi_output_init_xdg(struct wsi_platform *platform, struct wsi_output *output);
+wsi_output_init_xdg(struct wsi_output *output);
 
 void
 wsi_output_init_xdg_all(struct wsi_platform *platform);
