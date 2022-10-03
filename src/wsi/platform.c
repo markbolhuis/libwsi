@@ -42,6 +42,12 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         return WSI_ERROR_PLATFORM;
     }
 
+    if (!platform->handle) {
+        fprintf(stderr, "%s: %s\n", __func__, dlerror());
+        free(platform);
+        return WSI_ERROR_PLATFORM;
+    }
+
     PFN_wsiCreatePlatform sym = wsi_platform_dlsym(platform, "wsiCreatePlatform");
     enum wsi_result result = sym(&platform->platform);
     if (result != WSI_SUCCESS) {
