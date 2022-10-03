@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 WsiResult
-wsiOutputCreate(WsiPlatform platform, WsiOutput *pOutput);
+wsiCreateOutput(WsiPlatform platform, WsiOutput *pOutput);
 
 #ifdef __cplusplus
 }
