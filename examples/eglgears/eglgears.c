@@ -445,5 +445,5 @@ err_egl_init:
 err_wsi_display:
     wsiDestroyPlatform(g_platform);
 err_wsi_platform:
-    return 0;
+    return ret;
 }
