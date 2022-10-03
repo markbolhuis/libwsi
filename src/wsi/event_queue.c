@@ -31,6 +31,7 @@ wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
         return result;
     }
 
+    event_queue->platform = platform;
     *pEventQueue = event_queue;
     return WSI_SUCCESS;
 }
