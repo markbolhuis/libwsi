@@ -5,20 +5,11 @@
 #include "platform_priv.h"
 #include "window_priv.h"
 
-typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
-typedef void (*PFN_wsiDestroyWindow)(WsiWindow window);
-typedef void (*PFN_wsiGetWindowExtent)(WsiWindow window, WsiExtent *pExtent);
-typedef void (*PFN_wsiGetWindowFeatures)(WsiWindow window, WsiWindowFeatures *pFeatures);
-typedef WsiResult (*PFN_wsiSetWindowParent)(WsiWindow window, WsiWindow parent);
-typedef WsiResult (*PFN_wsiSetWindowTitle)(WsiWindow window, const char *pTitle);
-typedef bool (*PFN_wsiShouldCloseWindow)(WsiWindow window);
-
 void *
 wsi_window_dlsym(struct wsi_window *window, const char *symbol)
 {
     return wsi_platform_dlsym(window->platform, symbol);
 }
-
 
 WsiResult
 wsiCreateWindow(

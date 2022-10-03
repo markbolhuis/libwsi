@@ -5,10 +5,6 @@
 #include "platform_priv.h"
 #include "event_queue_priv.h"
 
-typedef WsiResult (*PFN_wsiCreateEventQueue)(WsiPlatform platform, WsiEventQueue *pEventQueue);
-typedef void (*PFN_wsiDestroyEventQueue)(WsiEventQueue eventQueue);
-typedef WsiResult (*PFN_wsiPollEventQueue)(WsiEventQueue eventQueue);
-
 void *
 wsi_event_queue_dlsym(struct wsi_event_queue *event_queue, const char *symbol)
 {

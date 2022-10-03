@@ -21,6 +21,12 @@ typedef struct wsi_platform_limits {
     uint32_t maxWindowHeight;
 } WsiPlatformLimits;
 
+typedef WsiResult (*PFN_wsiCreatePlatform)(WsiPlatform *pPlatform);
+typedef void (*PFN_wsiDestroyPlatform)(WsiPlatform platform);
+typedef void (*PFN_wsiGetPlatformFeatures)(WsiPlatform platform, WsiPlatformFeatures *pFeatures);
+typedef void (*PFN_wsiGetPlatformLimits)(WsiPlatform platform, WsiPlatformLimits *pLimits);
+typedef void (*PFN_wsiPoll)(WsiPlatform platform);
+
 WsiResult
 wsiCreatePlatform(WsiPlatform *pPlatform);
 

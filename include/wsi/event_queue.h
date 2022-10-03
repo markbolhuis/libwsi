@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+typedef WsiResult (*PFN_wsiCreateEventQueue)(WsiPlatform platform, WsiEventQueue *pEventQueue);
+typedef void (*PFN_wsiDestroyEventQueue)(WsiEventQueue eventQueue);
+typedef WsiResult (*PFN_wsiPollEventQueue)(WsiEventQueue eventQueue);
+
 WsiResult
 wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue);
 

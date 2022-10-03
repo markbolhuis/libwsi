@@ -5,10 +5,6 @@
 #include "platform_priv.h"
 #include "seat_priv.h"
 
-typedef WsiResult (*PFN_wsiCreateSeat)(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSeat *pSeat);
-typedef void (*PFN_wsiDestroySeat)(WsiSeat seat);
-typedef WsiResult (*PFN_wsiEnumerateNativeSeats)(WsiPlatform platform, uint32_t *pSeatCount, WsiNativeSeat *pSeats);
-
 void *
 wsi_seat_dlsym(WsiSeat seat, const char *symbol)
 {

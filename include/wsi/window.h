@@ -22,6 +22,14 @@ typedef struct wsi_window_create_info {
     const char *pTitle;
 } WsiWindowCreateInfo;
 
+typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
+typedef void (*PFN_wsiDestroyWindow)(WsiWindow window);
+typedef void (*PFN_wsiGetWindowExtent)(WsiWindow window, WsiExtent *pExtent);
+typedef void (*PFN_wsiGetWindowFeatures)(WsiWindow window, WsiWindowFeatures *pFeatures);
+typedef WsiResult (*PFN_wsiSetWindowParent)(WsiWindow window, WsiWindow parent);
+typedef WsiResult (*PFN_wsiSetWindowTitle)(WsiWindow window, const char *pTitle);
+typedef bool (*PFN_wsiShouldCloseWindow)(WsiWindow window);
+
 WsiResult
 wsiCreateWindow(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
 

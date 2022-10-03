@@ -7,12 +7,6 @@
 
 #include "platform_priv.h"
 
-typedef WsiResult (*PFN_wsiCreatePlatform)(WsiPlatform *pPlatform);
-typedef void (*PFN_wsiDestroyPlatform)(WsiPlatform platform);
-typedef void (*PFN_wsiGetPlatformFeatures)(WsiPlatform platform, WsiPlatformFeatures *pFeatures);
-typedef void (*PFN_wsiGetPlatformLimits)(WsiPlatform platform, WsiPlatformLimits *pLimits);
-typedef void (*PFN_wsiPoll)(WsiPlatform platform);
-
 void *
 wsi_platform_dlsym(struct wsi_platform *platform, const char *symbol)
 {
