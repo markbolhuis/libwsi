@@ -8,35 +8,9 @@
 
 #include "utils.h"
 
+#include "common_priv.h"
 #include "platform_priv.h"
 #include "window_priv.h"
-
-static inline struct wsi_xcb_extent
-wsi_extent_to_xcb(
-    struct wsi_extent extent)
-{
-    assert(extent.width <= UINT16_MAX);
-    assert(extent.height <= UINT16_MAX);
-
-    struct wsi_xcb_extent xcb = {
-        .width = (uint16_t)extent.width,
-        .height = (uint16_t)extent.height,
-    };
-
-    return xcb;
-}
-
-static inline struct wsi_extent
-    wsi_extent_from_xcb(
-    struct wsi_xcb_extent extent)
-{
-    struct wsi_extent xcb = {
-        .width = extent.width,
-        .height = extent.height,
-    };
-
-    return xcb;
-}
 
 // region XCB Events
 
