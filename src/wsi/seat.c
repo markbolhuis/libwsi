@@ -6,7 +6,7 @@
 #include "seat_priv.h"
 
 void *
-wsi_seat_dlsym(WsiSeat seat, const char *symbol)
+wsi_seat_dlsym(struct wsi_seat *seat, const char *symbol)
 {
     return wsi_platform_dlsym(seat->platform, symbol);
 }
