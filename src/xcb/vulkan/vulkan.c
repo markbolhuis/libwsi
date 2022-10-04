@@ -7,6 +7,9 @@
 #include <vulkan/vulkan_xcb.h>
 
 #include "wsi/vulkan/vulkan.h"
+#include "wsi/window.h"
+
+#include "utils.h"
 
 #include "platform_priv.h"
 #include "window_priv.h"

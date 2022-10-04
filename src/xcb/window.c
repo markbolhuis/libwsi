@@ -6,6 +6,8 @@
 
 #include "wsi/window.h"
 
+#include "utils.h"
+
 #include "platform_priv.h"
 #include "window_priv.h"
 
@@ -36,6 +38,35 @@ static inline struct wsi_extent
     return xcb;
 }
 
+// region XCB Events
+
+void
+wsi_window_xcb_configure_notify(
+    struct wsi_window *window,
+    const xcb_configure_notify_event_t *event)
+{
+    assert(event->window == window->xcb_window);
+
+    window->user_extent.width = event->width;
+    window->user_extent.height = event->height;
+}
+
+void
+wsi_window_xcb_client_message(
+    struct wsi_window *window,
+    const xcb_client_message_event_t *event)
+{
+    assert(event->window == window->xcb_window);
+
+    if (event->type == window->platform->xcb_atom_wm_protocols &&
+        event->data.data32[0] == window->platform->xcb_atom_wm_delete_window)
+    {
+        window->pfn_close(window, window->user_data);
+    }
+}
+
+// endregion
+
 WsiResult
 wsiCreateWindow(
     WsiPlatform platform,
@@ -51,6 +82,8 @@ wsiCreateWindow(
     window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
     window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
+    window->pfn_close = pCreateInfo->pfnClose;
+    window->user_data = pCreateInfo->pUserData;
 
     if (pCreateInfo->parent) {
         window->xcb_parent = pCreateInfo->parent->xcb_window;
@@ -62,7 +95,8 @@ wsiCreateWindow(
     uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK ;
     value_list[0] = platform->xcb_screen->black_pixel;
     value_list[1] = XCB_EVENT_MASK_EXPOSURE
-                  | XCB_EVENT_MASK_RESIZE_REDIRECT
+               // | XCB_EVENT_MASK_RESIZE_REDIRECT
+                  | XCB_EVENT_MASK_STRUCTURE_NOTIFY
                   | XCB_EVENT_MASK_BUTTON_PRESS
                   | XCB_EVENT_MASK_BUTTON_RELEASE;
 
@@ -97,6 +131,7 @@ wsiCreateWindow(
 
     xcb_map_window(platform->xcb_connection, window->xcb_window);
 
+    wsi_list_insert(&platform->window_list, &window->link);
     *pWindow = window;
     return WSI_SUCCESS;
 }
@@ -109,6 +144,7 @@ wsiDestroyWindow(
 
     xcb_unmap_window(platform->xcb_connection, window->xcb_window);
     xcb_destroy_window(platform->xcb_connection, window->xcb_window);
+    xcb_flush(platform->xcb_connection);
 
     free(window);
 }

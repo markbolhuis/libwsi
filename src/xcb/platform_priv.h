@@ -8,6 +8,8 @@ struct wsi_platform {
 
     xcb_atom_t       xcb_atom_wm_protocols;
     xcb_atom_t       xcb_atom_wm_delete_window;
+
+    struct wsi_list  window_list;
 };
 
 #define wsi_array_length(array) (sizeof(array) / sizeof((array)[0]))

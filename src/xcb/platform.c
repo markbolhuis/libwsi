@@ -4,8 +4,12 @@
 #include <xcb/xcb.h>
 
 #include "wsi/platform.h"
+#include "wsi/window.h"
+
+#include "utils.h"
 
 #include "platform_priv.h"
+#include "window_priv.h"
 
 void
 wsi_get_xcb_atoms(
@@ -72,6 +76,8 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
+    wsi_list_init(&platform->window_list);
+
     platform->xcb_connection = xcb_connect(NULL, &platform->xcb_screen_id);
     int err = xcb_connection_has_error(platform->xcb_connection);
     if (err > 0) {
@@ -111,6 +117,41 @@ wsiDestroyPlatform(WsiPlatform platform)
 void
 wsiPoll(WsiPlatform platform)
 {
-    xcb_generic_event_t *event = xcb_poll_for_event(platform->xcb_connection);
-    free(event);
+    while(true) {
+        xcb_generic_event_t *event = xcb_poll_for_event(platform->xcb_connection);
+        if (!event) {
+            break;
+        }
+
+        switch (event->response_type & ~0x80) {
+            case XCB_CONFIGURE_NOTIFY: {
+                xcb_configure_notify_event_t *notify
+                    = (xcb_configure_notify_event_t *)event;
+
+                struct wsi_window *window;
+                wsi_list_for_each(window, &platform->window_list, link) {
+                    if (notify->window == window->xcb_window) {
+                        wsi_window_xcb_configure_notify(window, notify);
+                    }
+                }
+
+                break;
+            }
+            case XCB_CLIENT_MESSAGE: {
+                xcb_client_message_event_t *message
+                    = (xcb_client_message_event_t *)event;
+
+                struct wsi_window *window;
+                wsi_list_for_each(window, &platform->window_list, link) {
+                    if (message->window == window->xcb_window) {
+                        wsi_window_xcb_client_message(window, message);
+                    }
+                }
+
+                break;
+            }
+        }
+
+        free(event);
+    }
 }
