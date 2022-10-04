@@ -57,7 +57,9 @@ struct wsi_window {
     struct wsi_window_state current;
     struct wl_list output_list;
 
-    bool closed;
+    PFN_wsiCloseWindow pfn_close;
+
+    void *user_data;
 };
 
 void

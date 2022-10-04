@@ -6,6 +6,7 @@
 #include <xdg-output-unstable-v1-client-protocol.h>
 
 #include "wsi/output.h"
+#include "wsi/window.h"
 
 #include "common_priv.h"
 #include "platform_priv.h"

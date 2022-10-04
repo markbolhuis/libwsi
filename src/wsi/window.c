@@ -82,11 +82,3 @@ wsiSetWindowTitle(
     PFN_wsiSetWindowTitle sym = wsi_window_dlsym(window, "wsiSetWindowTitle");
     return sym(window->window, pTitle);
 }
-
-bool
-wsiShouldCloseWindow(
-    WsiWindow window)
-{
-    PFN_wsiShouldCloseWindow sym = wsi_window_dlsym(window, "wsiShouldCloseWindow");
-    return sym(window->window);
-}

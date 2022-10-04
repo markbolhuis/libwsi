@@ -259,7 +259,7 @@ xdg_toplevel_close(
     struct xdg_toplevel *xdg_toplevel)
 {
     struct wsi_window *window = data;
-    window->closed = true;
+    window->pfn_close(window, window->user_data);
 }
 
 static void
@@ -418,6 +418,8 @@ wsiCreateWindow(
     window->platform = platform;
     window->api = WSI_API_NONE;
     window->user_extent = wsi_extent_to_wl(pCreateInfo->extent);
+    window->user_data = pCreateInfo->pUserData;
+    window->pfn_close = pCreateInfo->pfnClose;
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
     wl_surface_add_listener(window->wl_surface, &wl_surface_listener, window);
@@ -526,13 +528,4 @@ wsiGetWindowFeatures(
     pFeatures->maximize = window->current.capabilities.maximize;
     pFeatures->minimize = window->current.capabilities.minimize;
     pFeatures->fullscreen = window->current.capabilities.fullscreen;
-}
-
-bool
-wsiShouldCloseWindow(
-    WsiWindow window)
-{
-    bool closed =  window->closed;
-    window->closed = false;
-    return closed;
 }

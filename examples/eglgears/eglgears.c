@@ -47,6 +47,8 @@
 static WsiPlatform g_platform;
 static WsiWindow   g_window;
 
+static bool g_running = true;
+
 static EGLDisplay  g_display;
 static EGLConfig   g_config;
 static EGLSurface  g_surface;
@@ -304,6 +306,12 @@ create_gears()
     glEnable(GL_NORMALIZE);
 }
 
+static void
+handle_window_close(WsiWindow window, void *data)
+{
+    g_running = false;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -369,6 +377,7 @@ main(int argc, char *argv[])
     info.extent.width = 300;
     info.extent.height = 300;
     info.pTitle = "Gears";
+    info.pfnClose = handle_window_close;
 
     res = wsiCreateWindow(g_platform, &info, &g_window);
     if (res != WSI_SUCCESS) {
@@ -408,7 +417,7 @@ main(int argc, char *argv[])
     while(true) {
         wsiPoll(g_platform);
 
-        if (wsiShouldCloseWindow(g_window)) {
+        if (!g_running) {
             break;
         }
 
