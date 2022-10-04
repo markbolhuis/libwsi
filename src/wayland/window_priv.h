@@ -9,31 +9,33 @@ enum wsi_xdg_event {
     WSI_XDG_EVENT_DECORATION = 8,
 };
 
-struct wsi_xdg_capabilities {
-    bool window_menu;
-    bool maximize;
-    bool fullscreen;
-    bool minimize;
+enum wsi_xdg_capabilities {
+    WSI_XDG_CAPABILITIES_NONE = 0,
+    WSI_XDG_CAPABILITY_WINDOW_MENU = 1,
+    WSI_XDG_CAPABILITY_MAXIMIZE = 2,
+    WSI_XDG_CAPABILITY_FULLSCREEN = 4,
+    WSI_XDG_CAPABILITY_MINIMIZE = 8,
 };
 
-struct wsi_xdg_state {
-    bool maximized;
-    bool resizing;
-    bool fullscreen;
-    bool activated;
-    bool tiled_top;
-    bool tiled_bottom;
-    bool tiled_left;
-    bool tiled_right;
+enum wsi_xdg_state {
+    WSI_XDG_STATE_NONE = 0,
+    WSI_XDG_STATE_MAXIMIZED = 1,
+    WSI_XDG_STATE_RESIZING = 2,
+    WSI_XDG_STATE_FULLSCREEN = 4,
+    WSI_XDG_STATE_ACTIVATED = 8,
+    WSI_XDG_STATE_TILED_TOP = 16,
+    WSI_XDG_STATE_TILED_BOTTOM = 32,
+    WSI_XDG_STATE_TILED_LEFT = 64,
+    WSI_XDG_STATE_TILED_RIGHT = 128,
 };
 
 struct wsi_window_state {
-    struct wsi_wl_extent extent;              // xdg_toplevel.configure
-    struct wsi_wl_extent bounds;              // xdg_toplevel.configure_bounds
-    struct wsi_xdg_state state;               // xdg_toplevel.configure
-    struct wsi_xdg_capabilities capabilities; // xdg_toplevel.wm_capabilities
-    int32_t scale;                            // wl_surface.{enter.leave}
-    uint32_t decoration;                      // xdg_toplevel_decoration.configure
+    struct wsi_wl_extent extent;            // xdg_toplevel.configure
+    struct wsi_wl_extent bounds;            // xdg_toplevel.configure_bounds
+    enum wsi_xdg_state state;               // xdg_toplevel.configure
+    enum wsi_xdg_capabilities capabilities; // xdg_toplevel.wm_capabilities
+    int32_t scale;                          // wl_surface.{enter.leave}
+    uint32_t decoration;                    // xdg_toplevel_decoration.configure
 };
 
 struct wsi_window {

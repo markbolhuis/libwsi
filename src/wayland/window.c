@@ -138,10 +138,10 @@ wsi_window_set_initial_state(struct wsi_window *window)
     {
         window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
 
-        window->pending.capabilities.window_menu = true;
-        window->pending.capabilities.maximize = true;
-        window->pending.capabilities.fullscreen = true;
-        window->pending.capabilities.minimize = true;
+        window->pending.capabilities = WSI_XDG_CAPABILITY_WINDOW_MENU
+                                     | WSI_XDG_CAPABILITY_MAXIMIZE
+                                     | WSI_XDG_CAPABILITY_FULLSCREEN
+                                     | WSI_XDG_CAPABILITY_MINIMIZE;
     }
 }
 
@@ -218,34 +218,34 @@ xdg_toplevel_configure(
     window->pending.extent.width = width;
     window->pending.extent.height = height;
 
-    struct wsi_xdg_state pending = {0};
+    enum wsi_xdg_state pending = WSI_XDG_STATE_NONE;
 
     uint32_t *state = NULL;
     wl_array_for_each(state, states) {
         switch (*state) {
             case XDG_TOPLEVEL_STATE_MAXIMIZED:
-                pending.maximized = true;
+                pending |= WSI_XDG_STATE_MAXIMIZED;
                 break;
             case XDG_TOPLEVEL_STATE_FULLSCREEN:
-                pending.fullscreen = true;
+                pending |= WSI_XDG_STATE_FULLSCREEN;
                 break;
             case XDG_TOPLEVEL_STATE_RESIZING:
-                pending.resizing = true;
+                pending |= WSI_XDG_STATE_RESIZING;
                 break;
             case XDG_TOPLEVEL_STATE_ACTIVATED:
-                pending.activated = true;
+                pending |= WSI_XDG_STATE_ACTIVATED;
                 break;
             case XDG_TOPLEVEL_STATE_TILED_LEFT:
-                pending.tiled_left = true;
+                pending |= WSI_XDG_STATE_TILED_LEFT;
                 break;
             case XDG_TOPLEVEL_STATE_TILED_RIGHT:
-                pending.tiled_right = true;
+                pending |= WSI_XDG_STATE_TILED_RIGHT;
                 break;
             case XDG_TOPLEVEL_STATE_TILED_TOP:
-                pending.tiled_top = true;
+                pending |= WSI_XDG_STATE_TILED_TOP;
                 break;
             case XDG_TOPLEVEL_STATE_TILED_BOTTOM:
-                pending.tiled_bottom = true;
+                pending |= WSI_XDG_STATE_TILED_BOTTOM;
                 break;
         }
     }
@@ -284,22 +284,22 @@ xdg_toplevel_wm_capabilities(
 {
     struct wsi_window *window = data;
 
-    struct wsi_xdg_capabilities pending = {0};
+    enum wsi_xdg_capabilities pending = WSI_XDG_CAPABILITIES_NONE;
 
     uint32_t *cap = NULL;
     wl_array_for_each(cap, capabilities) {
         switch (*cap) {
             case XDG_TOPLEVEL_WM_CAPABILITIES_WINDOW_MENU:
-                pending.window_menu = true;
+                pending |= WSI_XDG_CAPABILITY_WINDOW_MENU;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_MAXIMIZE:
-                pending.maximize = true;
+                pending |= WSI_XDG_CAPABILITY_MAXIMIZE;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_FULLSCREEN:
-                pending.fullscreen = true;
+                pending |= WSI_XDG_CAPABILITY_FULLSCREEN;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_MINIMIZE:
-                pending.minimize = true;
+                pending |= WSI_XDG_CAPABILITY_MINIMIZE;
                 break;
         }
     }
@@ -525,7 +525,10 @@ wsiGetWindowFeatures(
 {
     pFeatures->move = true;
     pFeatures->resize = true;
-    pFeatures->maximize = window->current.capabilities.maximize;
-    pFeatures->minimize = window->current.capabilities.minimize;
-    pFeatures->fullscreen = window->current.capabilities.fullscreen;
+    pFeatures->maximize = window->current.capabilities
+                        & WSI_XDG_CAPABILITY_MAXIMIZE;
+    pFeatures->minimize = window->current.capabilities
+                        & WSI_XDG_CAPABILITY_MINIMIZE;
+    pFeatures->fullscreen = window->current.capabilities
+                          & WSI_XDG_CAPABILITY_FULLSCREEN;
 }
