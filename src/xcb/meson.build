@@ -6,6 +6,7 @@ src_wsi_xcb = files(
   'window.c',
   'egl/egl.c',
   'vulkan/vulkan.c',
+  'utils.c',
 )
 
 lib_wsi_xcb = library('wsi-xcb',
