@@ -11,6 +11,9 @@ typedef void *EGLDisplay;
 typedef void *EGLConfig;
 typedef void *EGLSurface;
 
+typedef WsiResult (*PFN_wsiGetEGLDisplay)(WsiPlatform platform, EGLDisplay *pDisplay);
+typedef WsiResult (*PFN_wsiCreateWindowEGLSurface)(WsiWindow window, EGLDisplay dpy, EGLConfig config, EGLSurface *pSurface);
+
 WsiResult
 wsiGetEGLDisplay(
     WsiPlatform platform,

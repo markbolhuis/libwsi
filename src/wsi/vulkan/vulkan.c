@@ -3,10 +3,6 @@
 #include "platform_priv.h"
 #include "window_priv.h"
 
-typedef WsiResult (*PFN_wsiEnumerateRequiredInstanceExtensions)(WsiPlatform platform, uint32_t *pExtensionCount, const char **ppExtensions);
-typedef WsiResult (*PFN_wsiEnumerateRequiredDeviceExtensions)(WsiPlatform platform, uint32_t *pExtensionCount, const char **ppExtensions);
-typedef WsiResult (*PFN_wsiCreateWindowSurface)(WsiPlatform platform, WsiWindow window, VkInstance instance, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface);
-typedef VkBool32 (*PFN_wsiGetPhysicalDevicePresentationSupport)(WsiPlatform platform, VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex);
 
 WsiResult
 wsiEnumerateRequiredInstanceExtensions(
