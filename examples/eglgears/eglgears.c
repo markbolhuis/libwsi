@@ -323,9 +323,9 @@ main(int argc, char *argv[])
         goto err_wsi_platform;
     }
 
-    res = wsiGetEglDisplay(g_platform, &g_display);
+    res = wsiGetEGLDisplay(g_platform, &g_display);
     if (res != WSI_SUCCESS) {
-        fprintf(stderr, "wsiGetEglDisplay failed: %d", res);
+        fprintf(stderr, "wsiGetEGLDisplay failed: %d", res);
         if (res == WSI_ERROR_EGL) {
             fprintf(stderr, " 0x%08x", eglGetError());
         }
@@ -385,9 +385,9 @@ main(int argc, char *argv[])
         goto err_wsi_window;
     }
 
-    res = wsiCreateWindowEglSurface(g_window, g_display, g_config, &g_surface);
+    res = wsiCreateWindowEGLSurface(g_window, g_display, g_config, &g_surface);
     if (res != WSI_SUCCESS) {
-        fprintf(stderr, "wsiCreateWindowEglSurface failed: %d", res);
+        fprintf(stderr, "wsiCreateWindowEGLSurface failed: %d", res);
         if (res == WSI_ERROR_EGL) {
             fprintf(stderr, " 0x%08x", eglGetError());
         }

@@ -12,12 +12,12 @@ typedef void *EGLConfig;
 typedef void *EGLSurface;
 
 WsiResult
-wsiGetEglDisplay(
+wsiGetEGLDisplay(
     WsiPlatform platform,
     EGLDisplay *pDisplay);
 
 WsiResult
-wsiCreateWindowEglSurface(
+wsiCreateWindowEGLSurface(
     WsiWindow window,
     EGLDisplay dpy,
     EGLConfig config,

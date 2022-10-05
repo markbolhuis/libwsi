@@ -3,19 +3,19 @@
 #include "../platform_priv.h"
 #include "../window_priv.h"
 
-typedef WsiResult (*PFN_wsiGetEglDisplay)(WsiPlatform platform, EGLDisplay *pDisplay);
-typedef WsiResult (*PFN_wsiCreateWindowEglSurface)(WsiWindow window, EGLDisplay dpy, EGLConfig config, EGLSurface *pSurface);
+typedef WsiResult (*PFN_wsiGetEGLDisplay)(WsiPlatform platform, EGLDisplay *pDisplay);
+typedef WsiResult (*PFN_wsiCreateWindowEGLSurface)(WsiWindow window, EGLDisplay dpy, EGLConfig config, EGLSurface *pSurface);
 
 WsiResult
-wsiGetEglDisplay(WsiPlatform platform, EGLDisplay *pDisplay)
+wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)
 {
-    PFN_wsiGetEglDisplay sym = wsi_platform_dlsym(platform, "wsiGetEglDisplay");
+    PFN_wsiGetEGLDisplay sym = wsi_platform_dlsym(platform, "wsiGetEGLDisplay");
     return sym(platform->platform, pDisplay);
 }
 
 WsiResult
-wsiCreateWindowEglSurface(WsiWindow window, EGLDisplay dpy, EGLConfig config, EGLSurface *pSurface)
+wsiCreateWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLConfig config, EGLSurface *pSurface)
 {
-    PFN_wsiCreateWindowEglSurface sym = wsi_window_dlsym(window, "wsiCreateWindowEglSurface");
+    PFN_wsiCreateWindowEGLSurface sym = wsi_window_dlsym(window, "wsiCreateWindowEGLSurface");
     return sym(window->window, dpy, config, pSurface);
 }

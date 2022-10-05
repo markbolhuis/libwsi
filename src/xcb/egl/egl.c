@@ -15,7 +15,7 @@
 #include "../window_priv.h"
 
 WsiResult
-wsiGetEglDisplay(
+wsiGetEGLDisplay(
     WsiPlatform platform,
     EGLDisplay *pDisplay)
 {
@@ -36,7 +36,7 @@ wsiGetEglDisplay(
 }
 
 WsiResult
-wsiCreateWindowEglSurface(
+wsiCreateWindowEGLSurface(
     WsiWindow window,
     EGLDisplay dpy,
     EGLConfig config,
