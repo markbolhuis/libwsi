@@ -350,27 +350,33 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     wl_array_init(&platform->format_array);
 
     platform->wl_registry = wl_display_get_registry(platform->wl_display);
+    if (platform->wl_registry == NULL) {
+        result = WSI_ERROR_OUT_OF_MEMORY;
+        goto err_registry;
+    }
+
     wl_registry_add_listener(platform->wl_registry, &wl_registry_listener, platform);
 
     wl_display_roundtrip(platform->wl_display);
 
     if (!platform->wl_compositor) {
         result = WSI_ERROR_PLATFORM;
-        goto err_registry;
+        goto err_globals;
     }
     if (!platform->wl_shm) {
         result = WSI_ERROR_PLATFORM;
-        goto err_registry;
+        goto err_globals;
     }
 
     *pPlatform = platform;
     return WSI_SUCCESS;
 
-err_registry:
+err_globals:
     wsi_seat_destroy_all(platform);
     wsi_output_destroy_all(platform);
     wsi_platform_destroy_globals(platform);
     wl_registry_destroy(platform->wl_registry);
+err_registry:
     wl_display_roundtrip(platform->wl_display);
     wl_display_disconnect(platform->wl_display);
 err_display:
