@@ -48,15 +48,6 @@ wsiDestroyWindow(
 }
 
 void
-wsiGetWindowExtent(
-    WsiWindow window,
-    WsiExtent *pExtent)
-{
-    PFN_wsiGetWindowExtent sym = wsi_window_dlsym(window, "wsiGetWindowExtent");
-    sym(window->window, pExtent);
-}
-
-void
 wsiGetWindowFeatures(
     WsiWindow window,
     WsiWindowFeatures *pFeatures)

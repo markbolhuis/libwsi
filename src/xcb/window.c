@@ -21,8 +21,12 @@ wsi_window_xcb_configure_notify(
 {
     assert(event->window == window->xcb_window);
 
-    window->user_extent.width = event->width;
-    window->user_extent.height = event->height;
+    struct wsi_extent extent = {
+        .width = event->width,
+        .height = event->height
+    };
+
+    window->pfn_resize(window, extent, window->user_data);
 }
 
 void
@@ -57,6 +61,7 @@ wsiCreateWindow(
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
     window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
     window->pfn_close = pCreateInfo->pfnClose;
+    window->pfn_resize = pCreateInfo->pfnResize;
     window->user_data = pCreateInfo->pUserData;
 
     if (pCreateInfo->parent) {
@@ -148,14 +153,6 @@ wsiSetWindowParent(
         parent->xcb_window,
         0, 0);
     return WSI_SUCCESS;
-}
-
-void
-wsiGetWindowExtent(
-    WsiWindow window,
-    WsiExtent *pExtent)
-{
-    *pExtent = wsi_extent_from_xcb(window->user_extent);
 }
 
 WsiResult

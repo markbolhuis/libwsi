@@ -247,30 +247,6 @@ draw()
 }
 
 static void
-reshape(WsiExtent extent)
-{
-    glViewport(0, 0, (GLsizei)extent.width, (GLsizei)extent.height);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    GLfloat hf = (GLfloat)extent.height;
-    GLfloat wf = (GLfloat)extent.width;
-
-    if (hf > wf) {
-        GLfloat aspect = hf / wf;
-        glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
-    } else {
-        GLfloat aspect = wf / hf;
-        glFrustum(-aspect, aspect, -1.0, 1.0, 5.0, 60.0);
-    }
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -40.0f);
-}
-
-static void
 create_gears()
 {
     static GLfloat pos[4] = { 5.0f, 5.0f, 10.0f, 0.0f };
@@ -310,6 +286,30 @@ static void
 handle_window_close(WsiWindow window, void *data)
 {
     g_running = false;
+}
+
+static void
+handle_window_resize(WsiWindow window, WsiExtent extent, void *data)
+{
+    glViewport(0, 0, (GLsizei)extent.width, (GLsizei)extent.height);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    GLfloat hf = (GLfloat)extent.height;
+    GLfloat wf = (GLfloat)extent.width;
+
+    if (hf > wf) {
+        GLfloat aspect = hf / wf;
+        glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+    } else {
+        GLfloat aspect = wf / hf;
+        glFrustum(-aspect, aspect, -1.0, 1.0, 5.0, 60.0);
+    }
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -40.0f);
 }
 
 int
@@ -378,6 +378,7 @@ main(int argc, char *argv[])
     info.extent.height = 300;
     info.pTitle = "Gears";
     info.pfnClose = handle_window_close;
+    info.pfnResize = handle_window_resize;
 
     res = wsiCreateWindow(g_platform, &info, &g_window);
     if (res != WSI_SUCCESS) {
@@ -419,13 +420,6 @@ main(int argc, char *argv[])
 
         if (!g_running) {
             break;
-        }
-
-        WsiExtent newExtent;
-        wsiGetWindowExtent(g_window, &newExtent);
-        if (newExtent.width != extent.width || newExtent.height != extent.height) {
-            extent = newExtent;
-            reshape(extent);
         }
 
         draw();

@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 typedef void (*PFN_wsiCloseWindow)(WsiWindow window, void *pUserData);
+typedef void (*PFN_wsiResizeWindow)(WsiWindow window, WsiExtent extent, void *pUserData);
 
 typedef struct wsi_window_features {
     bool fullscreen;
@@ -22,13 +23,13 @@ typedef struct wsi_window_create_info {
     WsiWindow parent;
     WsiExtent extent;
     const char *pTitle;
-    PFN_wsiCloseWindow pfnClose;
     void *pUserData;
+    PFN_wsiCloseWindow pfnClose;
+    PFN_wsiResizeWindow pfnResize;
 } WsiWindowCreateInfo;
 
 typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
 typedef void (*PFN_wsiDestroyWindow)(WsiWindow window);
-typedef void (*PFN_wsiGetWindowExtent)(WsiWindow window, WsiExtent *pExtent);
 typedef void (*PFN_wsiGetWindowFeatures)(WsiWindow window, WsiWindowFeatures *pFeatures);
 typedef WsiResult (*PFN_wsiSetWindowParent)(WsiWindow window, WsiWindow parent);
 typedef WsiResult (*PFN_wsiSetWindowTitle)(WsiWindow window, const char *pTitle);
@@ -44,9 +45,6 @@ wsiGetWindowFeatures(WsiWindow window, WsiWindowFeatures *pFeatures);
 
 WsiResult
 wsiSetWindowParent(WsiWindow window, WsiWindow parent);
-
-void
-wsiGetWindowExtent(WsiWindow window, WsiExtent *pExtent);
 
 WsiResult
 wsiSetWindowTitle(WsiWindow window, const char *pTitle);

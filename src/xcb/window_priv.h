@@ -16,6 +16,7 @@ struct wsi_window {
     void *user_data;
 
     PFN_wsiCloseWindow pfn_close;
+    PFN_wsiResizeWindow pfn_resize;
 };
 
 void
