@@ -167,7 +167,15 @@ wl_shm_format(
     struct wl_shm *wl_shm,
     uint32_t format)
 {
+    struct wsi_global *global = data;
+    struct wsi_platform *platform = global->platform;
 
+    uint32_t *next = wl_array_add(&platform->format_array, sizeof(uint32_t));
+    if (!next) {
+        return;
+    }
+
+    *next = format;
 }
 
 static const struct wl_shm_listener wl_shm_listener = {
@@ -339,6 +347,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     wl_list_init(&platform->seat_list);
     wl_list_init(&platform->output_list);
     wl_list_init(&platform->window_list);
+    wl_array_init(&platform->format_array);
 
     platform->wl_registry = wl_display_get_registry(platform->wl_display);
     wl_registry_add_listener(platform->wl_registry, &wl_registry_listener, platform);
@@ -380,6 +389,8 @@ wsiDestroyPlatform(WsiPlatform platform)
     wl_registry_destroy(platform->wl_registry);
 
     wl_display_roundtrip(platform->wl_display);
+
+    wl_array_release(&platform->format_array);
 
     wl_display_disconnect(platform->wl_display);
 

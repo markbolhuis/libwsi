@@ -9,6 +9,8 @@ struct wsi_platform {
     struct wl_list output_list;
     struct wl_list window_list;
 
+    struct wl_array format_array;
+
     uint64_t id;
 
     struct wl_compositor *wl_compositor;
