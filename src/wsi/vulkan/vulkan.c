@@ -4,7 +4,7 @@
 #include "window_priv.h"
 
 typedef WsiResult (*PFN_wsiEnumerateRequiredInstanceExtensions)(WsiPlatform platform, uint32_t *pExtensionCount, const char **ppExtensions);
-typedef WsiResult (*PFN_wsiGetRequiredDeviceExtensions)(WsiPlatform platform, uint32_t *pExtensionCount, const char **ppExtensions);
+typedef WsiResult (*PFN_wsiEnumerateRequiredDeviceExtensions)(WsiPlatform platform, uint32_t *pExtensionCount, const char **ppExtensions);
 typedef WsiResult (*PFN_wsiCreateWindowSurface)(WsiPlatform platform, WsiWindow window, VkInstance instance, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface);
 typedef VkBool32 (*PFN_wsiGetPhysicalDevicePresentationSupport)(WsiPlatform platform, VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex);
 
@@ -19,12 +19,12 @@ wsiEnumerateRequiredInstanceExtensions(
 }
 
 WsiResult
-wsiGetRequiredDeviceExtensions(
+wsiEnumerateRequiredDeviceExtensions(
     WsiPlatform platform,
     uint32_t *pExtensionCount,
     const char **ppExtensions)
 {
-    PFN_wsiGetRequiredDeviceExtensions sym = wsi_platform_dlsym(platform, "wsiGetRequiredDeviceExtensions");
+    PFN_wsiEnumerateRequiredDeviceExtensions sym = wsi_platform_dlsym(platform, "wsiEnumerateRequiredDeviceExtensions");
     return sym(platform, pExtensionCount, ppExtensions);
 }
 
