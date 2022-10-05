@@ -39,8 +39,8 @@ wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
         return NULL;
     }
 
-    seat->platform = platform;
-    seat->wl_global_name = name;
+    seat->global.platform = platform;
+    seat->global.name = name;
 
     seat->wl_seat = wsi_bind(
         platform,
@@ -77,7 +77,7 @@ wsi_seat_destroy(struct wsi_seat *seat)
 
     seat->wl_seat = NULL;
     seat->capabilities = 0;
-    seat->wl_global_name = 0;
+    seat->global.name = 0;
 
     if (seat->name) {
         free(seat->name);
