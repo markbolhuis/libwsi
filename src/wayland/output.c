@@ -149,7 +149,7 @@ static const struct wl_output_listener wl_output_listener = {
 void
 wsi_output_init_xdg(struct wsi_output *output)
 {
-    struct wsi_platform *platform = output->platform;
+    struct wsi_platform *platform = output->global.platform;
 
     assert(platform->xdg_output_manager_v1 != NULL);
     assert(output->xdg_output_v1 == NULL);
@@ -184,8 +184,8 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
         return NULL;
     }
 
-    output->platform = platform;
-    output->wl_global_name = name;
+    output->global.platform = platform;
+    output->global.name = name;
 
     output->wl_output = wsi_bind(
         platform,
@@ -209,7 +209,7 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
 void
 wsi_output_destroy(struct wsi_output *output)
 {
-    struct wsi_platform *platform = output->platform;
+    struct wsi_platform *platform = output->global.platform;
 
     struct wsi_window *window;
     wl_list_for_each(window, &platform->window_list, link) {

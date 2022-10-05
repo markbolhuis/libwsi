@@ -2,11 +2,9 @@
 #define WSI_SRC_WAYLAND_OUTPUT_PRIVATE_H
 
 struct wsi_output {
-    struct wsi_platform *platform;
+    struct wsi_global global;
 
     struct wl_list link;
-
-    uint32_t wl_global_name;
 
     struct wl_output *wl_output;
     struct zxdg_output_v1 *xdg_output_v1;
