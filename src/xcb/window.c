@@ -128,14 +128,6 @@ wsiDestroyWindow(
     free(window);
 }
 
-void
-wsiGetWindowFeatures(
-    WsiWindow window,
-    WsiWindowFeatures *pFeatures)
-{
-
-}
-
 WsiResult
 wsiSetWindowParent(
     WsiWindow window,

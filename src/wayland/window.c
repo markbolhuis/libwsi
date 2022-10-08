@@ -517,18 +517,3 @@ wsiSetWindowTitle(
     xdg_toplevel_set_title(window->xdg_toplevel, pTitle);
     return WSI_SUCCESS;
 }
-
-void
-wsiGetWindowFeatures(
-    WsiWindow window,
-    WsiWindowFeatures *pFeatures)
-{
-    pFeatures->move = true;
-    pFeatures->resize = true;
-    pFeatures->maximize = window->current.capabilities
-                        & WSI_XDG_CAPABILITY_MAXIMIZE;
-    pFeatures->minimize = window->current.capabilities
-                        & WSI_XDG_CAPABILITY_MINIMIZE;
-    pFeatures->fullscreen = window->current.capabilities
-                          & WSI_XDG_CAPABILITY_FULLSCREEN;
-}

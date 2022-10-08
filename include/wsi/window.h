@@ -10,14 +10,6 @@ extern "C" {
 typedef void (*PFN_wsiCloseWindow)(void *pUserData);
 typedef void (*PFN_wsiConfigureWindow)(void *pUserData, WsiExtent extent);
 
-typedef struct wsi_window_features {
-    bool fullscreen;
-    bool minimize;
-    bool maximize;
-    bool resize;
-    bool move;
-} WsiWindowFeatures;
-
 typedef struct wsi_window_create_info {
     WsiEventQueue eventQueue;
     WsiWindow parent;
@@ -30,7 +22,6 @@ typedef struct wsi_window_create_info {
 
 typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);
 typedef void (*PFN_wsiDestroyWindow)(WsiWindow window);
-typedef void (*PFN_wsiGetWindowFeatures)(WsiWindow window, WsiWindowFeatures *pFeatures);
 typedef WsiResult (*PFN_wsiSetWindowParent)(WsiWindow window, WsiWindow parent);
 typedef WsiResult (*PFN_wsiSetWindowTitle)(WsiWindow window, const char *pTitle);
 
@@ -39,9 +30,6 @@ wsiCreateWindow(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, Ws
 
 void
 wsiDestroyWindow(WsiWindow window);
-
-void
-wsiGetWindowFeatures(WsiWindow window, WsiWindowFeatures *pFeatures);
 
 WsiResult
 wsiSetWindowParent(WsiWindow window, WsiWindow parent);

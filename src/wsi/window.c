@@ -47,15 +47,6 @@ wsiDestroyWindow(
     free(window);
 }
 
-void
-wsiGetWindowFeatures(
-    WsiWindow window,
-    WsiWindowFeatures *pFeatures)
-{
-    PFN_wsiGetWindowFeatures sym = wsi_window_dlsym(window, "wsiGetWindowFeatures");
-    sym(window->window, pFeatures);
-}
-
 WsiResult
 wsiSetWindowParent(
     WsiWindow window,
