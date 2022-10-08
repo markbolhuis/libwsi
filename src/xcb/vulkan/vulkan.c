@@ -3,11 +3,10 @@
 
 #include <xcb/xcb.h>
 
-#include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan_xcb.h>
-
-#include "wsi/vulkan/vulkan.h"
 #include "wsi/window.h"
+#include "wsi/vulkan/vulkan.h"
+
+#include <vulkan/vulkan_xcb.h>
 
 #include "utils.h"
 

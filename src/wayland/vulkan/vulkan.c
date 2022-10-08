@@ -3,11 +3,10 @@
 
 #include <wayland-util.h>
 
-#include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan_wayland.h>
-
 #include "wsi/window.h"
 #include "wsi/vulkan/vulkan.h"
+
+#include <vulkan/vulkan_wayland.h>
 
 #include "../common_priv.h"
 #include "../platform_priv.h"
