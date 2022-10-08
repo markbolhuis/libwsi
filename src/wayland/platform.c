@@ -8,6 +8,8 @@
 #include <xdg-output-unstable-v1-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
 
+#include <xkbcommon/xkbcommon.h>
+
 #include "wsi/platform.h"
 
 #include "platform_priv.h"
@@ -349,6 +351,12 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     wl_list_init(&platform->window_list);
     wl_array_init(&platform->format_array);
 
+    platform->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    if (platform->xkb_context == NULL) {
+        result = WSI_ERROR_PLATFORM;
+        goto err_xkb;
+    }
+
     platform->wl_registry = wl_display_get_registry(platform->wl_display);
     if (platform->wl_registry == NULL) {
         result = WSI_ERROR_OUT_OF_MEMORY;
@@ -376,8 +384,10 @@ err_globals:
     wsi_output_destroy_all(platform);
     wsi_platform_destroy_globals(platform);
     wl_registry_destroy(platform->wl_registry);
-err_registry:
     wl_display_roundtrip(platform->wl_display);
+err_registry:
+    xkb_context_unref(platform->xkb_context);
+err_xkb:
     wl_display_disconnect(platform->wl_display);
 err_display:
     free(platform);
@@ -395,6 +405,8 @@ wsiDestroyPlatform(WsiPlatform platform)
     wl_registry_destroy(platform->wl_registry);
 
     wl_display_roundtrip(platform->wl_display);
+
+    xkb_context_unref(platform->xkb_context);
 
     wl_array_release(&platform->format_array);
 

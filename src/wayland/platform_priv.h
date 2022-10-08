@@ -18,6 +18,8 @@ struct wsi_platform {
     struct xdg_wm_base *xdg_wm_base;
     struct zxdg_decoration_manager_v1 *xdg_decoration_manager_v1;
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
+
+    struct xkb_context *xkb_context;
 };
 
 struct wsi_global {
