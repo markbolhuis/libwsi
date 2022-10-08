@@ -1,5 +1,4 @@
 
-dep_egl = dependency('egl')
 dep_opengl = dependency('opengl')
 
 executable('eglgears', 'eglgears.c',
