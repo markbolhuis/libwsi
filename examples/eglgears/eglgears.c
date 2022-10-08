@@ -48,6 +48,10 @@ static WsiPlatform g_platform;
 static WsiWindow   g_window;
 
 static bool g_running = true;
+static bool g_resized = false;
+
+static uint32_t g_width = 300;
+static uint32_t g_height = 300;
 
 static EGLDisplay  g_display;
 static EGLConfig   g_config;
@@ -212,6 +216,28 @@ gear(GLfloat inner_radius,
 static void
 draw()
 {
+    if (g_resized) {
+        glViewport(0, 0, (GLsizei) g_width, (GLsizei) g_height);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        GLfloat hf = (GLfloat) g_height;
+        GLfloat wf = (GLfloat) g_width;
+
+        if (hf > wf) {
+            GLfloat aspect = hf / wf;
+            glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+        } else {
+            GLfloat aspect = wf / hf;
+            glFrustum(-aspect, aspect, -1.0, 1.0, 5.0, 60.0);
+        }
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glTranslatef(0.0f, 0.0f, -40.0f);
+    }
+
     glClearColor(0.0f, 0.0f, 0.0f, 0.8f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -283,33 +309,17 @@ create_gears()
 }
 
 static void
-handle_window_close(WsiWindow window, void *data)
+handle_window_close(void *data)
 {
     g_running = false;
 }
 
 static void
-handle_window_resize(WsiWindow window, WsiExtent extent, void *data)
+handle_window_configure(void *data, WsiExtent extent)
 {
-    glViewport(0, 0, (GLsizei)extent.width, (GLsizei)extent.height);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    GLfloat hf = (GLfloat)extent.height;
-    GLfloat wf = (GLfloat)extent.width;
-
-    if (hf > wf) {
-        GLfloat aspect = hf / wf;
-        glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
-    } else {
-        GLfloat aspect = wf / hf;
-        glFrustum(-aspect, aspect, -1.0, 1.0, 5.0, 60.0);
-    }
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -40.0f);
+    g_width = extent.width;
+    g_height = extent.height;
+    g_resized = true;
 }
 
 int
@@ -374,11 +384,11 @@ main(int argc, char *argv[])
     }
 
     WsiWindowCreateInfo info = {0};
-    info.extent.width = 300;
-    info.extent.height = 300;
+    info.extent.width = g_width;
+    info.extent.height = g_height;
     info.pTitle = "Gears";
     info.pfnClose = handle_window_close;
-    info.pfnResize = handle_window_resize;
+    info.pfnConfigure = handle_window_configure;
 
     res = wsiCreateWindow(g_platform, &info, &g_window);
     if (res != WSI_SUCCESS) {

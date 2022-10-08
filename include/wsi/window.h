@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-typedef void (*PFN_wsiCloseWindow)(WsiWindow window, void *pUserData);
-typedef void (*PFN_wsiResizeWindow)(WsiWindow window, WsiExtent extent, void *pUserData);
+typedef void (*PFN_wsiCloseWindow)(void *pUserData);
+typedef void (*PFN_wsiConfigureWindow)(void *pUserData, WsiExtent extent);
 
 typedef struct wsi_window_features {
     bool fullscreen;
@@ -25,7 +25,7 @@ typedef struct wsi_window_create_info {
     const char *pTitle;
     void *pUserData;
     PFN_wsiCloseWindow pfnClose;
-    PFN_wsiResizeWindow pfnResize;
+    PFN_wsiConfigureWindow pfnConfigure;
 } WsiWindowCreateInfo;
 
 typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);

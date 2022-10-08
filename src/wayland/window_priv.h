@@ -60,9 +60,10 @@ struct wsi_window {
     struct wl_list output_list;
 
     PFN_wsiCloseWindow pfn_close;
-    PFN_wsiResizeWindow pfn_resize;
+    PFN_wsiConfigureWindow pfn_configure;
 
     void *user_data;
+    bool configured;
 };
 
 void

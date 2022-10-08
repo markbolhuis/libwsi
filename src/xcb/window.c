@@ -26,7 +26,7 @@ wsi_window_xcb_configure_notify(
         .height = event->height
     };
 
-    window->pfn_resize(window, extent, window->user_data);
+    window->pfn_configure(window->user_data, extent);
 }
 
 void
@@ -39,7 +39,7 @@ wsi_window_xcb_client_message(
     if (event->type == window->platform->xcb_atom_wm_protocols &&
         event->data.data32[0] == window->platform->xcb_atom_wm_delete_window)
     {
-        window->pfn_close(window, window->user_data);
+        window->pfn_close(window->user_data);
     }
 }
 
@@ -61,7 +61,7 @@ wsiCreateWindow(
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
     window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
     window->pfn_close = pCreateInfo->pfnClose;
-    window->pfn_resize = pCreateInfo->pfnResize;
+    window->pfn_configure = pCreateInfo->pfnConfigure;
     window->user_data = pCreateInfo->pUserData;
 
     if (pCreateInfo->parent) {

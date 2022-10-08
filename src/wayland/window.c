@@ -101,39 +101,36 @@ wsi_window_configure(struct wsi_window *window)
     bool rescaled = pending->scale != current->scale;
     if (rescaled) {
         current->scale = pending->scale;
+        resized = true;
     }
 
-    // TODO: Decide how best to handle Vulkan or EGL windows.
-    if (rescaled || resized) {
-        struct wsi_wl_extent buf_extent = wsi_window_get_buffer_extent(window);
+    if (resized) {
+        struct wsi_wl_extent be = wsi_window_get_buffer_extent(window);
 
         // TODO: Decide how best to handle Vulkan or EGL windows.
         if (window->api == WSI_API_EGL) {
             assert(window->wl_egl_window != NULL);
             wl_egl_window_resize(
                 window->wl_egl_window,
-                buf_extent.width,
-                buf_extent.height,
+                be.width,
+                be.height,
                 0, 0);
         }
 
-        if (window->pfn_resize) {
-            window->pfn_resize(
-                window,
-                wsi_extent_from_wl(buf_extent),
-                window->user_data);
-        }
+        window->pfn_configure(window->user_data, wsi_extent_from_wl(be));
+    }
 
-        uint32_t version = wl_surface_get_version(window->wl_surface);
-        if (version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
-            wl_surface_set_buffer_scale(window->wl_surface, current->scale);
-        }
+    uint32_t version = wl_surface_get_version(window->wl_surface);
+    if (rescaled && version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
+        wl_surface_set_buffer_scale(window->wl_surface, current->scale);
     }
 
     if (window->serial != 0) {
         xdg_surface_ack_configure(window->xdg_surface, window->serial);
         window->serial = 0;
     }
+
+    window->configured = true;
 }
 
 static void
@@ -267,7 +264,7 @@ xdg_toplevel_close(
     struct xdg_toplevel *xdg_toplevel)
 {
     struct wsi_window *window = data;
-    window->pfn_close(window, window->user_data);
+    window->pfn_close(window->user_data);
 }
 
 static void
@@ -428,7 +425,7 @@ wsiCreateWindow(
     window->user_extent = wsi_extent_to_wl(pCreateInfo->extent);
     window->user_data = pCreateInfo->pUserData;
     window->pfn_close = pCreateInfo->pfnClose;
-    window->pfn_resize = pCreateInfo->pfnResize;
+    window->pfn_configure = pCreateInfo->pfnConfigure;
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
     wl_surface_add_listener(window->wl_surface, &wl_surface_listener, window);
@@ -460,7 +457,10 @@ wsiCreateWindow(
 
     wl_surface_commit(window->wl_surface);
 
-    wl_display_roundtrip(platform->wl_display);
+    int ret = 0;
+    while(!window->configured && ret >= 0) {
+        ret = wl_display_dispatch(platform->wl_display);
+    }
 
     wl_list_insert(&platform->window_list, &window->link);
     *pWindow = window;
