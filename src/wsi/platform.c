@@ -76,20 +76,6 @@ wsiDestroyPlatform(WsiPlatform platform)
 }
 
 void
-wsiGetPlatformFeatures(WsiPlatform platform, WsiPlatformFeatures *pFeatures)
-{
-    PFN_wsiGetPlatformFeatures sym = wsi_platform_dlsym(platform, "wsiGetPlatformFeatures");
-    sym(platform->platform, pFeatures);
-}
-
-void
-wsiGetPlatformLimits(WsiPlatform platform, WsiPlatformLimits *pLimits)
-{
-    PFN_wsiGetPlatformLimits sym = wsi_platform_dlsym(platform, "wsiGetPlatformLimits");
-    sym(platform->platform, pLimits);
-}
-
-void
 wsiPoll(WsiPlatform platform)
 {
     PFN_wsiPoll sym = wsi_platform_dlsym(platform, "wsiPoll");

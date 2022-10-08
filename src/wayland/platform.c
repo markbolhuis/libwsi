@@ -404,25 +404,6 @@ wsiDestroyPlatform(WsiPlatform platform)
 }
 
 void
-wsiGetPlatformFeatures(WsiPlatform platform, WsiPlatformFeatures *pFeatures)
-{
-    memset(pFeatures, 0, sizeof(WsiPlatformFeatures));
-
-    pFeatures->windowing = platform->xdg_wm_base != NULL;
-}
-
-void
-wsiGetPlatformLimits(WsiPlatform platform, WsiPlatformLimits *pLimits)
-{
-    memset(pLimits, 0, sizeof(WsiPlatformLimits));
-
-    pLimits->maxWindowWidth = INT32_MAX;
-    pLimits->maxWindowHeight = INT32_MAX;
-    pLimits->maxEventQueueCount = 0;
-    pLimits->maxSeatCount = 0;
-}
-
-void
 wsiPoll(WsiPlatform platform)
 {
     struct wl_display *wl_display = platform->wl_display;
