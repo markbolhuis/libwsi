@@ -8,6 +8,7 @@ src_wsi_wl = files(
   'platform.c',
   'event_queue.c',
   'seat.c',
+  'keyboard.c',
   'window.c',
   'output.c',
   'egl/egl.c',
