@@ -10,6 +10,7 @@
 
 #include "platform_priv.h"
 #include "seat_priv.h"
+#include "pointer_priv.h"
 #include "keyboard_priv.h"
 
 #define WSI_WL_SEAT_VERSION 7
@@ -23,7 +24,14 @@ wl_seat_capabilities(void *data, struct wl_seat *wl_seat, uint32_t capabilities)
 
     seat->capabilities = capabilities;
 
+    bool has_pointer = capabilities & WL_SEAT_CAPABILITY_POINTER;
     bool has_keyboard = capabilities & WL_SEAT_CAPABILITY_KEYBOARD;
+
+    if (has_pointer && !seat->pointer) {
+        wsi_pointer_create(seat);
+    } else if (!has_pointer && seat->pointer) {
+        wsi_pointer_destroy(seat);
+    }
 
     if (has_keyboard && !seat->keyboard) {
         wsi_keyboard_create(seat);
@@ -80,6 +88,10 @@ wsi_seat_destroy(struct wsi_seat *seat)
     assert(seat->wl_seat != NULL);
 
     wl_list_remove(&seat->link);
+
+    if (seat->pointer) {
+        wsi_pointer_destroy(seat);
+    }
 
     if (seat->keyboard) {
         wsi_keyboard_destroy(seat);

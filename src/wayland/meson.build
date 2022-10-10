@@ -1,6 +1,7 @@
 wl_mod = import('unstable-wayland')
 
 dep_wl_client = dependency('wayland-client', version: '>= 1.21.0')
+dep_wl_cursor = dependency('wayland-cursor', version: '>= 1.21.0')
 dep_wl_egl    = dependency('wayland-egl', version: '>= 1.21.0')
 dep_xkbcommon = dependency('xkbcommon', version: '>= 1.4.0')
 
@@ -8,6 +9,7 @@ src_wsi_wl = files(
   'platform.c',
   'event_queue.c',
   'seat.c',
+  'pointer.c',
   'keyboard.c',
   'window.c',
   'output.c',
@@ -30,6 +32,7 @@ lib_wsi_wl = library('wsi-wl',
     dep_vulkan,
     dep_egl,
     dep_wl_client,
+    dep_wl_cursor,
     dep_wl_egl,
     dep_xkbcommon,
   ],

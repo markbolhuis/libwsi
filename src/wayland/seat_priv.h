@@ -12,6 +12,7 @@ struct wsi_seat {
     uint32_t           capabilities;
     char               *name;
 
+    struct wsi_pointer  *pointer;
     struct wsi_keyboard *keyboard;
 };
 
