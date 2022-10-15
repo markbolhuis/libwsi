@@ -41,9 +41,9 @@ wsiDestroySeat(WsiSeat seat)
 }
 
 WsiResult
-wsiEnumerateNativeSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiNativeSeat *pSeats)
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeatId *pSeats)
 {
-    PFN_wsiEnumerateNativeSeats sym = wsi_platform_dlsym(platform, "wsiEnumerateNativeSeats");
+    PFN_wsiEnumerateSeats sym = wsi_platform_dlsym(platform, "wsiEnumerateSeats");
     return sym(platform->platform, pSeatCount, pSeats);
 }
 

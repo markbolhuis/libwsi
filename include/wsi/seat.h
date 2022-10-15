@@ -7,16 +7,16 @@
 extern "C" {
 #endif
 
-typedef uint64_t WsiNativeSeat;
+typedef uint64_t WsiSeatId;
 
 typedef struct wsi_seat_create_info {
     WsiEventQueue eventQueue;
-    WsiNativeSeat nativeSeat;
+    WsiSeatId id;
 } WsiSeatCreateInfo;
 
 typedef WsiResult (*PFN_wsiCreateSeat)(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSeat *pSeat);
 typedef void (*PFN_wsiDestroySeat)(WsiSeat seat);
-typedef WsiResult (*PFN_wsiEnumerateNativeSeats)(WsiPlatform platform, uint32_t *pSeatCount, WsiNativeSeat *pSeats);
+typedef WsiResult (*PFN_wsiEnumerateSeats)(WsiPlatform platform, uint32_t *pSeatCount, WsiSeatId *pSeats);
 
 WsiResult
 wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSeat *pSeat);
@@ -25,7 +25,7 @@ void
 wsiDestroySeat(WsiSeat seat);
 
 WsiResult
-wsiEnumerateNativeSeats(WsiPlatform platform, uint32_t *pNativeSeatCount, WsiNativeSeat *pNativeSeats);
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeatId *pSeats);
 
 #ifdef __cplusplus
 }

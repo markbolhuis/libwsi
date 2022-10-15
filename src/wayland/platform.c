@@ -218,7 +218,7 @@ wl_registry_global(
             WSI_WL_SHM_VERSION);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
-        wsi_seat_bind(platform, name, version);
+        wsi_seat_ref_add(platform, name, version);
     }
     else if (strcmp(interface, wl_output_interface.name) == 0) {
         wsi_output_bind(platform, name, version);
@@ -262,11 +262,11 @@ wl_registry_global_remove(
     struct wsi_platform *platform = data;
     assert(platform->wl_registry == wl_registry);
 
-    struct wsi_seat *seat, *seat_tmp;
-    wl_list_for_each_safe(seat, seat_tmp, &platform->seat_list, link) {
-        if (name == seat->global.name) {
-            wsi_seat_destroy(seat);
-            return;
+    struct wsi_seat_ref *seat_ref, *seat_ref_tmp;
+    wl_list_for_each_safe(seat_ref, seat_ref_tmp, &platform->seat_list, link) {
+        if (seat_ref->name == name) {
+            wsi_seat_ref_remove(seat_ref);
+            break;
         }
     }
 
@@ -380,7 +380,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     return WSI_SUCCESS;
 
 err_globals:
-    wsi_seat_destroy_all(platform);
+    wsi_seat_ref_remove_all(platform);
     wsi_output_destroy_all(platform);
     wsi_platform_destroy_globals(platform);
     wl_registry_destroy(platform->wl_registry);
@@ -397,7 +397,7 @@ err_display:
 void
 wsiDestroyPlatform(WsiPlatform platform)
 {
-    wsi_seat_destroy_all(platform);
+    wsi_seat_ref_remove_all(platform);
     wsi_output_destroy_all(platform);
 
     wsi_platform_destroy_globals(platform);
