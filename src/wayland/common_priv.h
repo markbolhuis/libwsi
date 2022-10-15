@@ -36,4 +36,10 @@ wsi_extent_from_wl(
     return extent;
 }
 
+static inline bool
+wsi_wl_extent_equal(struct wsi_wl_extent a, struct wsi_wl_extent b)
+{
+    return a.width == b.width && a.height == b.height;
+}
+
 #endif

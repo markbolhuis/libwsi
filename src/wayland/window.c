@@ -29,12 +29,6 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
     return extent;
 }
 
-static bool
-wsi_wl_extent_equal(struct wsi_wl_extent a, struct wsi_wl_extent b)
-{
-    return a.width == b.width && a.height == b.height;
-}
-
 static int32_t
 wsi_window_get_max_scale(struct wsi_window *window)
 {
