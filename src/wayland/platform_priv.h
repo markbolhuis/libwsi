@@ -35,7 +35,7 @@ struct wsi_platform {
 };
 
 uint64_t
-wsi_platform_new_id(struct wsi_platform *platform);
+wsi_new_id(struct wsi_platform *platform);
 
 void *
 wsi_bind(

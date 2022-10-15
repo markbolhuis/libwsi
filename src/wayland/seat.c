@@ -97,7 +97,7 @@ wsi_seat_ref_add(struct wsi_platform *platform, uint32_t name, uint32_t version)
         return false;
     }
 
-    seat_ref->id = wsi_platform_new_id(platform);
+    seat_ref->id = wsi_new_id(platform);
     seat_ref->name = name;
     seat_ref->version = version;
 

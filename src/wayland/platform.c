@@ -23,12 +23,10 @@
 #define WSI_XDG_DECORATION_MANAGER_V1_VERSION 1
 
 uint64_t
-wsi_platform_new_id(struct wsi_platform *platform)
+wsi_new_id(struct wsi_platform *platform)
 {
     uint64_t id = ++platform->id;
-    if (id == 0) {
-        id++;
-    }
+    assert(id != 0);
     return id;
 }
 
