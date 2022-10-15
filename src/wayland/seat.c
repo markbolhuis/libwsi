@@ -57,6 +57,9 @@ const static struct wl_seat_listener wl_seat_listener = {
 static void
 wsi_seat_uninit(struct wsi_seat *seat)
 {
+    seat->ref->seat = NULL;
+    seat->ref = NULL;
+
     if (seat->pointer) {
         wsi_pointer_destroy(seat);
         seat->pointer = NULL;
@@ -161,6 +164,7 @@ wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSea
         WSI_WL_SEAT_VERSION);
     wl_seat_add_listener(seat->wl_seat, &wl_seat_listener, seat);
 
+    seat->ref = ref;
     ref->seat = seat;
     *pSeat = seat;
     return WSI_SUCCESS;

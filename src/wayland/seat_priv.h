@@ -11,6 +11,7 @@ struct wsi_seat_ref {
 
 struct wsi_seat {
     struct wsi_global  global;
+    struct wsi_seat_ref *ref;
 
     struct wl_seat     *wl_seat;
     uint32_t           capabilities;
