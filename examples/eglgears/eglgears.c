@@ -34,6 +34,7 @@
 #include <time.h>
 
 #include <wsi/platform.h>
+#include <wsi/event_queue.h>
 #include <wsi/window.h>
 #include <wsi/egl/egl.h>
 
@@ -44,8 +45,9 @@
 #define M_PI 3.14159265
 #endif
 
-static WsiPlatform g_platform;
-static WsiWindow   g_window;
+static WsiPlatform   g_platform;
+static WsiEventQueue g_event_queue;
+static WsiWindow     g_window;
 
 static bool g_running = true;
 static bool g_resized = false;
@@ -333,6 +335,8 @@ main(int argc, char *argv[])
         goto err_wsi_platform;
     }
 
+    wsiGetDefaultEventQueue(g_platform, &g_event_queue);
+
     res = wsiGetEGLDisplay(g_platform, &g_display);
     if (res != WSI_SUCCESS) {
         fprintf(stderr, "wsiGetEGLDisplay failed: %d", res);
@@ -384,6 +388,7 @@ main(int argc, char *argv[])
     }
 
     WsiWindowCreateInfo info = {0};
+    info.eventQueue = g_event_queue;
     info.extent.width = g_width;
     info.extent.height = g_height;
     info.pTitle = "Gears";
@@ -426,9 +431,8 @@ main(int argc, char *argv[])
 
     WsiExtent extent;
     while(true) {
-        wsiPoll(g_platform);
-
-        if (!g_running) {
+        res = wsiPollEventQueue(g_event_queue);
+        if (res != WSI_SUCCESS || !g_running) {
             break;
         }
 

@@ -6,6 +6,7 @@
 #include "wsi/platform.h"
 
 #include "platform_priv.h"
+#include "event_queue_priv.h"
 
 void *
 wsi_platform_dlsym(struct wsi_platform *platform, const char *symbol)
@@ -76,8 +77,17 @@ wsiDestroyPlatform(WsiPlatform platform)
 }
 
 void
-wsiPoll(WsiPlatform platform)
+wsiGetDefaultEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
 {
-    PFN_wsiPoll sym = wsi_platform_dlsym(platform, "wsiPoll");
-    sym(platform->platform);
+    struct wsi_event_queue *eq = calloc(1, sizeof(struct wsi_event_queue));
+    if (!eq) {
+        return;
+    }
+
+    eq->platform = platform;
+
+    PFN_wsiGetDefaultEventQueue sym = wsi_platform_dlsym(platform, "wsiGetDefaultEventQueue");
+    sym(platform->platform, &eq->event_queue);
+
+    *pEventQueue = eq;
 }

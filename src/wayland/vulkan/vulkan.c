@@ -8,6 +8,7 @@
 
 #include <vulkan/vulkan_wayland.h>
 
+#include "../event_queue_priv.h"
 #include "../common_priv.h"
 #include "../platform_priv.h"
 #include "../window_priv.h"

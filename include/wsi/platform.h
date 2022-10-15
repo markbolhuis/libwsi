@@ -9,7 +9,7 @@ extern "C" {
 
 typedef WsiResult (*PFN_wsiCreatePlatform)(WsiPlatform *pPlatform);
 typedef void (*PFN_wsiDestroyPlatform)(WsiPlatform platform);
-typedef void (*PFN_wsiPoll)(WsiPlatform platform);
+typedef void (*PFN_wsiGetDefaultEventQueue)(WsiPlatform platform, WsiEventQueue *pEventQueue);
 
 WsiResult
 wsiCreatePlatform(WsiPlatform *pPlatform);
@@ -18,7 +18,7 @@ void
 wsiDestroyPlatform(WsiPlatform platform);
 
 void
-wsiPoll(WsiPlatform platform);
+wsiGetDefaultEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue);
 
 #ifdef __cplusplus
 }

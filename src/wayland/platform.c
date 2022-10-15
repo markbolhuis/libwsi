@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <memory.h>
-#include <poll.h>
 
 #include <wayland-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
@@ -12,6 +11,7 @@
 
 #include "wsi/platform.h"
 
+#include "event_queue_priv.h"
 #include "platform_priv.h"
 #include "seat_priv.h"
 #include "output_priv.h"
@@ -351,6 +351,8 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     wl_list_init(&platform->window_list);
     wl_array_init(&platform->format_array);
 
+    platform->default_queue.wl_display = platform->wl_display;
+
     platform->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (platform->xkb_context == NULL) {
         result = WSI_ERROR_PLATFORM;
@@ -416,34 +418,7 @@ wsiDestroyPlatform(WsiPlatform platform)
 }
 
 void
-wsiPoll(WsiPlatform platform)
+wsiGetDefaultEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
 {
-    struct wl_display *wl_display = platform->wl_display;
-
-    if (wl_display_prepare_read(wl_display) == -1) {
-        wl_display_dispatch_pending(wl_display);
-        return;
-    }
-
-    wl_display_flush(wl_display);
-
-    struct pollfd pfd = {
-        .fd = wl_display_get_fd(wl_display),
-        .events = POLLIN,
-        .revents = 0,
-    };
-
-    int n = poll(&pfd, 1, 0);
-    if (n == -1) {
-        wl_display_cancel_read(wl_display);
-        return;
-    }
-
-    if (pfd.revents & POLLIN) {
-        wl_display_read_events(wl_display);
-    } else {
-        wl_display_cancel_read(wl_display);
-    }
-
-    wl_display_dispatch_pending(wl_display);
+    *pEventQueue = &platform->default_queue;
 }

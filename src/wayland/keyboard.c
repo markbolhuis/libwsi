@@ -7,6 +7,7 @@
 #include <wayland-client-protocol.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "event_queue_priv.h"
 #include "platform_priv.h"
 #include "seat_priv.h"
 #include "keyboard_priv.h"
