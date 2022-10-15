@@ -468,8 +468,7 @@ wsiCreateWindow(
 }
 
 void
-wsiDestroyWindow(
-    WsiWindow window)
+wsiDestroyWindow(WsiWindow window)
 {
     struct wsi_platform *platform = window->platform;
 
@@ -496,9 +495,7 @@ wsiDestroyWindow(
 }
 
 WsiResult
-wsiSetWindowParent(
-    WsiWindow window,
-    WsiWindow parent)
+wsiSetWindowParent(WsiWindow window, WsiWindow parent)
 {
     struct xdg_toplevel *xdg_parent = NULL;
     if (parent != NULL) {
@@ -510,9 +507,7 @@ wsiSetWindowParent(
 }
 
 WsiResult
-wsiSetWindowTitle(
-    WsiWindow window,
-    const char *pTitle)
+wsiSetWindowTitle(WsiWindow window, const char *pTitle)
 {
     xdg_toplevel_set_title(window->xdg_toplevel, pTitle);
     return WSI_SUCCESS;

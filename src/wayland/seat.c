@@ -177,10 +177,7 @@ wsiDestroySeat(WsiSeat seat)
 }
 
 WsiResult
-wsiEnumerateSeats(
-    WsiPlatform platform,
-    uint32_t *pSeatCount,
-    WsiSeatId *pSeats)
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeatId *pSeats)
 {
     uint32_t count = 0;
 

@@ -15,9 +15,7 @@
 #include "../window_priv.h"
 
 WsiResult
-wsiGetEGLDisplay(
-    WsiPlatform platform,
-    EGLDisplay *pDisplay)
+wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)
 {
     EGLAttrib attrib[] = {
         EGL_NONE,
