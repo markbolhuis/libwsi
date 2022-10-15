@@ -11,7 +11,6 @@
 #include "wsi/egl/egl.h"
 
 #include "../common_priv.h"
-#include "../event_queue_priv.h"
 #include "../platform_priv.h"
 #include "../window_priv.h"
 

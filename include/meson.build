@@ -1,7 +1,6 @@
 hdr_wsi = files(
   'wsi/common.h',
   'wsi/platform.h',
-  'wsi/event_queue.h',
   'wsi/window.h',
   'wsi/seat.h',
   'wsi/output.h',

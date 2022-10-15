@@ -6,7 +6,6 @@
 #include <wayland-client-protocol.h>
 #include <wayland-cursor.h>
 
-#include "event_queue_priv.h"
 #include "platform_priv.h"
 #include "seat_priv.h"
 #include "pointer_priv.h"

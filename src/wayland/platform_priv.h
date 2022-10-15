@@ -1,6 +1,16 @@
 #ifndef WSI_SRC_WAYLAND_PLATFORM_PRIVATE_H
 #define WSI_SRC_WAYLAND_PLATFORM_PRIVATE_H
 
+struct wsi_event_queue {
+    struct wl_display *wl_display;
+    struct wl_event_queue *wl_event_queue; // Must be NULL if the default
+};
+
+struct wsi_global {
+    struct wsi_platform *platform;
+    uint32_t name;
+};
+
 struct wsi_platform {
     struct wl_display *wl_display;
     struct wl_registry *wl_registry;
@@ -22,11 +32,6 @@ struct wsi_platform {
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
 
     struct xkb_context *xkb_context;
-};
-
-struct wsi_global {
-    struct wsi_platform *platform;
-    uint32_t name;
 };
 
 uint64_t

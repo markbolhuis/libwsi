@@ -34,7 +34,6 @@
 #include <time.h>
 
 #include <wsi/platform.h>
-#include <wsi/event_queue.h>
 #include <wsi/window.h>
 #include <wsi/egl/egl.h>
 

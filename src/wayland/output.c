@@ -8,7 +8,6 @@
 #include "wsi/output.h"
 #include "wsi/window.h"
 
-#include "event_queue_priv.h"
 #include "common_priv.h"
 #include "platform_priv.h"
 #include "output_priv.h"

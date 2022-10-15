@@ -8,7 +8,6 @@
 
 #include "wsi/seat.h"
 
-#include "event_queue_priv.h"
 #include "platform_priv.h"
 #include "seat_priv.h"
 #include "pointer_priv.h"
