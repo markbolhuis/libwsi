@@ -145,15 +145,13 @@ wsi_window_set_initial_state(struct wsi_window *window)
 }
 
 void
-wsi_window_handle_output_destroyed(
-    struct wsi_window *window,
-    struct wsi_output *output)
+wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
 {
     bool found = false;
 
     struct wsi_window_output *wo;
-    wl_list_for_each(wo, &window->output_list, link) {
-        if (wo->wl_output == output->wl_output) {
+    wl_list_for_each(wo, &w->output_list, link) {
+        if (wo->wl_output == o->wl_output) {
             found = true;
             break;
         }
@@ -166,11 +164,11 @@ wsi_window_handle_output_destroyed(
     wl_list_remove(&wo->link);
     free(wo);
 
-    if (wl_surface_get_version(window->wl_surface) >=
+    if (wl_surface_get_version(w->wl_surface) >=
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
-        window->pending.scale = wsi_window_get_max_scale(window);
-        wsi_window_configure(window);
+        w->pending.scale = wsi_window_get_max_scale(w);
+        wsi_window_configure(w);
     }
 }
 
@@ -382,7 +380,7 @@ wl_surface_leave(
     wl_list_remove(&wo->link);
     free(wo);
 
-    if (wl_surface_get_version(wl_surface) >=
+    if (wl_surface_get_version(wl_surface) <
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
         window->pending.scale = wsi_window_get_max_scale(window);

@@ -67,9 +67,7 @@ struct wsi_window {
 };
 
 void
-wsi_window_handle_output_destroyed(
-    struct wsi_window *window,
-    struct wsi_output *output);
+wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o);
 
 struct wsi_wl_extent
 wsi_window_get_buffer_extent(struct wsi_window *window);
