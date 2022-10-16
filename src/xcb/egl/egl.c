@@ -15,9 +15,7 @@
 #include "../window_priv.h"
 
 WsiResult
-wsiGetEGLDisplay(
-    WsiPlatform platform,
-    EGLDisplay *pDisplay)
+wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)
 {
     EGLAttrib attrib[] = {
         EGL_PLATFORM_XCB_SCREEN_EXT, platform->xcb_screen_id,
@@ -58,12 +56,12 @@ wsiCreateWindowEGLSurface(
         return WSI_ERROR_EGL;
     }
 
-    xcb_colormap_t colormap = xcb_generate_id(platform->xcb_connection);
+    window->xcb_colormap = xcb_generate_id(platform->xcb_connection);
 
     xcb_create_colormap_checked(
         platform->xcb_connection,
         XCB_COLORMAP_ALLOC_NONE,
-        colormap,
+        window->xcb_colormap,
         platform->xcb_screen->root,
         visualid);
 
@@ -71,7 +69,7 @@ wsiCreateWindowEGLSurface(
         platform->xcb_connection,
         window->xcb_window,
         XCB_CW_COLORMAP,
-        (const uint32_t[]){ colormap });
+        (const uint32_t[]){ window->xcb_colormap });
 
     EGLAttrib attrs[] = {
         EGL_NONE,
@@ -88,4 +86,29 @@ wsiCreateWindowEGLSurface(
 
     window->api = WSI_API_EGL;
     return WSI_SUCCESS;
+}
+
+void
+wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
+{
+    assert(window->api == WSI_API_EGL);
+
+    struct wsi_platform *platform = window->platform;
+
+    eglDestroySurface(dpy, surface);
+
+    const uint32_t value_list[] = {
+        platform->xcb_screen->default_colormap,
+    };
+
+    xcb_change_window_attributes(
+        platform->xcb_connection,
+        window->xcb_window,
+        XCB_CW_COLORMAP,
+        value_list);
+
+    xcb_free_colormap(platform->xcb_connection, window->xcb_colormap);
+    window->xcb_colormap = XCB_NONE;
+
+    window->api = WSI_API_NONE;
 }

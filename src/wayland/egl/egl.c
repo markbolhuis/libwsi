@@ -86,4 +86,13 @@ wsiCreateWindowEGLSurface(
     return WSI_SUCCESS;
 }
 
+void
+wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
+{
+    assert(window->api == WSI_API_EGL);
 
+    eglDestroySurface(dpy, surface);
+    wl_egl_window_destroy(window->wl_egl_window);
+    wl_surface_set_opaque_region(window->wl_surface, NULL);
+    window->api = WSI_API_NONE;
+}

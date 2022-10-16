@@ -447,7 +447,7 @@ main(int argc, char *argv[])
     ret = EXIT_SUCCESS;
 err_egl_interval:
 err_egl_current:
-    eglDestroySurface(g_display, g_surface);
+    wsiDestroyWindowEGLSurface(g_window, g_display, g_surface);
 err_wsi_surface:
     wsiDestroyWindow(g_window);
 err_wsi_window:

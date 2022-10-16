@@ -16,3 +16,10 @@ wsiCreateWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLConfig config, EG
     PFN_wsiCreateWindowEGLSurface sym = wsi_window_dlsym(window, "wsiCreateWindowEGLSurface");
     return sym(window->window, dpy, config, pSurface);
 }
+
+void
+wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
+{
+    PFN_wsiDestroyWindowEGLSurface sym = wsi_window_dlsym(window, "wsiDestroyWindowEGLSurface");
+    sym(window->window, dpy, surface);
+}
