@@ -1,5 +1,5 @@
-#ifndef WSI_INCLUDE_SEAT_H
-#define WSI_INCLUDE_SEAT_H
+#ifndef WSI_INCLUDE_INPUT_H
+#define WSI_INCLUDE_INPUT_H
 
 #include "common.h"
 

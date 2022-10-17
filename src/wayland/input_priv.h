@@ -1,5 +1,5 @@
-#ifndef WSI_SRC_WAYLAND_SEAT_PRIVATE_H
-#define WSI_SRC_WAYLAND_SEAT_PRIVATE_H
+#ifndef WSI_SRC_WAYLAND_INPUT_PRIVATE_H
+#define WSI_SRC_WAYLAND_INPUT_PRIVATE_H
 
 struct wsi_seat_ref {
     struct wl_list link;

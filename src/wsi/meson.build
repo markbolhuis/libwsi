@@ -1,7 +1,7 @@
 src_wsi = files(
   'platform.c',
   'output.c',
-  'seat.c',
+  'input.c',
   'window.c',
   'egl/egl.c',
   'vulkan/vulkan.c',

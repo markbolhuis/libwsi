@@ -13,7 +13,7 @@
 #include "wsi/platform.h"
 
 #include "platform_priv.h"
-#include "seat_priv.h"
+#include "input_priv.h"
 #include "output_priv.h"
 
 #define WSI_WL_COMPOSITOR_VERSION 5

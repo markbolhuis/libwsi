@@ -8,7 +8,7 @@
 #include <xkbcommon/xkbcommon.h>
 
 #include "platform_priv.h"
-#include "seat_priv.h"
+#include "input_priv.h"
 #include "keyboard_priv.h"
 
 static void

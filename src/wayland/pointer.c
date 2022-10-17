@@ -7,7 +7,7 @@
 #include <wayland-cursor.h>
 
 #include "platform_priv.h"
-#include "seat_priv.h"
+#include "input_priv.h"
 #include "pointer_priv.h"
 
 static void

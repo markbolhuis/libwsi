@@ -1,5 +1,5 @@
-#ifndef WSI_SRC_WSI_SEAT_PRIVATE_H
-#define WSI_SRC_WSI_SEAT_PRIVATE_H
+#ifndef WSI_SRC_WSI_INPUT_PRIVATE_H
+#define WSI_SRC_WSI_INPUT_PRIVATE_H
 
 struct wsi_seat {
     struct wsi_platform *platform;
