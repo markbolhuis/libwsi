@@ -11,6 +11,46 @@
 #include "seat_priv.h"
 #include "keyboard_priv.h"
 
+static void
+wsi_keyboard_reset(struct wsi_keyboard *keyboard)
+{
+    xkb_state_unref(keyboard->xkb_state);
+    keyboard->xkb_state = NULL;
+
+    xkb_keymap_unref(keyboard->xkb_keymap);
+    keyboard->xkb_keymap = NULL;
+}
+
+static bool
+wsi_keyboard_init_xkb(struct wsi_keyboard *keyboard, int fd, uint32_t size)
+{
+    char *map_str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+    if (map_str == MAP_FAILED) {
+        return false;
+    }
+
+    struct xkb_keymap *keymap = xkb_keymap_new_from_string(
+        keyboard->xkb_context,
+        map_str,
+        XKB_KEYMAP_FORMAT_TEXT_V1,
+        XKB_KEYMAP_COMPILE_NO_FLAGS);
+    munmap(map_str, size);
+    if (!keymap) {
+        return false;
+    }
+
+    struct xkb_state *state = xkb_state_new(keymap);
+    if (!state) {
+        xkb_keymap_unref(keymap);
+        return false;
+    }
+
+    keyboard->xkb_keymap = keymap;
+    keyboard->xkb_state = state;
+    return true;
+}
+
 // region Wl Keyboard
 
 static void
@@ -23,41 +63,14 @@ wl_keyboard_keymap(
 {
     struct wsi_keyboard *keyboard = data;
 
-    xkb_state_unref(keyboard->xkb_state);
-    keyboard->xkb_state = NULL;
-
-    xkb_keymap_unref(keyboard->xkb_keymap);
-    keyboard->xkb_keymap = NULL;
+    wsi_keyboard_reset(keyboard);
 
     if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
         close(fd);
         return;
     }
 
-    char *map_str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-    close(fd);
-    if (map_str == MAP_FAILED) {
-        return;
-    }
-
-    struct xkb_keymap *keymap = xkb_keymap_new_from_string(
-        keyboard->xkb_context,
-        map_str,
-        XKB_KEYMAP_FORMAT_TEXT_V1,
-        XKB_KEYMAP_COMPILE_NO_FLAGS);
-    munmap(map_str, size);
-    if (!keymap) {
-        return;
-    }
-
-    struct xkb_state *state = xkb_state_new(keymap);
-    if (!state) {
-        xkb_keymap_unref(keymap);
-        return;
-    }
-
-    keyboard->xkb_keymap = keymap;
-    keyboard->xkb_state = state;
+    wsi_keyboard_init_xkb(keyboard, fd, size);
 }
 
 static void
