@@ -10,7 +10,6 @@
 #include "wsi/window.h"
 #include "wsi/egl/egl.h"
 
-#include "../common_priv.h"
 #include "../platform_priv.h"
 #include "../window_priv.h"
 
@@ -43,7 +42,7 @@ wsiCreateWindowEGLSurface(
         return WSI_ERROR_WINDOW_IN_USE;
     }
 
-    struct wsi_wl_extent extent = wsi_window_get_buffer_extent(window);
+    struct wsi_extent extent = wsi_window_get_buffer_extent(window);
 
     window->wl_egl_window = wl_egl_window_create(
         window->wl_surface,

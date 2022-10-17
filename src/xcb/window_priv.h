@@ -12,7 +12,8 @@ struct wsi_window {
     xcb_window_t xcb_parent;
     xcb_colormap_t xcb_colormap;
 
-    struct wsi_xcb_extent user_extent;
+    uint16_t user_width;
+    uint16_t user_height;
 
     void *user_data;
 

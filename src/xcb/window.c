@@ -45,6 +45,7 @@ wsi_window_xcb_client_message(
 
 // endregion
 
+
 WsiResult
 wsiCreateWindow(
     WsiPlatform platform,
@@ -59,7 +60,8 @@ wsiCreateWindow(
     window->platform = platform;
     window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
-    window->user_extent = wsi_extent_to_xcb(pCreateInfo->extent);
+    window->user_width = wsi_xcb_clamp(pCreateInfo->extent.width);
+    window->user_height = wsi_xcb_clamp(pCreateInfo->extent.height);
     window->pfn_close = pCreateInfo->pfnClose;
     window->pfn_configure = pCreateInfo->pfnConfigure;
     window->user_data = pCreateInfo->pUserData;
@@ -85,8 +87,8 @@ wsiCreateWindow(
         window->xcb_window,
         window->xcb_parent,
         0, 0,
-        window->user_extent.width,
-        window->user_extent.height,
+        window->user_width,
+        window->user_height,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
         XCB_COPY_FROM_PARENT,

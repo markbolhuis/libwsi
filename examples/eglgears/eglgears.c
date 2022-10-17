@@ -47,12 +47,10 @@
 static WsiPlatform   g_platform;
 static WsiEventQueue g_event_queue;
 static WsiWindow     g_window;
+static WsiExtent     g_extent = { 300, 300 };
 
 static bool g_running = true;
 static bool g_resized = false;
-
-static uint32_t g_width = 300;
-static uint32_t g_height = 300;
 
 static EGLDisplay  g_display;
 static EGLConfig   g_config;
@@ -218,13 +216,13 @@ static void
 draw()
 {
     if (g_resized) {
-        glViewport(0, 0, (GLsizei) g_width, (GLsizei) g_height);
+        glViewport(0, 0, (GLsizei) g_extent.width, (GLsizei) g_extent.height);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        GLfloat hf = (GLfloat) g_height;
-        GLfloat wf = (GLfloat) g_width;
+        GLfloat hf = (GLfloat) g_extent.height;
+        GLfloat wf = (GLfloat) g_extent.width;
 
         if (hf > wf) {
             GLfloat aspect = hf / wf;
@@ -318,8 +316,7 @@ handle_window_close(void *data)
 static void
 handle_window_configure(void *data, WsiExtent extent)
 {
-    g_width = extent.width;
-    g_height = extent.height;
+    g_extent = extent;
     g_resized = true;
 }
 
@@ -388,8 +385,7 @@ main(int argc, char *argv[])
 
     WsiWindowCreateInfo info = {0};
     info.eventQueue = g_event_queue;
-    info.extent.width = g_width;
-    info.extent.height = g_height;
+    info.extent = g_extent;
     info.pTitle = "Gears";
     info.pfnClose = handle_window_close;
     info.pfnConfigure = handle_window_configure;

@@ -20,10 +20,10 @@ struct wsi_window_output {
     struct wl_output *wl_output;
 };
 
-struct wsi_wl_extent
+struct wsi_extent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
-    struct wsi_wl_extent extent = window->current.extent;
+    struct wsi_extent extent = window->current.extent;
     extent.width *= window->current.scale;
     extent.height *= window->current.scale;
     return extent;
@@ -70,7 +70,7 @@ wsi_window_configure(struct wsi_window *window)
 
     bool resized = false;
     if (mask & WSI_XDG_EVENT_CONFIGURE) {
-        resized = !wsi_wl_extent_equal(current->extent, pending->extent);
+        resized = !wsi_extent_equal(current->extent, pending->extent);
         if (resized) {
             current->extent = pending->extent;
         }
@@ -99,7 +99,7 @@ wsi_window_configure(struct wsi_window *window)
     }
 
     if (resized) {
-        struct wsi_wl_extent be = wsi_window_get_buffer_extent(window);
+        struct wsi_extent be = wsi_window_get_buffer_extent(window);
 
         // TODO: Decide how best to handle Vulkan or EGL windows.
         if (window->api == WSI_API_EGL) {
@@ -111,7 +111,7 @@ wsi_window_configure(struct wsi_window *window)
                 0, 0);
         }
 
-        window->pfn_configure(window->user_data, wsi_extent_from_wl(be));
+        window->pfn_configure(window->user_data, be);
     }
 
     uint32_t version = wl_surface_get_version(window->wl_surface);
@@ -414,7 +414,7 @@ wsiCreateWindow(
 
     window->platform = platform;
     window->api = WSI_API_NONE;
-    window->user_extent = wsi_extent_to_wl(pCreateInfo->extent);
+    window->user_extent = pCreateInfo->extent;
     window->user_data = pCreateInfo->pUserData;
     window->pfn_close = pCreateInfo->pfnClose;
     window->pfn_configure = pCreateInfo->pfnConfigure;

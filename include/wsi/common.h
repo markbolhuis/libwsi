@@ -41,8 +41,8 @@ typedef enum wsi_result {
 } WsiResult;
 
 typedef struct wsi_extent {
-    uint32_t width;
-    uint32_t height;
+    int32_t width;
+    int32_t height;
 } WsiExtent;
 
 typedef enum wsi_api {
