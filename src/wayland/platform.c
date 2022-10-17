@@ -408,6 +408,7 @@ err_globals:
 err_registry:
     xkb_context_unref(platform->xkb_context);
 err_xkb:
+    wl_array_release(&platform->format_array);
     wl_display_disconnect(platform->wl_display);
 err_display:
     free(platform);
