@@ -134,6 +134,10 @@ wl_keyboard_repeat_info(
     int32_t rate,
     int32_t delay)
 {
+    struct wsi_keyboard *keyboard = data;
+
+    keyboard->repeat_rate = rate;
+    keyboard->repeat_delay = delay;
 }
 
 static const struct wl_keyboard_listener wl_keyboard_listener = {
