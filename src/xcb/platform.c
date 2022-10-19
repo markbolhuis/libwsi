@@ -177,4 +177,6 @@ wsiPollEventQueue(WsiEventQueue eventQueue)
 
         free(event);
     }
+
+    return WSI_SUCCESS;
 }
