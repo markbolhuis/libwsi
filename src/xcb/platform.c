@@ -85,6 +85,8 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         goto err_connect;
     }
 
+    platform->default_queue.platform = platform;
+
     const xcb_setup_t *setup = xcb_get_setup(platform->xcb_connection);
 
     platform->xcb_screen = wsi_xcb_get_screen(setup, platform->xcb_screen_id);
@@ -117,14 +119,7 @@ wsiDestroyPlatform(WsiPlatform platform)
 void
 wsiGetDefaultEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
 {
-    struct wsi_event_queue *eq = calloc(1, sizeof(struct wsi_event_queue));
-    if (!eq) {
-        return;
-    }
-
-    eq->platform = platform;
-
-    *pEventQueue = eq;
+    *pEventQueue = &platform->default_queue;
 }
 
 WsiResult

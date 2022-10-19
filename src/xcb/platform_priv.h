@@ -10,6 +10,8 @@ struct wsi_platform {
     xcb_screen_t     *xcb_screen;
     int              xcb_screen_id;
 
+    struct wsi_event_queue default_queue;
+
     xcb_atom_t       xcb_atom_wm_protocols;
     xcb_atom_t       xcb_atom_wm_delete_window;
 
