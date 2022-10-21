@@ -11,30 +11,36 @@
 #include "pointer_priv.h"
 
 static void
-wsi_pointer_set_cursor(struct wsi_pointer *pointer, uint32_t serial)
+wsi_pointer_set_cursor(
+    struct wsi_pointer *ptr,
+    const char *name,
+    uint32_t serial)
 {
-    struct wl_cursor_image *image = pointer->wl_cursor->images[0];
+    ptr->wl_cursor = wl_cursor_theme_get_cursor(ptr->wl_cursor_theme, name);
 
-    wl_surface_attach(
-        pointer->wl_cursor_surface,
-        wl_cursor_image_get_buffer(image),
-        0, 0);
+    struct wl_buffer *buffer = NULL;
+    int32_t x = 0, y = 0;
+    if (ptr->wl_cursor != NULL) {
+        struct wl_cursor_image *image = ptr->wl_cursor->images[0];
+        buffer = wl_cursor_image_get_buffer(image);
+        x = (int32_t)image->hotspot_x;
+        y = (int32_t)image->hotspot_y;
+    }
 
-    wl_surface_commit(pointer->wl_cursor_surface);
+    wl_surface_attach(ptr->wl_cursor_surface, buffer, 0, 0);
+    wl_surface_commit(ptr->wl_cursor_surface);
 
-    wl_pointer_set_cursor(
-        pointer->wl_pointer,
-        serial,
-        pointer->wl_cursor_surface,
-        (int32_t)image->hotspot_x,
-        (int32_t)image->hotspot_y);
+    struct wl_surface *surface = ptr->wl_cursor
+                               ? ptr->wl_cursor_surface
+                               : NULL;
+    wl_pointer_set_cursor(ptr->wl_pointer, serial, surface, x, y);
 }
 
 static void
 wsi_pointer_frame(struct wsi_pointer *pointer)
 {
     if (pointer->frame.mask & WSI_POINTER_EVENT_ENTER) {
-        wsi_pointer_set_cursor(pointer, pointer->frame.serial);
+        wsi_pointer_set_cursor(pointer, "left_ptr", pointer->frame.serial);
     }
 
     pointer->frame.mask = WSI_POINTER_EVENT_NONE;
@@ -242,7 +248,6 @@ wsi_pointer_create(struct wsi_seat *seat)
 
     ptr->wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
     ptr->wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
-    ptr->wl_cursor = wl_cursor_theme_get_cursor(ptr->wl_cursor_theme, "left_ptr");
 
     seat->pointer = ptr;
 
