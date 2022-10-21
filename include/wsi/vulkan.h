@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "../common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {

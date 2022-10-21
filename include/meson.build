@@ -4,8 +4,8 @@ hdr_wsi = files(
   'wsi/window.h',
   'wsi/input.h',
   'wsi/output.h',
-  'wsi/egl/egl.h',
-  'wsi/vulkan/vulkan.h',
+  'wsi/egl.h',
+  'wsi/vulkan.h',
 )
 
 install_headers(

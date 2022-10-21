@@ -3,8 +3,8 @@ src_wsi = files(
   'output.c',
   'input.c',
   'window.c',
-  'egl/egl.c',
-  'vulkan/vulkan.c',
+  'egl.c',
+  'vulkan.c',
 )
 
 lib_wsi = library('wsi', src_wsi,

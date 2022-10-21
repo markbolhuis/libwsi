@@ -12,8 +12,8 @@ src_wsi_wl = files(
   'keyboard.c',
   'window.c',
   'output.c',
-  'egl/egl.c',
-  'vulkan/vulkan.c',
+  'egl.c',
+  'vulkan.c',
 )
 
 wl_xmls = [

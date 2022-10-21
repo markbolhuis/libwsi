@@ -8,10 +8,10 @@
 #include <EGL/eglext.h>
 
 #include "wsi/window.h"
-#include "wsi/egl/egl.h"
+#include "wsi/egl.h"
 
-#include "../platform_priv.h"
-#include "../window_priv.h"
+#include "platform_priv.h"
+#include "window_priv.h"
 
 WsiResult
 wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)

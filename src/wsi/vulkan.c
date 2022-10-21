@@ -1,4 +1,4 @@
-#include "wsi/vulkan/vulkan.h"
+#include "wsi/vulkan.h"
 
 #include "platform_priv.h"
 #include "window_priv.h"

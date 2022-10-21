@@ -3,8 +3,8 @@ dep_xcb = dependency('xcb', version : '>=1.15')
 src_wsi_xcb = files(
   'platform.c',
   'window.c',
-  'egl/egl.c',
-  'vulkan/vulkan.c',
+  'egl.c',
+  'vulkan.c',
   'utils.c',
 )
 

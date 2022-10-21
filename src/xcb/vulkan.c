@@ -1,21 +1,23 @@
-#include <memory.h>
 #include <assert.h>
+#include <memory.h>
 
-#include <wayland-util.h>
+#include <xcb/xcb.h>
 
 #include "wsi/window.h"
-#include "wsi/vulkan/vulkan.h"
+#include "wsi/vulkan.h"
 
-#include <vulkan/vulkan_wayland.h>
+#include <vulkan/vulkan_xcb.h>
 
-#include "../common_priv.h"
-#include "../platform_priv.h"
-#include "../window_priv.h"
+#include "utils.h"
+
+#include "common_priv.h"
+#include "platform_priv.h"
+#include "window_priv.h"
 
 const uint32_t INSTANCE_EXTENSION_COUNT = 2;
 const char *INSTANCE_EXTENSION_NAMES[2] ={
     VK_KHR_SURFACE_EXTENSION_NAME,
-    VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
+    VK_KHR_XCB_SURFACE_EXTENSION_NAME,
 };
 
 const uint32_t DEVICE_EXTENSION_COUNT = 1;
@@ -75,10 +77,11 @@ wsiGetPhysicalDevicePresentationSupport(
     VkPhysicalDevice physicalDevice,
     uint32_t queueFamilyIndex)
 {
-    return vkGetPhysicalDeviceWaylandPresentationSupportKHR(
+    return vkGetPhysicalDeviceXcbPresentationSupportKHR(
         physicalDevice,
         queueFamilyIndex,
-        platform->wl_display);
+        platform->xcb_connection,
+        platform->xcb_screen->root_visual);
 }
 
 WsiResult
@@ -89,23 +92,23 @@ wsiCreateWindowSurface(
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    assert(window->platform == platform);
-
     if (window->api != WSI_API_NONE) {
         return WSI_ERROR_WINDOW_IN_USE;
     }
 
-    VkWaylandSurfaceCreateInfoKHR wlInfo = {0};
-    wlInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
-    wlInfo.pNext = NULL;
-    wlInfo.flags = 0;
-    wlInfo.display = platform->wl_display;
-    wlInfo.surface = window->wl_surface;
+    assert(window->platform == platform);
+
+    VkXcbSurfaceCreateInfoKHR xcbInfo = {0};
+    xcbInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+    xcbInfo.pNext = NULL;
+    xcbInfo.flags = 0;
+    xcbInfo.connection = platform->xcb_connection;
+    xcbInfo.window = window->xcb_window;
 
     VkSurfaceKHR surface;
-    VkResult vres = vkCreateWaylandSurfaceKHR(
+    VkResult vres = vkCreateXcbSurfaceKHR(
         instance,
-        &wlInfo,
+        &xcbInfo,
         pAllocator,
         &surface);
 

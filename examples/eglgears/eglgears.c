@@ -35,7 +35,7 @@
 
 #include <wsi/platform.h>
 #include <wsi/window.h>
-#include <wsi/egl/egl.h>
+#include <wsi/egl.h>
 
 #include <EGL/egl.h>
 #include <GL/gl.h>

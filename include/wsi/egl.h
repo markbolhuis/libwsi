@@ -1,7 +1,7 @@
 #ifndef WSI_INCLUDE_EGL_EGL_H
 #define WSI_INCLUDE_EGL_EGL_H
 
-#include "../common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
