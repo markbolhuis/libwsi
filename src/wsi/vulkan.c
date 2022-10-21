@@ -36,12 +36,11 @@ wsiGetPhysicalDevicePresentationSupport(
 
 WsiResult
 wsiCreateWindowSurface(
-    WsiPlatform platform,
     WsiWindow window,
     VkInstance instance,
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    PFN_wsiCreateWindowSurface sym = wsi_platform_dlsym(platform, "wsiCreateWindowSurface");
-    return sym(platform->platform, window->window, instance, pAllocator, pSurface);
+    PFN_wsiCreateWindowSurface sym = wsi_window_dlsym(window, "wsiCreateWindowSurface");
+    return sym(window->window, instance, pAllocator, pSurface);
 }

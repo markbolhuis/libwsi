@@ -83,13 +83,12 @@ wsiGetPhysicalDevicePresentationSupport(
 
 WsiResult
 wsiCreateWindowSurface(
-    WsiPlatform platform,
     WsiWindow window,
     VkInstance instance,
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    assert(window->platform == platform);
+    struct wsi_platform *platform = window->platform;
 
     if (window->api != WSI_API_NONE) {
         return WSI_ERROR_WINDOW_IN_USE;
