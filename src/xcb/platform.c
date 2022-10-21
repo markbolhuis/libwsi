@@ -103,8 +103,8 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
     return WSI_SUCCESS;
 
 err_screen:
-    xcb_disconnect(platform->xcb_connection);
 err_connect:
+    xcb_disconnect(platform->xcb_connection);
     free(platform);
     return result;
 }
