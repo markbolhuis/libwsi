@@ -436,10 +436,10 @@ wsiDestroyPlatform(WsiPlatform platform)
     free(platform);
 }
 
-void
-wsiGetDefaultEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
+WsiEventQueue
+wsiGetDefaultEventQueue(WsiPlatform platform)
 {
-    *pEventQueue = &platform->default_queue;
+    return &platform->default_queue;
 }
 
 WsiResult

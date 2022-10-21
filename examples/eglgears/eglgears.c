@@ -331,7 +331,7 @@ main(int argc, char *argv[])
         goto err_wsi_platform;
     }
 
-    wsiGetDefaultEventQueue(g_platform, &g_event_queue);
+    g_event_queue = wsiGetDefaultEventQueue(g_platform);
 
     res = wsiGetEGLDisplay(g_platform, &g_display);
     if (res != WSI_SUCCESS) {

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <dlfcn.h>
 
 #include "wsi/platform.h"
@@ -81,20 +82,18 @@ wsiDestroyPlatform(WsiPlatform platform)
     free(platform);
 }
 
-void
-wsiGetDefaultEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
+WsiEventQueue
+wsiGetDefaultEventQueue(WsiPlatform platform)
 {
     struct wsi_event_queue *eq = calloc(1, sizeof(struct wsi_event_queue));
-    if (!eq) {
-        return;
-    }
+    assert(eq != NULL);
 
     eq->platform = platform;
 
     PFN_wsiGetDefaultEventQueue sym = wsi_platform_dlsym(platform, "wsiGetDefaultEventQueue");
-    sym(platform->platform, &eq->event_queue);
+    eq->event_queue = sym(platform->platform);
 
-    *pEventQueue = eq;
+    return eq;
 }
 
 WsiResult
