@@ -45,11 +45,11 @@ wsi_pointer_set_cursor(
 static void
 wsi_pointer_frame(struct wsi_pointer *pointer)
 {
-    if (pointer->frame.mask & WSI_POINTER_EVENT_ENTER) {
+    if (pointer->frame.mask & WSI_WL_POINTER_EVENT_ENTER) {
         wsi_pointer_set_cursor(pointer, "left_ptr", pointer->frame.serial);
     }
 
-    pointer->frame.mask = WSI_POINTER_EVENT_NONE;
+    pointer->frame.mask = WSI_WL_POINTER_EVENT_NONE;
 }
 
 // region Wl Pointer
@@ -65,7 +65,7 @@ wl_pointer_enter(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_ENTER;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_ENTER;
     pointer->frame.serial = serial;
     pointer->frame.enter = surface;
     pointer->frame.x = wl_fixed_to_double(sx);
@@ -85,7 +85,7 @@ wl_pointer_leave(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_LEAVE;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LEAVE;
     pointer->frame.serial = serial;
     pointer->frame.leave = surface;
 
@@ -104,7 +104,7 @@ wl_pointer_motion(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_MOTION;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_MOTION;
     pointer->frame.time = time;
     pointer->frame.x = wl_fixed_to_double(sx);
     pointer->frame.y = wl_fixed_to_double(sy);
@@ -125,7 +125,7 @@ wl_pointer_button(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_BUTTON;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_BUTTON;
     pointer->frame.serial = serial;
     pointer->frame.time = time;
     pointer->frame.button = button;
@@ -146,7 +146,7 @@ wl_pointer_axis(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_AXIS;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS;
     pointer->frame.axes[axis].start_time = time;
     pointer->frame.axes[axis].value = wl_fixed_to_double(value);
 
@@ -173,7 +173,7 @@ wl_pointer_axis_source(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_AXIS_SOURCE;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_SOURCE;
     pointer->frame.axis_source = axis_source;
 }
 
@@ -186,7 +186,7 @@ wl_pointer_axis_stop(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_AXIS_STOP;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_STOP;
     pointer->frame.axes[axis].stop_time = time;
 }
 
@@ -202,7 +202,7 @@ wl_pointer_axis_discrete(
     {
         struct wsi_pointer *pointer = data;
 
-        pointer->frame.mask |= WSI_POINTER_EVENT_AXIS_DISCRETE;
+        pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_DISCRETE;
         pointer->frame.axes[axis].discrete = discrete * 120;
     }
 }
@@ -216,7 +216,7 @@ wl_pointer_axis_value120(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_EVENT_AXIS_DISCRETE;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_DISCRETE;
     pointer->frame.axes[axis].discrete = value;
 }
 
