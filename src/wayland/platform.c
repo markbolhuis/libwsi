@@ -348,15 +348,10 @@ static const struct wl_registry_listener wl_registry_listener = {
 
 // endregion
 
-WsiResult
-wsiCreatePlatform(WsiPlatform *pPlatform)
+static enum wsi_result
+wsi_platform_init(struct wsi_platform *platform)
 {
     enum wsi_result result;
-
-    struct wsi_platform *platform = calloc(1, sizeof(struct wsi_platform));
-    if (platform == NULL) {
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
 
     platform->wl_display = wl_display_connect(NULL);
     if (platform->wl_display == NULL) {
@@ -396,7 +391,6 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         goto err_globals;
     }
 
-    *pPlatform = platform;
     return WSI_SUCCESS;
 
 err_globals:
@@ -411,28 +405,44 @@ err_xkb:
     wl_array_release(&platform->format_array);
     wl_display_disconnect(platform->wl_display);
 err_display:
-    free(platform);
     return result;
+}
+
+static void
+wsi_platform_uninit(struct wsi_platform *platform)
+{
+    wsi_seat_ref_remove_all(platform);
+    wsi_output_destroy_all(platform);
+    wsi_platform_destroy_globals(platform);
+    wl_registry_destroy(platform->wl_registry);
+    wl_display_roundtrip(platform->wl_display);
+    xkb_context_unref(platform->xkb_context);
+    wl_array_release(&platform->format_array);
+    wl_display_disconnect(platform->wl_display);
+}
+
+WsiResult
+wsiCreatePlatform(WsiPlatform *pPlatform)
+{
+    struct wsi_platform *platform = calloc(1, sizeof(*platform));
+    if (platform == NULL) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    enum wsi_result result = wsi_platform_init(platform);
+    if (result != WSI_SUCCESS) {
+        free(platform);
+        return result;
+    }
+
+    *pPlatform = platform;
+    return WSI_SUCCESS;
 }
 
 void
 wsiDestroyPlatform(WsiPlatform platform)
 {
-    wsi_seat_ref_remove_all(platform);
-    wsi_output_destroy_all(platform);
-
-    wsi_platform_destroy_globals(platform);
-
-    wl_registry_destroy(platform->wl_registry);
-
-    wl_display_roundtrip(platform->wl_display);
-
-    xkb_context_unref(platform->xkb_context);
-
-    wl_array_release(&platform->format_array);
-
-    wl_display_disconnect(platform->wl_display);
-
+    wsi_platform_uninit(platform);
     free(platform);
 }
 
