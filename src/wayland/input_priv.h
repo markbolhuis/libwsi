@@ -63,17 +63,10 @@ struct wsi_keyboard {
     int32_t repeat_delay;
 };
 
-struct wsi_seat_ref {
-    struct wl_list link;
-    uint64_t id;
-    uint32_t name;
-    uint32_t version;
-    struct wsi_seat *seat;
-};
-
 struct wsi_seat {
     struct wsi_global  global;
-    struct wsi_seat_ref *ref;
+    uint64_t           id;
+    struct wl_list     link;
 
     struct wl_seat     *wl_seat;
     uint32_t           capabilities;
@@ -83,13 +76,13 @@ struct wsi_seat {
     struct wsi_keyboard *keyboard;
 };
 
-bool
-wsi_seat_ref_add(struct wsi_platform *platform, uint32_t name, uint32_t version);
+struct wsi_seat *
+wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version);
 
 void
-wsi_seat_ref_remove(struct wsi_seat_ref *seat);
+wsi_seat_destroy(struct wsi_seat *seat);
 
 void
-wsi_seat_ref_remove_all(struct wsi_platform *platform);
+wsi_seat_destroy_all(struct wsi_platform *platform);
 
 #endif

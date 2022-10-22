@@ -506,25 +506,45 @@ const static struct wl_seat_listener wl_seat_listener = {
 
 // endregion
 
-static void
-wsi_seat_uninit(struct wsi_seat *seat)
+struct wsi_seat *
+wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
 {
-    seat->ref->seat = NULL;
-    seat->ref = NULL;
+    struct wsi_seat *seat = calloc(1, sizeof(struct wsi_seat));
+    if (!seat) {
+        return NULL;
+    }
+
+    seat->global.platform = platform;
+    seat->global.name = name;
+    seat->id = wsi_new_id(platform);
+
+    seat->wl_seat = wsi_bind(
+        platform,
+        name,
+        &wl_seat_interface,
+        version,
+        WSI_WL_SEAT_VERSION);
+    wl_seat_add_listener(seat->wl_seat, &wl_seat_listener, seat);
+
+    wl_list_insert(&platform->seat_list, &seat->link);
+    return seat;
+}
+
+void
+wsi_seat_destroy(struct wsi_seat *seat)
+{
+    wl_list_remove(&seat->link);
 
     if (seat->pointer) {
-        wsi_pointer_destroy(seat);
-        seat->pointer = NULL;
+        // TODO: Destroy pointer
     }
 
     if (seat->keyboard) {
-        wsi_keyboard_destroy(seat);
-        seat->keyboard = NULL;
+        // TODO: Destroy keyboard
     }
 
     if (seat->name) {
         free(seat->name);
-        seat->name = NULL;
     }
 
     if (seat->wl_seat) {
@@ -535,106 +555,26 @@ wsi_seat_uninit(struct wsi_seat *seat)
         } else {
             wl_seat_destroy(seat->wl_seat);
         }
-        seat->wl_seat = NULL;
     }
 
-    seat->global.name = 0;
-    seat->capabilities = 0;
-}
-
-bool
-wsi_seat_ref_add(struct wsi_platform *platform, uint32_t name, uint32_t version)
-{
-    struct wsi_seat_ref *seat_ref = calloc(1, sizeof(struct wsi_seat_ref));
-    if (!seat_ref) {
-        return false;
-    }
-
-    seat_ref->id = wsi_new_id(platform);
-    seat_ref->name = name;
-    seat_ref->version = version;
-
-    wl_list_insert(&platform->seat_list, &seat_ref->link);
-    return true;
-}
-
-void
-wsi_seat_ref_remove(struct wsi_seat_ref *seat_ref)
-{
-    wl_list_remove(&seat_ref->link);
-
-    if (seat_ref->seat) {
-        wsi_seat_uninit(seat_ref->seat);
-    }
-
-    free(seat_ref);
-}
-
-void
-wsi_seat_ref_remove_all(struct wsi_platform *platform)
-{
-    struct wsi_seat_ref *ref, *tmp;
-    wl_list_for_each_safe(ref, tmp, &platform->seat_list, link) {
-        wsi_seat_ref_remove(ref);
-    }
-}
-
-WsiResult
-wsiCreateSeat(WsiPlatform platform, const WsiSeatCreateInfo *pCreateInfo, WsiSeat *pSeat)
-{
-    bool found = false;
-
-    struct wsi_seat_ref *ref;
-    wl_list_for_each(ref, &platform->seat_list, link) {
-        if (ref->id == pCreateInfo->id) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        return WSI_ERROR_SEAT_LOST;
-    }
-
-    if (ref->seat) {
-        return WSI_ERROR_SEAT_IN_USE;
-    }
-
-    struct wsi_seat *seat = calloc(1, sizeof(struct wsi_seat));
-    if (!seat) {
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
-
-    seat->global.platform = platform;
-    seat->global.name = ref->name;
-
-    seat->wl_seat = wsi_bind(
-        platform,
-        ref->name,
-        &wl_seat_interface,
-        ref->version,
-        WSI_WL_SEAT_VERSION);
-    wl_seat_add_listener(seat->wl_seat, &wl_seat_listener, seat);
-
-    seat->ref = ref;
-    ref->seat = seat;
-    *pSeat = seat;
-    return WSI_SUCCESS;
-}
-
-void
-wsiDestroySeat(WsiSeat seat)
-{
-    wsi_seat_uninit(seat);
     free(seat);
 }
 
+void
+wsi_seat_destroy_all(struct wsi_platform *platform)
+{
+    struct wsi_seat *seat, *tmp;
+    wl_list_for_each_safe(seat, tmp, &platform->seat_list, link) {
+        wsi_seat_destroy(seat);
+    }
+}
+
 WsiResult
-wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeatId *pSeats)
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
 {
     uint32_t count = 0;
 
-    struct wsi_seat_ref *seat;
+    struct wsi_seat *seat;
     wl_list_for_each_reverse(seat, &platform->seat_list, link) {
         if (pSeats && count < *pSeatCount) {
             pSeats[count] = seat->id;

@@ -10,7 +10,7 @@ extern "C" {
 
 typedef struct wsi_platform *WsiPlatform;
 typedef struct wsi_event_queue *WsiEventQueue;
-typedef struct wsi_seat *WsiSeat;
+typedef uint64_t WsiSeat;
 typedef struct wsi_window *WsiWindow;
 typedef struct wsi_output *WsiOutput;
 typedef struct wsi_pointer *WsiPointer;
