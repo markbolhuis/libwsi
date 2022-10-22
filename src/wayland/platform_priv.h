@@ -46,12 +46,9 @@ wsi_bind(
     uint32_t max_version);
 
 struct wsi_global *
-wsi_global_create(
-    struct wsi_platform *platform,
-    uint32_t name);
+wsi_global_create(struct wsi_platform *platform, uint32_t name);
 
 void
-wsi_global_destroy(
-    struct wsi_global *global);
+wsi_global_destroy(struct wsi_global *global);
 
 #endif
