@@ -8,8 +8,6 @@ dep_xkbcommon = dependency('xkbcommon', version: '>= 1.4.0')
 src_wsi_wl = files(
   'platform.c',
   'input.c',
-  'pointer.c',
-  'keyboard.c',
   'window.c',
   'output.c',
   'egl.c',
