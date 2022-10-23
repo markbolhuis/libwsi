@@ -58,6 +58,19 @@ wsi_xcb_get_screen(
     return NULL;
 }
 
+static struct wsi_window *
+wsi_find_window(struct wsi_platform *platform, xcb_window_t window)
+{
+    struct wsi_window *wsi_window = NULL;
+    wsi_list_for_each(wsi_window, &platform->window_list, link) {
+        if (wsi_window->xcb_window == window) {
+            return wsi_window;
+        }
+    }
+
+    return NULL;
+}
+
 WsiResult
 wsiCreatePlatform(WsiPlatform *pPlatform)
 {
@@ -151,26 +164,22 @@ wsiPollEventQueue(WsiEventQueue eventQueue)
                 xcb_configure_notify_event_t *notify
                     = (xcb_configure_notify_event_t *)event;
 
-                struct wsi_window *window;
-                wsi_list_for_each(window, &platform->window_list, link) {
-                    if (notify->window == window->xcb_window) {
-                        wsi_window_xcb_configure_notify(window, notify);
-                    }
+                struct wsi_window *window
+                    = wsi_find_window(platform, notify->window);
+                if (window) {
+                    wsi_window_xcb_configure_notify(window, notify);
                 }
-
                 break;
             }
             case XCB_CLIENT_MESSAGE: {
                 xcb_client_message_event_t *message
                     = (xcb_client_message_event_t *)event;
 
-                struct wsi_window *window;
-                wsi_list_for_each(window, &platform->window_list, link) {
-                    if (message->window == window->xcb_window) {
-                        wsi_window_xcb_client_message(window, message);
-                    }
+                struct wsi_window *window
+                    = wsi_find_window(platform, message->window);
+                if (window) {
+                    wsi_window_xcb_client_message(window, message);
                 }
-
                 break;
             }
         }
