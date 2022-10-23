@@ -16,6 +16,18 @@
 
 #define WSI_WL_SEAT_VERSION 7
 
+static struct wsi_seat *
+wsi_seat_find(struct wsi_platform *platform, uint64_t id)
+{
+    struct wsi_seat *seat;
+    wl_list_for_each(seat, &platform->seat_list, link) {
+        if (seat->id == id) {
+            return seat;
+        }
+    }
+    return NULL;
+}
+
 static void
 wsi_pointer_set_cursor(
     struct wsi_pointer *ptr,
@@ -235,53 +247,6 @@ static const struct wl_pointer_listener wl_pointer_listener = {
 
 // endregion
 
-static bool
-wsi_pointer_create(struct wsi_seat *seat)
-{
-    assert(seat->pointer == NULL);
-
-    struct wsi_pointer *ptr = calloc(1, sizeof(struct wsi_pointer));
-    if (ptr == NULL) {
-        return false;
-    }
-
-    struct wsi_platform *plat = seat->global.platform;
-
-    ptr->seat = seat;
-
-    ptr->wl_pointer = wl_seat_get_pointer(seat->wl_seat);
-    wl_pointer_add_listener(ptr->wl_pointer, &wl_pointer_listener, ptr);
-
-    ptr->wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
-    ptr->wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
-
-    seat->pointer = ptr;
-
-    return true;
-}
-
-static void
-wsi_pointer_destroy(struct wsi_seat *seat)
-{
-    assert(seat->pointer != NULL);
-
-    struct wsi_pointer *ptr = seat->pointer;
-    seat->pointer = NULL;
-
-    if (wl_pointer_get_version(ptr->wl_pointer) >=
-        WL_POINTER_RELEASE_SINCE_VERSION)
-    {
-        wl_pointer_release(ptr->wl_pointer);
-    } else {
-        wl_pointer_destroy(ptr->wl_pointer);
-    }
-
-    wl_cursor_theme_destroy(ptr->wl_cursor_theme);
-    wl_surface_destroy(ptr->wl_cursor_surface);
-
-    free(ptr);
-}
-
 static void
 wsi_keyboard_reset(struct wsi_keyboard *keyboard)
 {
@@ -422,52 +387,6 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 
 // endregion
 
-static bool
-wsi_keyboard_create(struct wsi_seat *seat)
-{
-    assert(seat->keyboard == NULL);
-
-    struct wsi_keyboard *keyboard = calloc(1, sizeof(struct wsi_keyboard));
-    if (!keyboard) {
-        return false;
-    }
-
-    struct wsi_platform *platform = seat->global.platform;
-
-    keyboard->seat = seat;
-    keyboard->xkb_context = xkb_context_ref(platform->xkb_context);
-
-    keyboard->wl_keyboard = wl_seat_get_keyboard(seat->wl_seat);
-    wl_keyboard_add_listener(keyboard->wl_keyboard, &wl_keyboard_listener, keyboard);
-
-    seat->keyboard = keyboard;
-
-    return true;
-}
-
-static void
-wsi_keyboard_destroy(struct wsi_seat *seat)
-{
-    assert(seat->keyboard != NULL);
-
-    struct wsi_keyboard *keyboard = seat->keyboard;
-    seat->keyboard = NULL;
-
-    if (wl_keyboard_get_version(keyboard->wl_keyboard) >=
-        WL_KEYBOARD_RELEASE_SINCE_VERSION)
-    {
-        wl_keyboard_release(keyboard->wl_keyboard);
-    } else {
-        wl_keyboard_destroy(keyboard->wl_keyboard);
-    }
-
-    xkb_state_unref(keyboard->xkb_state);
-    xkb_keymap_unref(keyboard->xkb_keymap);
-    xkb_context_unref(keyboard->xkb_context);
-
-    free(keyboard);
-}
-
 // region WL Seat
 
 static void
@@ -476,21 +395,6 @@ wl_seat_capabilities(void *data, struct wl_seat *wl_seat, uint32_t capabilities)
     struct wsi_seat *seat = data;
 
     seat->capabilities = capabilities;
-
-    bool has_pointer = capabilities & WL_SEAT_CAPABILITY_POINTER;
-    bool has_keyboard = capabilities & WL_SEAT_CAPABILITY_KEYBOARD;
-
-    if (has_pointer && !seat->pointer) {
-        wsi_pointer_create(seat);
-    } else if (!has_pointer && seat->pointer) {
-        wsi_pointer_destroy(seat);
-    }
-
-    if (has_keyboard && !seat->keyboard) {
-        wsi_keyboard_create(seat);
-    } else if (!has_keyboard && seat->keyboard) {
-        wsi_keyboard_destroy(seat);
-    }
 }
 
 static void
@@ -593,4 +497,125 @@ wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
 
     *pSeatCount = count;
     return WSI_SUCCESS;
+}
+
+WsiResult
+wsiCreatePointer(
+    WsiPlatform platform,
+    const WsiPointerCreateInfo *pCreateInfo,
+    WsiPointer *pPointer)
+{
+    struct wsi_seat *seat = wsi_seat_find(platform, pCreateInfo->seat);
+
+    if (!seat) {
+        return WSI_ERROR_SEAT_LOST;
+    }
+
+    if (seat->pointer) {
+        return WSI_ERROR_SEAT_IN_USE;
+    }
+
+    if (!(seat->capabilities & WL_SEAT_CAPABILITY_POINTER)) {
+        return WSI_ERROR_UNSUPPORTED;
+    }
+
+    struct wsi_pointer *ptr = calloc(1, sizeof(struct wsi_pointer));
+    if (ptr == NULL) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    struct wsi_platform *plat = seat->global.platform;
+
+    ptr->seat = seat;
+
+    ptr->wl_pointer = wl_seat_get_pointer(seat->wl_seat);
+    wl_pointer_add_listener(ptr->wl_pointer, &wl_pointer_listener, ptr);
+
+    ptr->wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
+    ptr->wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
+
+    seat->pointer = ptr;
+    *pPointer = ptr;
+    return WSI_SUCCESS;
+}
+
+void
+wsiDestroyPointer(WsiPointer pointer)
+{
+    struct wsi_seat *seat = pointer->seat;
+
+    assert(seat->pointer == pointer);
+    seat->pointer = NULL;
+
+    if (wl_pointer_get_version(pointer->wl_pointer) >=
+        WL_POINTER_RELEASE_SINCE_VERSION)
+    {
+        wl_pointer_release(pointer->wl_pointer);
+    } else {
+        wl_pointer_destroy(pointer->wl_pointer);
+    }
+
+    wl_cursor_theme_destroy(pointer->wl_cursor_theme);
+    wl_surface_destroy(pointer->wl_cursor_surface);
+
+    free(pointer);
+}
+
+WsiResult
+wsiCreateKeyboard(
+    WsiPlatform platform,
+    const WsiKeyboardCreateInfo *pCreateInfo,
+    WsiKeyboard *pKeyboard)
+{
+    struct wsi_seat *seat = wsi_seat_find(platform, pCreateInfo->seat);
+
+    if (!seat) {
+        return WSI_ERROR_SEAT_LOST;
+    }
+
+    if (seat->keyboard) {
+        return WSI_ERROR_SEAT_IN_USE;
+    }
+
+    if (!(seat->capabilities & WL_SEAT_CAPABILITY_KEYBOARD)) {
+        return WSI_ERROR_UNSUPPORTED;
+    }
+
+    struct wsi_keyboard *kbd = calloc(1, sizeof(struct wsi_keyboard));
+    if (!kbd) {
+        return false;
+    }
+
+    kbd->seat = seat;
+    kbd->xkb_context = xkb_context_ref(platform->xkb_context);
+
+    kbd->wl_keyboard = wl_seat_get_keyboard(seat->wl_seat);
+    wl_keyboard_add_listener(kbd->wl_keyboard, &wl_keyboard_listener, kbd);
+
+    seat->keyboard = kbd;
+    *pKeyboard = kbd;
+    return WSI_SUCCESS;
+}
+
+void
+wsiDestroyKeyboard(WsiKeyboard keyboard)
+{
+    struct wsi_seat *seat = keyboard->seat;
+
+    assert(seat->keyboard == keyboard);
+    seat->keyboard = NULL;
+
+    if (wl_keyboard_get_version(keyboard->wl_keyboard) >=
+        WL_KEYBOARD_RELEASE_SINCE_VERSION)
+    {
+        wl_keyboard_release(keyboard->wl_keyboard);
+    } else {
+        wl_keyboard_destroy(keyboard->wl_keyboard);
+    }
+
+    xkb_state_unref(keyboard->xkb_state);
+    xkb_keymap_unref(keyboard->xkb_keymap);
+    xkb_context_unref(keyboard->xkb_context);
+
+    free(keyboard);
 }
