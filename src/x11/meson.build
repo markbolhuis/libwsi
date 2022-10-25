@@ -1,6 +1,6 @@
 dep_xcb = dependency('xcb', version : '>=1.15')
 
-src_wsi_xcb = files(
+src_wsi_x11 = files(
   'platform.c',
   'window.c',
   'egl.c',
@@ -8,8 +8,8 @@ src_wsi_xcb = files(
   'utils.c',
 )
 
-lib_wsi_xcb = library('wsi-xcb',
-  src_wsi_xcb,
+lib_wsi_x11 = library('wsi-x11',
+  src_wsi_x11,
   include_directories : inc_wsi,
   install : true,
   dependencies : [
@@ -19,7 +19,7 @@ lib_wsi_xcb = library('wsi-xcb',
   ],
 )
 
-dep_wsi_xcb = declare_dependency(
-  link_with : lib_wsi_xcb,
+dep_wsi_x11 = declare_dependency(
+  link_with : lib_wsi_x11,
   include_directories : inc_wsi,
 )

@@ -1,3 +1,3 @@
 subdir('wsi')
 subdir('wayland')
-subdir('xcb')
+subdir('x11')

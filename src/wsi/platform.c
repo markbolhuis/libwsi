@@ -31,7 +31,7 @@ wsi_platform_dlopen(struct wsi_platform *platform)
     if (strcmp(session, "wayland") == 0) {
         platform->handle = dlopen("libwsi-wl.so", RTLD_NOW);
     } else if (strcmp(session, "x11") == 0) {
-        platform->handle = dlopen("libwsi-xcb.so", RTLD_NOW);
+        platform->handle = dlopen("libwsi-x11.so", RTLD_NOW);
     } else {
         return WSI_ERROR_PLATFORM;
     }
