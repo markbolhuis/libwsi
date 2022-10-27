@@ -11,6 +11,28 @@
 #include "platform_priv.h"
 #include "window_priv.h"
 
+static bool
+wsi_query_extension(struct wsi_platform *platform, const char *name)
+{
+    xcb_query_extension_cookie_t cookie = xcb_query_extension(
+        platform->xcb_connection,
+        strlen(name),
+        name);
+
+    xcb_query_extension_reply_t *reply = xcb_query_extension_reply(
+        platform->xcb_connection,
+        cookie,
+        NULL);
+
+    bool present = false;
+    if (reply) {
+        present = reply->present;
+        free(reply);
+    }
+
+    return present;
+}
+
 static void
 wsi_init_atoms(struct wsi_platform *platform)
 {
@@ -99,11 +121,22 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         goto err_screen;
     }
 
+    if (!wsi_query_extension(platform, "RANDR")) {
+        result = WSI_ERROR_PLATFORM;
+        goto err_extension;
+    }
+
+    if (!wsi_query_extension(platform, "XInputExtension")) {
+        result = WSI_ERROR_PLATFORM;
+        goto err_extension;
+    }
+
     wsi_init_atoms(platform);
 
     *pPlatform = platform;
     return WSI_SUCCESS;
 
+err_extension:
 err_screen:
 err_connect:
     xcb_disconnect(platform->xcb_connection);
