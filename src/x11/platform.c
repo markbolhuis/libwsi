@@ -44,9 +44,7 @@ wsi_init_atoms(struct wsi_platform *platform)
 }
 
 static xcb_screen_t *
-wsi_xcb_get_screen(
-    const xcb_setup_t *setup,
-    int screen)
+wsi_xcb_get_screen(const xcb_setup_t *setup, int screen)
 {
     xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
     for (; iter.rem; --screen, xcb_screen_next(&iter))
