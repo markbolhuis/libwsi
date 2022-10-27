@@ -92,15 +92,10 @@ wsi_find_window(struct wsi_platform *platform, xcb_window_t window)
     return NULL;
 }
 
-WsiResult
-wsiCreatePlatform(WsiPlatform *pPlatform)
+static enum wsi_result
+wsi_platform_init(struct wsi_platform *platform)
 {
     enum wsi_result result;
-
-    struct wsi_platform *platform = calloc(1, sizeof(struct wsi_platform));
-    if (!platform) {
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
 
     wsi_list_init(&platform->window_list);
 
@@ -133,21 +128,43 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 
     wsi_init_atoms(platform);
 
-    *pPlatform = platform;
     return WSI_SUCCESS;
 
 err_extension:
 err_screen:
 err_connect:
     xcb_disconnect(platform->xcb_connection);
-    free(platform);
     return result;
+}
+
+static void
+wsi_platform_uninit(struct wsi_platform *platform)
+{
+    xcb_disconnect(platform->xcb_connection);
+}
+
+WsiResult
+wsiCreatePlatform(WsiPlatform *pPlatform)
+{
+    struct wsi_platform *p = calloc(1, sizeof(struct wsi_platform));
+    if (!p) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    enum wsi_result result = wsi_platform_init(p);
+    if (result != WSI_SUCCESS) {
+        free(p);
+        return result;
+    }
+
+    *pPlatform = p;
+    return WSI_SUCCESS;
 }
 
 void
 wsiDestroyPlatform(WsiPlatform platform)
 {
-    xcb_disconnect(platform->xcb_connection);
+    wsi_platform_uninit(platform);
     free(platform);
 }
 
