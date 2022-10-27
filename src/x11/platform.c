@@ -11,35 +11,36 @@
 #include "platform_priv.h"
 #include "window_priv.h"
 
-void
-wsi_get_xcb_atoms(
-    struct wsi_platform *platform,
-    const char *const *names,
-    size_t count,
-    xcb_atom_t *atoms)
+static void
+wsi_init_atoms(struct wsi_platform *platform)
 {
-    xcb_connection_t *connection = platform->xcb_connection;
+    struct {
+        const char *name;
+        xcb_atom_t *atom;
+    } table[2] = {
+        { "WM_PROTOCOLS", &platform->xcb_atom_wm_protocols },
+        { "WM_DELETE_WINDOW", &platform->xcb_atom_wm_delete_window },
+    };
 
-    xcb_intern_atom_cookie_t *cookies
-        = calloc(count, sizeof(xcb_intern_atom_cookie_t));
+    const int count = wsi_array_length(table);
+    xcb_intern_atom_cookie_t cookies[count];
 
     for (size_t i = 0; i < count; ++i) {
-        cookies[i] = xcb_intern_atom(connection, 0, strlen(names[i]), names[i]);
+        cookies[i] = xcb_intern_atom(
+            platform->xcb_connection, 0, strlen(table[i].name), table[i].name);
     }
 
     for (size_t i = 0; i < count; ++i) {
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(
-            connection, cookies[i], NULL);
+            platform->xcb_connection, cookies[i], NULL);
 
         if (reply) {
-            atoms[i] = reply->atom;
+            *table[i].atom = reply->atom;
             free(reply);
         } else {
-            atoms[i] = XCB_ATOM_NONE;
+            *table[i].atom = XCB_ATOM_NONE;
         }
     }
-
-    free(cookies);
 }
 
 static xcb_screen_t *
@@ -76,14 +77,6 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
 {
     enum wsi_result result;
 
-    const char *const atom_names[] = {
-        "WM_PROTOCOLS",
-        "WM_DELETE_WINDOW",
-    };
-
-    const int atom_count = wsi_array_length(atom_names);
-    xcb_atom_t atoms[atom_count];
-
     struct wsi_platform *platform = calloc(1, sizeof(struct wsi_platform));
     if (!platform) {
         return WSI_ERROR_OUT_OF_MEMORY;
@@ -108,9 +101,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         goto err_screen;
     }
 
-    wsi_get_xcb_atoms(platform, atom_names, atom_count, atoms);
-    platform->xcb_atom_wm_protocols = atoms[0];
-    platform->xcb_atom_wm_delete_window = atoms[1];
+    wsi_init_atoms(platform);
 
     *pPlatform = platform;
     return WSI_SUCCESS;

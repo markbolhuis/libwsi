@@ -20,11 +20,4 @@ struct wsi_platform {
 
 #define wsi_array_length(array) (sizeof(array) / sizeof((array)[0]))
 
-void
-wsi_get_xcb_atoms(
-    struct wsi_platform *platform,
-    const char *const *names,
-    size_t count,
-    xcb_atom_t *atoms);
-
 #endif
