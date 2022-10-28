@@ -118,8 +118,7 @@ wsiCreateWindow(
 }
 
 void
-wsiDestroyWindow(
-    WsiWindow window)
+wsiDestroyWindow(WsiWindow window)
 {
     struct wsi_platform *platform = window->platform;
 
@@ -131,9 +130,7 @@ wsiDestroyWindow(
 }
 
 WsiResult
-wsiSetWindowParent(
-    WsiWindow window,
-    WsiWindow parent)
+wsiSetWindowParent(WsiWindow window, WsiWindow parent)
 {
     struct wsi_platform *platform = window->platform;
     if (parent) {
@@ -150,9 +147,7 @@ wsiSetWindowParent(
 }
 
 WsiResult
-wsiSetWindowTitle(
-    WsiWindow window,
-    const char *pTitle)
+wsiSetWindowTitle(WsiWindow window, const char *pTitle)
 {
     if (pTitle) {
         xcb_change_property(
