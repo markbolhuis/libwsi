@@ -189,7 +189,7 @@ wsiDestroyEventQueue(WsiEventQueue eventQueue)
 }
 
 WsiResult
-wsiPollEventQueue(WsiEventQueue eventQueue)
+wsiPollEventQueue(WsiEventQueue eventQueue, int64_t timeout)
 {
     struct wsi_platform *platform = eventQueue->platform;
     while(true) {

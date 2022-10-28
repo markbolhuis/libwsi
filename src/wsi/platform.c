@@ -126,8 +126,8 @@ wsiDestroyEventQueue(WsiEventQueue eventQueue)
 }
 
 WsiResult
-wsiPollEventQueue(WsiEventQueue eventQueue)
+wsiPollEventQueue(WsiEventQueue eventQueue, int64_t timeout)
 {
     PFN_wsiPollEventQueue sym = wsi_event_queue_dlsym(eventQueue, "wsiPollEventQueue");
-    return sym(eventQueue->event_queue);
+    return sym(eventQueue->event_queue, timeout);
 }

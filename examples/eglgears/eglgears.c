@@ -426,7 +426,7 @@ main(int argc, char *argv[])
 
     WsiExtent extent;
     while(true) {
-        res = wsiPollEventQueue(g_event_queue);
+        res = wsiPollEventQueue(g_event_queue, 0);
         if (res != WSI_SUCCESS || !g_running) {
             break;
         }

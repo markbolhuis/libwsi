@@ -483,7 +483,7 @@ wsiDestroyEventQueue(WsiEventQueue eventQueue)
 }
 
 WsiResult
-wsiPollEventQueue(WsiEventQueue eventQueue)
+wsiPollEventQueue(WsiEventQueue eventQueue, int64_t timeout)
 {
     struct wl_display *wl_display = eventQueue->wl_display;
 
