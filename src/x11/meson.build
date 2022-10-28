@@ -2,6 +2,7 @@ dep_xcb = dependency('xcb', version : '>=1.15')
 
 src_wsi_x11 = files(
   'platform.c',
+  'input.c',
   'window.c',
   'egl.c',
   'vulkan.c',
