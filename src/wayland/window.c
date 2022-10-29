@@ -147,17 +147,8 @@ wsi_window_set_initial_state(struct wsi_window *window)
 void
 wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
 {
-    bool found = false;
-
-    struct wsi_window_output *wo;
-    wl_list_for_each(wo, &w->output_list, link) {
-        if (wo->wl_output == o->wl_output) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
+    struct wsi_window_output *wo = wsi_window_find_output(w, o->wl_output);
+    if (!wo) {
         return;
     }
 
