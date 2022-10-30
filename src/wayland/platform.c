@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <memory.h>
 #include <poll.h>
+#include <errno.h>
 
 #include <wayland-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
@@ -483,35 +484,69 @@ wsiDestroyEventQueue(WsiEventQueue eventQueue)
 }
 
 WsiResult
-wsiPollEventQueue(WsiEventQueue eventQueue, int64_t timeout)
+wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
 {
     struct wl_display *wl_display = eventQueue->wl_display;
 
-    if (wsi_event_queue_prepare_read(eventQueue) == -1) {
-        wsi_event_queue_dispatch_pending(eventQueue);
-        return WSI_SUCCESS;
+    if (wsi_event_queue_prepare_read(eventQueue) < 0) {
+        int n = wsi_event_queue_dispatch_pending(eventQueue);
+        return n < 0 ? WSI_ERROR_PLATFORM : WSI_SUCCESS;
     }
 
-    wl_display_flush(wl_display);
+    while (wl_display_flush(wl_display) < 0) {
+        if (errno != EAGAIN) {
+            wl_display_cancel_read(wl_display);
+            return WSI_ERROR_PLATFORM;
+        }
 
-    struct pollfd pfd = {
-        .fd = wl_display_get_fd(wl_display),
-        .events = POLLIN,
-        .revents = 0,
-    };
+        struct pollfd fds[1];
+        fds[0].fd = wl_display_get_fd(wl_display);
+        fds[0].events = POLLOUT;
 
-    int n = poll(&pfd, 1, 0);
-    if (n == -1) {
+        int n;
+        do {
+            n = poll(fds, 1, 0);
+        } while (n < 0 && errno == EAGAIN);
+
+        if (n < 0) {
+            wl_display_cancel_read(wl_display);
+            if (errno == ENOMEM) {
+                return WSI_ERROR_OUT_OF_MEMORY;
+            }
+            return WSI_ERROR_PLATFORM;
+        }
+    }
+
+    struct pollfd fds[1];
+    fds[0].fd = wl_display_get_fd(wl_display);
+    fds[0].events = POLLIN;
+
+    int ret;
+    do {
+        ret = poll(fds, 1, 0);
+    } while (ret < 0 && errno == EAGAIN);
+
+    if (ret < 0) {
         wl_display_cancel_read(wl_display);
+        if (errno == ENOMEM) {
+            return WSI_ERROR_OUT_OF_MEMORY;
+        }
         return WSI_ERROR_PLATFORM;
     }
 
-    if (pfd.revents & POLLIN) {
-        wl_display_read_events(wl_display);
+    if (fds[0].revents & POLLIN) {
+        ret = wl_display_read_events(wl_display);
+        if (ret < 0) {
+            return WSI_ERROR_PLATFORM;
+        }
     } else {
         wl_display_cancel_read(wl_display);
     }
 
-    wsi_event_queue_dispatch_pending(eventQueue);
+    ret = wsi_event_queue_dispatch_pending(eventQueue);
+    if (ret < 0) {
+        return WSI_ERROR_PLATFORM;
+    }
+
     return WSI_SUCCESS;
 }
