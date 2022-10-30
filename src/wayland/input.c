@@ -209,14 +209,10 @@ wl_pointer_axis_discrete(
     uint32_t axis,
     int32_t discrete)
 {
-    if (wl_pointer_get_version(wl_pointer) <
-        WL_POINTER_AXIS_VALUE120_SINCE_VERSION)
-    {
-        struct wsi_pointer *pointer = data;
+    struct wsi_pointer *pointer = data;
 
-        pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_DISCRETE;
-        pointer->frame.axes[axis].discrete = discrete * 120;
-    }
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_DISCRETE;
+    pointer->frame.axes[axis].discrete = discrete * 120;
 }
 
 static void
