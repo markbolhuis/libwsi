@@ -285,7 +285,7 @@ wl_registry_global_remove(
     wl_list_for_each_safe(seat, seat_tmp, &platform->seat_list, link) {
         if (seat->global.name== name) {
             wsi_seat_destroy(seat);
-            break;
+            return;
         }
     }
 
