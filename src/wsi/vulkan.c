@@ -1,8 +1,8 @@
+#include <dlfcn.h>
+
 #include "wsi/vulkan.h"
 
-#include "platform_priv.h"
-#include "window_priv.h"
-
+extern void *g_handle;
 
 WsiResult
 wsiEnumerateRequiredInstanceExtensions(
@@ -10,7 +10,9 @@ wsiEnumerateRequiredInstanceExtensions(
     uint32_t *pExtensionCount,
     const char **ppExtensions)
 {
-    PFN_wsiEnumerateRequiredInstanceExtensions sym = wsi_platform_dlsym(platform, "wsiEnumerateRequiredInstanceExtensions");
+    PFN_wsiEnumerateRequiredInstanceExtensions sym
+        = (PFN_wsiEnumerateRequiredInstanceExtensions)
+            dlsym(g_handle, "wsiEnumerateRequiredInstanceExtensions");
     return sym(platform, pExtensionCount, ppExtensions);
 }
 
@@ -20,7 +22,9 @@ wsiEnumerateRequiredDeviceExtensions(
     uint32_t *pExtensionCount,
     const char **ppExtensions)
 {
-    PFN_wsiEnumerateRequiredDeviceExtensions sym = wsi_platform_dlsym(platform, "wsiEnumerateRequiredDeviceExtensions");
+    PFN_wsiEnumerateRequiredDeviceExtensions sym
+        = (PFN_wsiEnumerateRequiredDeviceExtensions)
+            dlsym(g_handle, "wsiEnumerateRequiredDeviceExtensions");
     return sym(platform, pExtensionCount, ppExtensions);
 }
 
@@ -30,8 +34,10 @@ wsiGetPhysicalDevicePresentationSupport(
     VkPhysicalDevice physicalDevice,
     uint32_t queueFamilyIndex)
 {
-    PFN_wsiGetPhysicalDevicePresentationSupport sym = wsi_platform_dlsym(platform, "wsiGetPhysicalDevicePresentationSupport");
-    return sym(platform->platform, physicalDevice, queueFamilyIndex);
+    PFN_wsiGetPhysicalDevicePresentationSupport sym
+        = (PFN_wsiGetPhysicalDevicePresentationSupport)
+            dlsym(g_handle, "wsiGetPhysicalDevicePresentationSupport");
+    return sym(platform, physicalDevice, queueFamilyIndex);
 }
 
 WsiResult
@@ -41,6 +47,8 @@ wsiCreateWindowSurface(
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    PFN_wsiCreateWindowSurface sym = wsi_window_dlsym(window, "wsiCreateWindowSurface");
-    return sym(window->window, instance, pAllocator, pSurface);
+    PFN_wsiCreateWindowSurface sym
+        = (PFN_wsiCreateWindowSurface)
+            dlsym(g_handle, "wsiCreateWindowSurface");
+    return sym(window, instance, pAllocator, pSurface);
 }
