@@ -505,8 +505,8 @@ wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
 
         int n;
         do {
-            n = poll(fds, 1, 0);
-        } while (n < 0 && errno == EAGAIN);
+            n = poll(fds, 1, -1);
+        } while (n < 0 && errno == EINTR);
 
         if (n < 0) {
             wl_display_cancel_read(wl_display);
@@ -524,7 +524,7 @@ wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
     int ret;
     do {
         ret = poll(fds, 1, 0);
-    } while (ret < 0 && errno == EAGAIN);
+    } while (ret < 0 && errno == EINTR);
 
     if (ret < 0) {
         wl_display_cancel_read(wl_display);
