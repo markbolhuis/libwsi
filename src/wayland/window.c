@@ -492,6 +492,9 @@ wsiSetWindowParent(WsiWindow window, WsiWindow parent)
 WsiResult
 wsiSetWindowTitle(WsiWindow window, const char *pTitle)
 {
+    if (pTitle == NULL) {
+        pTitle = "";
+    }
     xdg_toplevel_set_title(window->xdg_toplevel, pTitle);
     return WSI_SUCCESS;
 }
