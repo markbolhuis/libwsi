@@ -268,7 +268,9 @@ wl_registry_global(
             NULL,
             version,
             WSI_XDG_OUTPUT_MANAGER_V1_VERSION);
-        wsi_output_init_xdg_all(platform);
+        if (platform->xdg_output_manager_v1) {
+            wsi_output_init_xdg_all(platform);
+        }
     }
 }
 

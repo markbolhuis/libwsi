@@ -8,8 +8,17 @@ struct wsi_output {
 
     struct wl_output *wl_output;
     struct zxdg_output_v1 *xdg_output_v1;
+    int done_count;
 
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
     int32_t scale;
+
+    char *name;
+    char *description;
+
 };
 
 void

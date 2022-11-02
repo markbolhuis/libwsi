@@ -1,6 +1,8 @@
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include <wayland-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
@@ -14,6 +16,41 @@
 #include "window_priv.h"
 
 #define WSI_WL_OUTPUT_VERSION 4
+#define WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION 3
+
+int
+wsi_output_get_required_done_count(struct wsi_output *output)
+{
+    int count = 0;
+
+    uint32_t wl_ver = wl_output_get_version(output->wl_output);
+    if (wl_ver >= WL_OUTPUT_DONE_SINCE_VERSION) {
+        count++;
+    }
+
+    if (output->xdg_output_v1 == NULL) {
+        return count;
+    }
+
+    uint32_t xdg_ver = zxdg_output_v1_get_version(output->xdg_output_v1);
+    if (xdg_ver < WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION ||
+        wl_ver >= WL_OUTPUT_DONE_SINCE_VERSION) {
+        count++;
+    }
+
+    return count;
+}
+
+static void
+wsi_output_done(struct wsi_output *output)
+{
+    int required = wsi_output_get_required_done_count(output);
+    if (output->done_count < required) {
+        return;
+    }
+
+    // TODO: handle atomic update
+}
 
 // region XDG Output V1
 
@@ -24,7 +61,10 @@ xdg_output_v1_logical_position(
     int32_t x,
     int32_t y)
 {
+    struct wsi_output *output = data;
 
+    output->x = x;
+    output->y = y;
 }
 
 static void
@@ -34,7 +74,10 @@ xdg_output_v1_logical_size(
     int32_t width,
     int32_t height)
 {
+    struct wsi_output *output = data;
 
+    output->width = width;
+    output->height = height;
 }
 
 static void
@@ -42,7 +85,17 @@ xdg_output_v1_done(
     void *data,
     struct zxdg_output_v1 *xdg_output_v1)
 {
+    struct wsi_output *output = data;
 
+    // Catch any compositor bug, and prevent it messing up the done count
+    if (zxdg_output_v1_get_version(xdg_output_v1) >=
+        WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION)
+    {
+        return;
+    }
+
+    output->done_count++;
+    wsi_output_done(output);
 }
 
 static void
@@ -51,7 +104,10 @@ xdg_output_v1_name(
     struct zxdg_output_v1 *xdg_output_v1,
     const char *name)
 {
+    struct wsi_output *output = data;
 
+    free(output->name);
+    output->name = strdup(name);
 }
 
 static void
@@ -60,7 +116,10 @@ xdg_output_v1_description(
     struct zxdg_output_v1 *xdg_output_v1,
     const char *description)
 {
+    struct wsi_output *output = data;
 
+    free(output->description);
+    output->description = strdup(description);
 }
 
 static const struct zxdg_output_v1_listener xdg_output_v1_listener = {
@@ -106,6 +165,13 @@ wl_output_done(
     void *data,
     struct wl_output *wl_output)
 {
+    struct wsi_output *output = data;
+    if (output->xdg_output_v1) {
+        output->done_count++;
+    } else {
+        output->done_count = 1;
+    }
+    wsi_output_done(output);
 }
 
 static void
@@ -114,7 +180,6 @@ wl_output_scale(
     struct wl_output *wl_output,
     int32_t scale)
 {
-    // TODO: This is temporary
     struct wsi_output *output = data;
     output->scale = scale;
 }
@@ -227,6 +292,9 @@ wsi_output_destroy(struct wsi_output *output)
     } else {
         wl_output_destroy(output->wl_output);
     }
+
+    free(output->name);
+    free(output->description);
 
     wl_list_remove(&output->link);
     free(output);
