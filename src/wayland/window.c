@@ -37,8 +37,9 @@ wsi_window_get_max_scale(struct wsi_window *window)
     struct wsi_window_output *wo;
     wl_list_for_each(wo, &window->output_list, link) {
         struct wsi_output *output = wl_output_get_user_data(wo->wl_output);
-        if (output->scale > max_scale) {
-            max_scale = output->scale;
+        int32_t scale = wsi_output_get_scale(output);
+        if (scale > max_scale) {
+            max_scale = scale;
         }
     }
 

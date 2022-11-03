@@ -29,6 +29,9 @@ struct wsi_output {
     char *model;
 };
 
+int32_t
+wsi_output_get_scale(struct wsi_output *output);
+
 void
 wsi_output_init_xdg(struct wsi_output *output);
 

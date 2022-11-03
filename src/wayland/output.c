@@ -18,6 +18,18 @@
 #define WSI_WL_OUTPUT_VERSION 4
 #define WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION 3
 
+int32_t
+wsi_output_get_scale(struct wsi_output *output)
+{
+    if (wl_output_get_version(output->wl_output) <
+        WL_OUTPUT_SCALE_SINCE_VERSION)
+    {
+        return 1;
+    }
+
+    return output->scale;
+}
+
 static int
 wsi_output_get_required_done_count(struct wsi_output *output)
 {
