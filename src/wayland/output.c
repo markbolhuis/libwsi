@@ -18,7 +18,7 @@
 #define WSI_WL_OUTPUT_VERSION 4
 #define WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION 3
 
-int
+static int
 wsi_output_get_required_done_count(struct wsi_output *output)
 {
     int count = 0;
@@ -76,8 +76,8 @@ xdg_output_v1_logical_size(
 {
     struct wsi_output *output = data;
 
-    output->width = width;
-    output->height = height;
+    output->logical_width = width;
+    output->logical_height = height;
 }
 
 static void
@@ -147,6 +147,24 @@ wl_output_geometry(
     const char *model,
     int32_t transform)
 {
+    struct wsi_output *output = data;
+
+    if (output->xdg_output_v1 == NULL) {
+        output->x = x;
+        output->y = y;
+    }
+
+    output->physical_width = physical_width;
+    output->physical_height = physical_height;
+    output->subpixel = subpixel;
+
+    free(output->make);
+    output->make = strdup(make);
+
+    free(output->model);
+    output->model = strdup(model);
+
+    output->transform = transform;
 }
 
 static void
@@ -158,6 +176,16 @@ wl_output_mode(
     int32_t height,
     int32_t refresh)
 {
+    struct wsi_output *output = data;
+
+    if (flags != WL_OUTPUT_MODE_CURRENT) {
+        return;
+    }
+
+    output->pixel_width = width;
+    output->pixel_height = height;
+
+    output->refresh = refresh;
 }
 
 static void
@@ -190,6 +218,17 @@ wl_output_name(
     struct wl_output *wl_output,
     const char *name)
 {
+    struct wsi_output *output = data;
+
+    if (output->xdg_output_v1 &&
+        zxdg_output_v1_get_version(output->xdg_output_v1) >=
+            ZXDG_OUTPUT_V1_NAME_SINCE_VERSION)
+    {
+        return;
+    }
+
+    free(output->name);
+    output->name = strdup(name);
 }
 
 static void
@@ -198,6 +237,17 @@ wl_output_description(
     struct wl_output *wl_output,
     const char *description)
 {
+    struct wsi_output *output = data;
+
+    if (output->xdg_output_v1 &&
+        zxdg_output_v1_get_version(output->xdg_output_v1) >=
+            ZXDG_OUTPUT_V1_DESCRIPTION_SINCE_VERSION)
+    {
+        return;
+    }
+
+    free(output->description);
+    output->description = strdup(description);
 }
 
 static const struct wl_output_listener wl_output_listener = {
@@ -295,6 +345,8 @@ wsi_output_destroy(struct wsi_output *output)
 
     free(output->name);
     free(output->description);
+    free(output->make);
+    free(output->model);
 
     wl_list_remove(&output->link);
     free(output);

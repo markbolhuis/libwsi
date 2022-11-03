@@ -12,13 +12,21 @@ struct wsi_output {
 
     int32_t x;
     int32_t y;
-    int32_t width;
-    int32_t height;
+    int32_t logical_width;
+    int32_t logical_height;
+    int32_t pixel_width;
+    int32_t pixel_height;
+    int32_t physical_width;
+    int32_t physical_height;
     int32_t scale;
+    int32_t subpixel;
+    int32_t transform;
+    int32_t refresh;
 
     char *name;
     char *description;
-
+    char *make;
+    char *model;
 };
 
 void
