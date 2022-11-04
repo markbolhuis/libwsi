@@ -15,7 +15,7 @@ struct wsi_platform {
     struct wl_display *wl_display;
     struct wl_registry *wl_registry;
 
-    struct wsi_event_queue default_queue;
+    struct wsi_event_queue queue;
 
     struct wl_list seat_list;
     struct wl_list output_list;

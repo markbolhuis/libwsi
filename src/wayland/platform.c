@@ -351,6 +351,13 @@ static const struct wl_registry_listener wl_registry_listener = {
 
 // endregion
 
+static void
+wsi_platform_init_queue(struct wsi_platform *platform)
+{
+    platform->queue.wl_display = platform->wl_display;
+    platform->queue.wl_event_queue = NULL;
+}
+
 static enum wsi_result
 wsi_platform_init(struct wsi_platform *platform)
 {
@@ -367,7 +374,7 @@ wsi_platform_init(struct wsi_platform *platform)
     wl_list_init(&platform->window_list);
     wl_array_init(&platform->format_array);
 
-    platform->default_queue.wl_display = platform->wl_display;
+    wsi_platform_init_queue(platform);
 
     platform->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (platform->xkb_context == NULL) {
@@ -453,7 +460,7 @@ wsiDestroyPlatform(WsiPlatform platform)
 WsiEventQueue
 wsiGetDefaultEventQueue(WsiPlatform platform)
 {
-    return &platform->default_queue;
+    return &platform->queue;
 }
 
 WsiResult
