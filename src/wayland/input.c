@@ -243,6 +243,47 @@ static const struct wl_pointer_listener wl_pointer_listener = {
 
 // endregion
 
+static enum wsi_result
+wsi_pointer_init(struct wsi_seat *seat, struct wsi_event_queue *queue)
+{
+    assert(seat->pointer == NULL);
+
+    struct wsi_pointer *ptr = calloc(1, sizeof(struct wsi_pointer));
+    if (ptr == NULL) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    struct wsi_platform *plat = seat->global.platform;
+
+    ptr->seat = seat;
+
+    ptr->wl_pointer = wl_seat_get_pointer(seat->wl_seat);
+    wl_pointer_add_listener(ptr->wl_pointer, &wl_pointer_listener, ptr);
+
+    ptr->wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
+    ptr->wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
+
+    seat->pointer = ptr;
+    return WSI_SUCCESS;
+}
+
+static void
+wsi_pointer_uninit(struct wsi_pointer *pointer)
+{
+    if (wl_pointer_get_version(pointer->wl_pointer) >=
+        WL_POINTER_RELEASE_SINCE_VERSION)
+    {
+        wl_pointer_release(pointer->wl_pointer);
+    } else {
+        wl_pointer_destroy(pointer->wl_pointer);
+    }
+
+    wl_cursor_theme_destroy(pointer->wl_cursor_theme);
+    wl_surface_destroy(pointer->wl_cursor_surface);
+
+    memset(pointer, 0, sizeof(struct wsi_pointer));
+}
+
 static void
 wsi_keyboard_reset(struct wsi_keyboard *keyboard)
 {
@@ -383,6 +424,46 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 
 // endregion
 
+static enum wsi_result
+wsi_keyboard_init(struct wsi_seat *seat, struct wsi_event_queue *eq)
+{
+    assert(seat->keyboard == NULL);
+
+    struct wsi_keyboard *kbd = calloc(1, sizeof(struct wsi_keyboard));
+    if (!kbd) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    struct wsi_platform *plat = seat->global.platform;
+
+    kbd->seat = seat;
+    kbd->xkb_context = xkb_context_ref(plat->xkb_context);
+
+    kbd->wl_keyboard = wl_seat_get_keyboard(seat->wl_seat);
+    wl_keyboard_add_listener(kbd->wl_keyboard, &wl_keyboard_listener, kbd);
+
+    seat->keyboard = kbd;
+    return WSI_SUCCESS;
+}
+
+static void
+wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
+{
+    if (wl_keyboard_get_version(keyboard->wl_keyboard) >=
+        WL_KEYBOARD_RELEASE_SINCE_VERSION)
+    {
+        wl_keyboard_release(keyboard->wl_keyboard);
+    } else {
+        wl_keyboard_destroy(keyboard->wl_keyboard);
+    }
+
+    xkb_state_unref(keyboard->xkb_state);
+    xkb_keymap_unref(keyboard->xkb_keymap);
+    xkb_context_unref(keyboard->xkb_context);
+
+    memset(keyboard, 0, sizeof(struct wsi_keyboard));
+}
+
 // region WL Seat
 
 static void
@@ -436,25 +517,21 @@ wsi_seat_destroy(struct wsi_seat *seat)
     wl_list_remove(&seat->link);
 
     if (seat->pointer) {
-        // TODO: Destroy pointer
+        wsi_pointer_uninit(seat->pointer);
     }
 
     if (seat->keyboard) {
-        // TODO: Destroy keyboard
+        wsi_keyboard_uninit(seat->keyboard);
     }
 
-    if (seat->name) {
-        free(seat->name);
-    }
+    free(seat->name);
 
-    if (seat->wl_seat) {
-        if (wl_seat_get_version(seat->wl_seat) >=
-            WL_SEAT_RELEASE_SINCE_VERSION)
-        {
-            wl_seat_release(seat->wl_seat);
-        } else {
-            wl_seat_destroy(seat->wl_seat);
-        }
+    if (wl_seat_get_version(seat->wl_seat) >=
+        WL_SEAT_RELEASE_SINCE_VERSION)
+    {
+        wl_seat_release(seat->wl_seat);
+    } else {
+        wl_seat_destroy(seat->wl_seat);
     }
 
     free(seat);
@@ -515,45 +592,22 @@ wsiCreatePointer(
         return WSI_ERROR_UNSUPPORTED;
     }
 
-    struct wsi_pointer *ptr = calloc(1, sizeof(struct wsi_pointer));
-    if (ptr == NULL) {
-        return WSI_ERROR_OUT_OF_MEMORY;
+    enum wsi_result res = wsi_pointer_init(seat, pCreateInfo->eventQueue);
+    if (res == WSI_SUCCESS) {
+        *pPointer = seat->pointer;
     }
-
-    struct wsi_platform *plat = seat->global.platform;
-
-    ptr->seat = seat;
-
-    ptr->wl_pointer = wl_seat_get_pointer(seat->wl_seat);
-    wl_pointer_add_listener(ptr->wl_pointer, &wl_pointer_listener, ptr);
-
-    ptr->wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
-    ptr->wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
-
-    seat->pointer = ptr;
-    *pPointer = ptr;
-    return WSI_SUCCESS;
+    return res;
 }
 
 void
 wsiDestroyPointer(WsiPointer pointer)
 {
     struct wsi_seat *seat = pointer->seat;
-
-    assert(seat->pointer == pointer);
-    seat->pointer = NULL;
-
-    if (wl_pointer_get_version(pointer->wl_pointer) >=
-        WL_POINTER_RELEASE_SINCE_VERSION)
-    {
-        wl_pointer_release(pointer->wl_pointer);
-    } else {
-        wl_pointer_destroy(pointer->wl_pointer);
+    if (seat != NULL) {
+        assert(seat->pointer == pointer);
+        wsi_pointer_uninit(pointer);
+        seat->pointer = NULL;
     }
-
-    wl_cursor_theme_destroy(pointer->wl_cursor_theme);
-    wl_surface_destroy(pointer->wl_cursor_surface);
-
     free(pointer);
 }
 
@@ -577,41 +631,21 @@ wsiCreateKeyboard(
         return WSI_ERROR_UNSUPPORTED;
     }
 
-    struct wsi_keyboard *kbd = calloc(1, sizeof(struct wsi_keyboard));
-    if (!kbd) {
-        return false;
+    enum wsi_result res = wsi_keyboard_init(seat, pCreateInfo->eventQueue);
+    if (res == WSI_SUCCESS) {
+        *pKeyboard = seat->keyboard;
     }
-
-    kbd->seat = seat;
-    kbd->xkb_context = xkb_context_ref(platform->xkb_context);
-
-    kbd->wl_keyboard = wl_seat_get_keyboard(seat->wl_seat);
-    wl_keyboard_add_listener(kbd->wl_keyboard, &wl_keyboard_listener, kbd);
-
-    seat->keyboard = kbd;
-    *pKeyboard = kbd;
-    return WSI_SUCCESS;
+    return res;
 }
 
 void
 wsiDestroyKeyboard(WsiKeyboard keyboard)
 {
     struct wsi_seat *seat = keyboard->seat;
-
-    assert(seat->keyboard == keyboard);
-    seat->keyboard = NULL;
-
-    if (wl_keyboard_get_version(keyboard->wl_keyboard) >=
-        WL_KEYBOARD_RELEASE_SINCE_VERSION)
-    {
-        wl_keyboard_release(keyboard->wl_keyboard);
-    } else {
-        wl_keyboard_destroy(keyboard->wl_keyboard);
+    if (seat != NULL) {
+        assert(seat->keyboard == keyboard);
+        wsi_keyboard_uninit(keyboard);
+        seat->keyboard = NULL;
     }
-
-    xkb_state_unref(keyboard->xkb_state);
-    xkb_keymap_unref(keyboard->xkb_keymap);
-    xkb_context_unref(keyboard->xkb_context);
-
     free(keyboard);
 }
