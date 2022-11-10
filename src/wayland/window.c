@@ -372,7 +372,7 @@ wl_surface_leave(
     wl_list_remove(&wo->link);
     free(wo);
 
-    if (wl_surface_get_version(wl_surface) <
+    if (wl_surface_get_version(wl_surface) >=
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
         window->pending.scale = wsi_window_get_max_scale(window);
