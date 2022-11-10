@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -478,6 +479,9 @@ static void
 wl_seat_name(void *data, struct wl_seat *wl_seat, const char *name)
 {
     struct wsi_seat *seat = data;
+
+    free(seat->name);
+    seat->name = strdup(name);
 }
 
 const static struct wl_seat_listener wl_seat_listener = {
