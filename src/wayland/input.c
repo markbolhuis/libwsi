@@ -59,7 +59,7 @@ wsi_pointer_set_cursor(
         wsi_pointer_set_cursor_image(ptr, ptr->wl_cursor->images[0], serial);
         return;
     }
-    
+
     wl_surface_attach(ptr->wl_cursor_surface, NULL, 0, 0);
     wl_surface_commit(ptr->wl_cursor_surface);
     wl_pointer_set_cursor(ptr->wl_pointer, serial, NULL, 0, 0);
@@ -563,23 +563,18 @@ wsi_seat_destroy_all(struct wsi_platform *platform)
 WsiResult
 wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
 {
-    uint32_t count = 0;
-
-    struct wsi_seat *seat;
-    wl_list_for_each_reverse(seat, &platform->seat_list, link) {
-        if (pSeats && count < *pSeatCount) {
-            pSeats[count] = seat->id;
-        }
-        count++;
-    }
-
-    if (!pSeats) {
-        *pSeatCount = count;
+    if (pSeats == NULL) {
+        *pSeatCount = wl_list_length(&platform->output_list);
         return WSI_SUCCESS;
     }
 
-    if (count > *pSeatCount) {
-        return WSI_INCOMPLETE;
+    uint32_t count = 0;
+    struct wsi_seat *seat;
+    wl_list_for_each(seat, &platform->seat_list, link) {
+        if (count >= *pSeatCount) {
+            return WSI_INCOMPLETE;
+        }
+        pSeats[count++] = seat->id;
     }
 
     *pSeatCount = count;
