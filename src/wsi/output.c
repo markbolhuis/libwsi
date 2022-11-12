@@ -5,9 +5,9 @@
 extern void *g_handle;
 
 WsiResult
-wsiCreateOutput(WsiPlatform platform, WsiOutput *pOutput)
+wsiEnumerateOutputs(WsiPlatform platform, uint32_t *pCount, WsiOutput *pOutputs)
 {
-    PFN_wsiCreateOutput sym
-        = (PFN_wsiCreateOutput)dlsym(g_handle, "wsiCreateOutput");
-    return sym(platform, pOutput);
+    PFN_wsiEnumerateOutputs sym
+        = (PFN_wsiEnumerateOutputs)dlsym(g_handle, "wsiEnumerateOutputs");
+    return sym(platform, pCount, pOutputs);
 }

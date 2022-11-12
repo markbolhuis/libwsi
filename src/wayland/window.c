@@ -12,8 +12,8 @@
 
 #include "common_priv.h"
 #include "platform_priv.h"
-#include "window_priv.h"
 #include "output_priv.h"
+#include "window_priv.h"
 
 struct wsi_window_output {
     struct wl_list link;

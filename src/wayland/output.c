@@ -313,6 +313,7 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
 
     output->global.platform = platform;
     output->global.name = name;
+    output->id = wsi_new_id(platform);
 
     output->wl_output = wsi_bind(
         platform,
@@ -374,7 +375,22 @@ wsi_output_destroy_all(struct wsi_platform *platform)
 }
 
 WsiResult
-wsiCreateOutput(WsiPlatform platform, WsiOutput *pOutput)
+wsiEnumerateOutputs(WsiPlatform platform, uint32_t *pCount, WsiOutput *pOutputs)
 {
-    return WSI_ERROR_NOT_IMPLEMENTED;
+    if (pOutputs == NULL) {
+        *pCount = wl_list_length(&platform->output_list);
+        return WSI_SUCCESS;
+    }
+
+    uint32_t count = 0;
+    struct wsi_output *output;
+    wl_list_for_each(output, &platform->output_list, link) {
+        if (count >= *pCount) {
+            return WSI_INCOMPLETE;
+        }
+        pOutputs[count++] = output->id;
+    }
+
+    *pCount = count;
+    return WSI_SUCCESS;
 }

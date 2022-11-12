@@ -12,7 +12,7 @@ typedef struct wsi_platform *WsiPlatform;
 typedef struct wsi_event_queue *WsiEventQueue;
 typedef uint64_t WsiSeat;
 typedef struct wsi_window *WsiWindow;
-typedef struct wsi_output *WsiOutput;
+typedef uint64_t WsiOutput;
 typedef struct wsi_pointer *WsiPointer;
 typedef struct wsi_keyboard *WsiKeyboard;
 
@@ -34,9 +34,8 @@ typedef enum wsi_result {
     WSI_ERROR_PLATFORM_LOST = -9,
     WSI_ERROR_SEAT_LOST = -10,
     WSI_ERROR_SEAT_IN_USE = -11,
-    WSI_ERROR_NOT_IMPLEMENTED = -12,
-    WSI_ERROR_UNINITIALIZED = -13,
-    WSI_ERROR_WINDOW_IN_USE = -14,
+    WSI_ERROR_UNINITIALIZED = -12,
+    WSI_ERROR_WINDOW_IN_USE = -13,
     WSI_ERROR_ENUM_MAX = 0x7fffffff,
 } WsiResult;
 

@@ -3,6 +3,7 @@
 
 struct wsi_output {
     struct wsi_global global;
+    uint64_t id;
 
     struct wl_list link;
 

@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-typedef WsiResult (*PFN_wsiCreateOutput)(WsiPlatform platform, WsiOutput *output);
+typedef WsiResult (*PFN_wsiEnumerateOutputs)(WsiPlatform platform, uint32_t *pCount, WsiOutput *pOutputs);
 
 WsiResult
-wsiCreateOutput(WsiPlatform platform, WsiOutput *pOutput);
+wsiEnumerateOutputs(WsiPlatform platform, uint32_t *pCount, WsiOutput *pOutputs);
 
 #ifdef __cplusplus
 }
