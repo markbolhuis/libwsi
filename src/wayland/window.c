@@ -29,8 +29,8 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
     return extent;
 }
 
-static int32_t
-wsi_window_get_max_scale(struct wsi_window *window)
+static void
+wsi_window_rescale(struct wsi_window *window)
 {
     int32_t max_scale = 1;
 
@@ -43,7 +43,7 @@ wsi_window_get_max_scale(struct wsi_window *window)
         }
     }
 
-    return max_scale;
+    window->pending.scale = max_scale;
 }
 
 static struct wsi_window_output *
@@ -159,7 +159,7 @@ wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
     if (wl_surface_get_version(w->wl_surface) >=
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
-        w->pending.scale = wsi_window_get_max_scale(w);
+        wsi_window_rescale(w);
         wsi_window_configure(w);
     }
 }
@@ -351,7 +351,7 @@ wl_surface_enter(
     if (wl_surface_get_version(wl_surface) >=
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
-        window->pending.scale = wsi_window_get_max_scale(window);
+        wsi_window_rescale(window);
         wsi_window_configure(window);
     }
 }
@@ -375,7 +375,7 @@ wl_surface_leave(
     if (wl_surface_get_version(wl_surface) >=
         WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
-        window->pending.scale = wsi_window_get_max_scale(window);
+        wsi_window_rescale(window);
         wsi_window_configure(window);
     }
 }
