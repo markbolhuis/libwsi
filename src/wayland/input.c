@@ -30,29 +30,39 @@ wsi_seat_find(struct wsi_platform *platform, uint64_t id)
 }
 
 static void
+wsi_pointer_set_cursor_image(
+    struct wsi_pointer *ptr,
+    struct wl_cursor_image *image,
+    uint32_t serial)
+{
+    struct wl_buffer *buffer = wl_cursor_image_get_buffer(image);
+
+    wl_surface_attach(ptr->wl_cursor_surface, buffer, 0, 0);
+    wl_surface_commit(ptr->wl_cursor_surface);
+
+    wl_pointer_set_cursor(
+        ptr->wl_pointer,
+        serial,
+        ptr->wl_cursor_surface,
+        (int32_t)image->hotspot_x,
+        (int32_t)image->hotspot_y);
+}
+
+static void
 wsi_pointer_set_cursor(
     struct wsi_pointer *ptr,
     const char *name,
     uint32_t serial)
 {
     ptr->wl_cursor = wl_cursor_theme_get_cursor(ptr->wl_cursor_theme, name);
-
-    struct wl_buffer *buffer = NULL;
-    int32_t x = 0, y = 0;
-    if (ptr->wl_cursor != NULL) {
-        struct wl_cursor_image *image = ptr->wl_cursor->images[0];
-        buffer = wl_cursor_image_get_buffer(image);
-        x = (int32_t)image->hotspot_x;
-        y = (int32_t)image->hotspot_y;
+    if (ptr->wl_cursor) {
+        wsi_pointer_set_cursor_image(ptr, ptr->wl_cursor->images[0], serial);
+        return;
     }
-
-    wl_surface_attach(ptr->wl_cursor_surface, buffer, 0, 0);
+    
+    wl_surface_attach(ptr->wl_cursor_surface, NULL, 0, 0);
     wl_surface_commit(ptr->wl_cursor_surface);
-
-    struct wl_surface *surface = ptr->wl_cursor
-                               ? ptr->wl_cursor_surface
-                               : NULL;
-    wl_pointer_set_cursor(ptr->wl_pointer, serial, surface, x, y);
+    wl_pointer_set_cursor(ptr->wl_pointer, serial, NULL, 0, 0);
 }
 
 static void
