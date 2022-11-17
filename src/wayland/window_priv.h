@@ -1,6 +1,8 @@
 #ifndef WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 #define WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 
+struct wsi_output;
+
 enum wsi_xdg_event {
     WSI_XDG_EVENT_NONE = 0,
     WSI_XDG_EVENT_CONFIGURE = 1,
