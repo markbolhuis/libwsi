@@ -494,7 +494,7 @@ wl_seat_name(void *data, struct wl_seat *wl_seat, const char *name)
     seat->name = strdup(name);
 }
 
-const static struct wl_seat_listener wl_seat_listener = {
+static const struct wl_seat_listener wl_seat_listener = {
     .capabilities = wl_seat_capabilities,
     .name         = wl_seat_name,
 };
