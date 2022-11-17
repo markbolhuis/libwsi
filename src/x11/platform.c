@@ -44,7 +44,7 @@ wsi_init_atoms(struct wsi_platform *platform)
         { "WM_DELETE_WINDOW", &platform->xcb_atom_wm_delete_window },
     };
 
-    const int count = wsi_array_length(table);
+    const size_t count = wsi_array_length(table);
     xcb_intern_atom_cookie_t cookies[count];
 
     for (size_t i = 0; i < count; ++i) {
