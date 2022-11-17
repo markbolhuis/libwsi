@@ -93,7 +93,7 @@ wsi_bind(
     uint32_t version,
     uint32_t max_version)
 {
-    if (max_version > wl_interface->version) {
+    if (max_version > (uint32_t)wl_interface->version) {
         max_version = wl_interface->version;
     }
 
