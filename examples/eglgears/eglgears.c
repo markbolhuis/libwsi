@@ -424,7 +424,6 @@ main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &epoch);
     float epoch_d = (float)epoch.tv_sec + (float)epoch.tv_nsec / 1000000000.0f;
 
-    WsiExtent extent;
     while(true) {
         res = wsiDispatchEvents(g_event_queue, 0);
         if (res != WSI_SUCCESS || !g_running) {
