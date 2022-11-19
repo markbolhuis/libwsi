@@ -138,10 +138,10 @@ wsi_window_set_initial_state(struct wsi_window *window)
     {
         window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
 
-        window->pending.capabilities = WSI_XDG_CAPABILITY_WINDOW_MENU
-                                     | WSI_XDG_CAPABILITY_MAXIMIZE
-                                     | WSI_XDG_CAPABILITY_FULLSCREEN
-                                     | WSI_XDG_CAPABILITY_MINIMIZE;
+        window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
+                                     | WSI_XDG_CAPABILITIES_MAXIMIZE
+                                     | WSI_XDG_CAPABILITIES_FULLSCREEN
+                                     | WSI_XDG_CAPABILITIES_MINIMIZE;
     }
 }
 
@@ -279,16 +279,16 @@ xdg_toplevel_wm_capabilities(
     wl_array_for_each(cap, capabilities) {
         switch (*cap) {
             case XDG_TOPLEVEL_WM_CAPABILITIES_WINDOW_MENU:
-                pending |= WSI_XDG_CAPABILITY_WINDOW_MENU;
+                pending |= WSI_XDG_CAPABILITIES_WINDOW_MENU;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_MAXIMIZE:
-                pending |= WSI_XDG_CAPABILITY_MAXIMIZE;
+                pending |= WSI_XDG_CAPABILITIES_MAXIMIZE;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_FULLSCREEN:
-                pending |= WSI_XDG_CAPABILITY_FULLSCREEN;
+                pending |= WSI_XDG_CAPABILITIES_FULLSCREEN;
                 break;
             case XDG_TOPLEVEL_WM_CAPABILITIES_MINIMIZE:
-                pending |= WSI_XDG_CAPABILITY_MINIMIZE;
+                pending |= WSI_XDG_CAPABILITIES_MINIMIZE;
                 break;
         }
     }
