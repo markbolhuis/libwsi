@@ -52,6 +52,35 @@ wsi_global_destroy(struct wsi_global *global)
     free(global);
 }
 
+int
+wsi_flush(struct wl_display *display)
+{
+    while (wl_display_flush(display) < 0) {
+        if (errno == EINTR) {
+            continue;
+        }
+
+        if (errno != EAGAIN) {
+            return -1;
+        }
+
+        struct pollfd fds[1];
+        fds[0].fd = wl_display_get_fd(display);
+        fds[0].events = POLLOUT;
+
+        int n;
+        do {
+            n = poll(fds, 1, -1);
+        } while (n < 0 && errno == EINTR);
+
+        if (n < 0) {
+            return n;
+        }
+    }
+
+    return 0;
+}
+
 static void
 wsi_platform_destroy_globals(struct wsi_platform *platform)
 {
@@ -502,40 +531,24 @@ wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
         return n < 0 ? WSI_ERROR_PLATFORM : WSI_SUCCESS;
     }
 
-    while (wl_display_flush(wl_display) < 0) {
-        if (errno != EAGAIN) {
-            wl_display_cancel_read(wl_display);
-            return WSI_ERROR_PLATFORM;
+    int n = wsi_flush(wl_display);
+    if (n < 0) {
+        wl_display_cancel_read(wl_display);
+        if (errno == ENOMEM) {
+            return WSI_ERROR_OUT_OF_MEMORY;
         }
-
-        struct pollfd fds[1];
-        fds[0].fd = wl_display_get_fd(wl_display);
-        fds[0].events = POLLOUT;
-
-        int n;
-        do {
-            n = poll(fds, 1, -1);
-        } while (n < 0 && errno == EINTR);
-
-        if (n < 0) {
-            wl_display_cancel_read(wl_display);
-            if (errno == ENOMEM) {
-                return WSI_ERROR_OUT_OF_MEMORY;
-            }
-            return WSI_ERROR_PLATFORM;
-        }
+        return WSI_ERROR_PLATFORM;
     }
 
     struct pollfd fds[1];
     fds[0].fd = wl_display_get_fd(wl_display);
     fds[0].events = POLLIN;
 
-    int ret;
     do {
-        ret = poll(fds, 1, 0);
-    } while (ret < 0 && errno == EINTR);
+        n = poll(fds, 1, 0);
+    } while (n < 0 && errno == EINTR);
 
-    if (ret < 0) {
+    if (n < 0) {
         wl_display_cancel_read(wl_display);
         if (errno == ENOMEM) {
             return WSI_ERROR_OUT_OF_MEMORY;
@@ -544,16 +557,16 @@ wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
     }
 
     if (fds[0].revents & POLLIN) {
-        ret = wl_display_read_events(wl_display);
-        if (ret < 0) {
+        n = wl_display_read_events(wl_display);
+        if (n < 0) {
             return WSI_ERROR_PLATFORM;
         }
     } else {
         wl_display_cancel_read(wl_display);
     }
 
-    ret = wsi_event_queue_dispatch_pending(eventQueue);
-    if (ret < 0) {
+    n = wsi_event_queue_dispatch_pending(eventQueue);
+    if (n < 0) {
         return WSI_ERROR_PLATFORM;
     }
 

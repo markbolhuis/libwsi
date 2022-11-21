@@ -51,4 +51,7 @@ wsi_global_create(struct wsi_platform *platform, uint32_t name);
 void
 wsi_global_destroy(struct wsi_global *global);
 
+int
+wsi_flush(struct wl_display *display);
+
 #endif
