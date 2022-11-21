@@ -564,7 +564,7 @@ WsiResult
 wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
 {
     if (pSeats == NULL) {
-        *pSeatCount = wl_list_length(&platform->output_list);
+        *pSeatCount = wl_list_length(&platform->seat_list);
         return WSI_SUCCESS;
     }
 
