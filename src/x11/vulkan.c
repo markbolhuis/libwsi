@@ -36,7 +36,7 @@ wsiEnumerateRequiredInstanceExtensions(
         return WSI_SUCCESS;
     }
 
-    enum wsi_result res = WSI_SUCCESS;
+    WsiResult res = WSI_SUCCESS;
     uint32_t cpy = INSTANCE_EXTENSION_COUNT;
     if (cpy > *pExtensionCount) {
         cpy = *pExtensionCount;
@@ -59,7 +59,7 @@ wsiEnumerateRequiredDeviceExtensions(
         return WSI_SUCCESS;
     }
 
-    enum wsi_result res = WSI_SUCCESS;
+    WsiResult res = WSI_SUCCESS;
     uint32_t cpy = DEVICE_EXTENSION_COUNT;
     if (cpy > *pExtensionCount) {
         cpy = *pExtensionCount;
@@ -111,7 +111,7 @@ wsiCreateWindowSurface(
         pAllocator,
         &surface);
 
-    enum wsi_result res;
+    WsiResult res;
     if (vres == VK_SUCCESS) {
         res = WSI_SUCCESS;
         window->api = WSI_API_VULKAN;

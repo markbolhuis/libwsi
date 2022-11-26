@@ -21,7 +21,7 @@ wsi_window_xcb_configure_notify(
 {
     assert(event->window == window->xcb_window);
 
-    struct wsi_extent extent = {
+    WsiExtent extent = {
         .width = event->width,
         .height = event->height
     };

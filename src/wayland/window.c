@@ -20,10 +20,10 @@ struct wsi_window_output {
     struct wl_output *wl_output;
 };
 
-struct wsi_extent
+WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
-    struct wsi_extent extent = window->current.extent;
+    WsiExtent extent = window->current.extent;
     extent.width *= window->current.scale;
     extent.height *= window->current.scale;
     return extent;
@@ -100,7 +100,7 @@ wsi_window_configure(struct wsi_window *window)
     }
 
     if (resized) {
-        struct wsi_extent be = wsi_window_get_buffer_extent(window);
+        WsiExtent be = wsi_window_get_buffer_extent(window);
 
         // TODO: Decide how best to handle Vulkan or EGL windows.
         if (window->api == WSI_API_EGL) {

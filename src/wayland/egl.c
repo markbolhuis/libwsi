@@ -42,7 +42,7 @@ wsiCreateWindowEGLSurface(
         return WSI_ERROR_WINDOW_IN_USE;
     }
 
-    struct wsi_extent extent = wsi_window_get_buffer_extent(window);
+    WsiExtent extent = wsi_window_get_buffer_extent(window);
 
     window->wl_egl_window = wl_egl_window_create(
         window->wl_surface,

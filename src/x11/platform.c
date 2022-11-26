@@ -92,10 +92,10 @@ wsi_find_window(struct wsi_platform *platform, xcb_window_t window)
     return NULL;
 }
 
-static enum wsi_result
+static WsiResult
 wsi_platform_init(struct wsi_platform *platform)
 {
-    enum wsi_result result;
+    WsiResult result;
 
     wsi_list_init(&platform->window_list);
 
@@ -151,7 +151,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    enum wsi_result result = wsi_platform_init(p);
+    WsiResult result = wsi_platform_init(p);
     if (result != WSI_SUCCESS) {
         free(p);
         return result;

@@ -16,7 +16,7 @@ typedef uint64_t WsiOutput;
 typedef struct wsi_pointer *WsiPointer;
 typedef struct wsi_keyboard *WsiKeyboard;
 
-typedef enum wsi_result {
+typedef enum {
     WSI_SUCCESS = 0,
     WSI_INCOMPLETE = 1,
     WSI_TIMEOUT = 2,
@@ -39,12 +39,12 @@ typedef enum wsi_result {
     WSI_ERROR_ENUM_MAX = 0x7fffffff,
 } WsiResult;
 
-typedef struct wsi_extent {
+typedef struct {
     int32_t width;
     int32_t height;
 } WsiExtent;
 
-typedef enum wsi_api {
+typedef enum {
     WSI_API_NONE = 0,
     WSI_API_EGL = 1,
     WSI_API_VULKAN = 2,

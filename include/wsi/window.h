@@ -10,7 +10,7 @@ extern "C" {
 typedef void (*PFN_wsiCloseWindow)(void *pUserData);
 typedef void (*PFN_wsiConfigureWindow)(void *pUserData, WsiExtent extent);
 
-typedef struct wsi_window_create_info {
+typedef struct {
     WsiEventQueue eventQueue;
     WsiWindow parent;
     WsiExtent extent;

@@ -387,10 +387,10 @@ wsi_platform_init_queue(struct wsi_platform *platform)
     platform->queue.wl_event_queue = NULL;
 }
 
-static enum wsi_result
+static WsiResult
 wsi_platform_init(struct wsi_platform *platform)
 {
-    enum wsi_result result;
+    WsiResult result;
 
     platform->wl_display = wl_display_connect(NULL);
     if (platform->wl_display == NULL) {
@@ -469,7 +469,7 @@ wsiCreatePlatform(WsiPlatform *pPlatform)
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    enum wsi_result result = wsi_platform_init(platform);
+    WsiResult result = wsi_platform_init(platform);
     if (result != WSI_SUCCESS) {
         free(platform);
         return result;

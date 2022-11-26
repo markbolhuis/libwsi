@@ -6,7 +6,7 @@ struct wsi_window {
 
     struct wsi_list link;
 
-    enum wsi_api api;
+    WsiApi api;
 
     xcb_window_t xcb_window;
     xcb_window_t xcb_parent;

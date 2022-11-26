@@ -32,8 +32,8 @@ enum wsi_xdg_state {
 };
 
 struct wsi_window_state {
-    struct wsi_extent extent;               // xdg_toplevel.configure
-    struct wsi_extent bounds;               // xdg_toplevel.configure_bounds
+    WsiExtent extent;                       // xdg_toplevel.configure
+    WsiExtent bounds;                       // xdg_toplevel.configure_bounds
     enum wsi_xdg_state state;               // xdg_toplevel.configure
     enum wsi_xdg_capabilities capabilities; // xdg_toplevel.wm_capabilities
     int32_t scale;                          // wl_surface.{enter.leave}
@@ -43,11 +43,11 @@ struct wsi_window_state {
 struct wsi_window {
     struct wsi_platform   *platform;
     struct wsi_window     *parent;
-    struct wsi_extent     user_extent;
+    WsiExtent user_extent;
 
     struct wl_list link;
 
-    enum wsi_api          api;
+    WsiApi api;
 
     struct wl_surface     *wl_surface;
     struct wl_egl_window  *wl_egl_window; // Temporary
@@ -71,7 +71,7 @@ struct wsi_window {
 void
 wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o);
 
-struct wsi_extent
+WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window);
 
 #endif
