@@ -1,1 +1,2 @@
 subdir('eglgears')
+subdir('vkcube')
