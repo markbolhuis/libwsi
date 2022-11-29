@@ -45,9 +45,6 @@ struct demo {
     VkCommandBuffer       cmd_buffers[NUM_FRAMES];
     uint32_t              image_index;
     uint32_t              frame_index;
-    VkDescriptorSetLayout descriptor_set_layout;
-    VkDescriptorPool      descriptor_pool;
-    VkDescriptorSet       descriptor_set;
     VkPipelineLayout      pipeline_layout;
     VkPipeline            pipeline;
     VkBuffer              vertex_buffer;
