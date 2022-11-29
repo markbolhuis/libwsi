@@ -23,6 +23,7 @@ executable('vkcube',
     dep_vulkan,
     dep_wsi,
     dep_glm,
+    lib_m,
   ],
 )
 
