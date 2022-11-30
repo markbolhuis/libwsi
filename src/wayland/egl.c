@@ -10,6 +10,7 @@
 #include "wsi/window.h"
 #include "wsi/egl.h"
 
+#include "common_priv.h"
 #include "platform_priv.h"
 #include "window_priv.h"
 

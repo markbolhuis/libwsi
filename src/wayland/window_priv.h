@@ -47,7 +47,7 @@ struct wsi_window {
 
     struct wl_list link;
 
-    WsiApi api;
+    enum wsi_api api;
 
     struct wl_surface     *wl_surface;
     struct wl_egl_window  *wl_egl_window; // Temporary

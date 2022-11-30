@@ -44,13 +44,6 @@ typedef struct {
     int32_t height;
 } WsiExtent;
 
-typedef enum {
-    WSI_API_NONE = 0,
-    WSI_API_EGL = 1,
-    WSI_API_VULKAN = 2,
-    WSI_API_ENUM_MAX = 0x7fffffff,
-} WsiApi;
-
 #ifdef __cplusplus
 }
 #endif
