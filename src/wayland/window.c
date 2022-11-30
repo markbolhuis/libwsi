@@ -387,29 +387,20 @@ static const struct wl_surface_listener wl_surface_listener = {
 
 // endregion
 
-WsiResult
-wsiCreateWindow(
-    WsiPlatform platform,
-    const WsiWindowCreateInfo *pCreateInfo,
-    WsiWindow *pWindow)
+static WsiResult
+wsi_window_init(
+    struct wsi_platform *platform,
+    const WsiWindowCreateInfo *info,
+    struct wsi_window *window)
 {
-    if (platform->xdg_wm_base == NULL) {
-        return WSI_ERROR_UNSUPPORTED;
-    }
-
-    struct wsi_window *window = calloc(1, sizeof(struct wsi_window));
-    if (window == NULL) {
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
-
-    wl_list_init(&window->output_list);
-
     window->platform = platform;
     window->api = WSI_API_NONE;
-    window->user_extent = pCreateInfo->extent;
-    window->user_data = pCreateInfo->pUserData;
-    window->pfn_close = pCreateInfo->pfnClose;
-    window->pfn_configure = pCreateInfo->pfnConfigure;
+    window->user_extent = info->extent;
+    window->user_data = info->pUserData;
+    window->pfn_close = info->pfnClose;
+    window->pfn_configure = info->pfnConfigure;
+
+    wl_list_init(&window->output_list);
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
     wl_surface_add_listener(window->wl_surface, &wl_surface_listener, window);
@@ -430,10 +421,10 @@ wsiCreateWindow(
             window);
     }
 
-    xdg_toplevel_set_title(window->xdg_toplevel, pCreateInfo->pTitle);
+    xdg_toplevel_set_title(window->xdg_toplevel, info->pTitle);
 
-    if (pCreateInfo->parent != NULL) {
-        window->parent = pCreateInfo->parent;
+    if (info->parent != NULL) {
+        window->parent = info->parent;
         xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
     }
 
@@ -447,27 +438,13 @@ wsiCreateWindow(
     }
 
     wl_list_insert(&platform->window_list, &window->link);
-    *pWindow = window;
     return WSI_SUCCESS;
 }
 
-void
-wsiDestroyWindow(WsiWindow window)
+static void
+wsi_window_uninit(struct wsi_window *window)
 {
-    struct wsi_platform *platform = window->platform;
-
     wl_list_remove(&window->link);
-
-    if (window->xdg_toplevel_decoration_v1) {
-        zxdg_toplevel_decoration_v1_destroy(window->xdg_toplevel_decoration_v1);
-    }
-
-    xdg_toplevel_destroy(window->xdg_toplevel);
-    xdg_surface_destroy(window->xdg_surface);
-
-    wl_surface_destroy(window->wl_surface);
-
-    wl_display_roundtrip(platform->wl_display);
 
     struct wsi_window_output *wo, *wm_tmp;
     wl_list_for_each_safe(wo, wm_tmp, &window->output_list, link) {
@@ -475,6 +452,44 @@ wsiDestroyWindow(WsiWindow window)
         free(wo);
     }
 
+    if (window->xdg_toplevel_decoration_v1) {
+        zxdg_toplevel_decoration_v1_destroy(window->xdg_toplevel_decoration_v1);
+    }
+
+    xdg_toplevel_destroy(window->xdg_toplevel);
+    xdg_surface_destroy(window->xdg_surface);
+    wl_surface_destroy(window->wl_surface);
+}
+
+WsiResult
+wsiCreateWindow(
+    WsiPlatform platform,
+    const WsiWindowCreateInfo *pCreateInfo,
+    WsiWindow *pWindow)
+{
+    if (platform->xdg_wm_base == NULL) {
+        return WSI_ERROR_UNSUPPORTED;
+    }
+
+    struct wsi_window *window = calloc(1, sizeof(struct wsi_window));
+    if (!window) {
+        return WSI_ERROR_OUT_OF_MEMORY;
+    }
+
+    WsiResult result = wsi_window_init(platform, pCreateInfo, window);
+    if (result != WSI_SUCCESS) {
+        free(window);
+        return result;
+    }
+
+    *pWindow = window;
+    return WSI_SUCCESS;
+}
+
+void
+wsiDestroyWindow(WsiWindow window)
+{
+    wsi_window_uninit(window);
     free(window);
 }
 
