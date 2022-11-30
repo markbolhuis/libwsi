@@ -54,4 +54,16 @@ wsi_global_destroy(struct wsi_global *global);
 int
 wsi_flush(struct wl_display *display);
 
+int
+wsi_event_queue_prepare_read(struct wsi_event_queue *eq);
+
+int
+wsi_event_queue_dispatch(struct wsi_event_queue *eq);
+
+int
+wsi_event_queue_dispatch_pending(struct wsi_event_queue *eq);
+
+int
+wsi_event_queue_roundtrip(struct wsi_event_queue *eq);
+
 #endif

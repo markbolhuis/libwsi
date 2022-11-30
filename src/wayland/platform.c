@@ -172,24 +172,40 @@ wsi_global_bind(
     return proxy;
 }
 
-static inline int
+int
 wsi_event_queue_prepare_read(struct wsi_event_queue *eq)
 {
-    struct wl_display *display = eq->wl_display;
     if (eq->wl_event_queue) {
-        return wl_display_prepare_read_queue(display, eq->wl_event_queue);
+        return wl_display_prepare_read_queue(eq->wl_display, eq->wl_event_queue);
     }
-    return wl_display_prepare_read(display);
+    return wl_display_prepare_read(eq->wl_display);
 }
 
-static inline int
+int
+wsi_event_queue_dispatch(struct wsi_event_queue *eq)
+{
+    if (eq->wl_event_queue) {
+        return wl_display_dispatch_queue(eq->wl_display, eq->wl_event_queue);
+    }
+    return wl_display_dispatch(eq->wl_display);
+}
+
+int
 wsi_event_queue_dispatch_pending(struct wsi_event_queue *eq)
 {
-    struct wl_display *display = eq->wl_display;
     if (eq->wl_event_queue) {
-        return wl_display_dispatch_queue_pending(display, eq->wl_event_queue);
+        return wl_display_dispatch_queue_pending(eq->wl_display, eq->wl_event_queue);
     }
-    return wl_display_dispatch_pending(display);
+    return wl_display_dispatch_pending(eq->wl_display);
+}
+
+int
+wsi_event_queue_roundtrip(struct wsi_event_queue *eq)
+{
+    if (eq->wl_event_queue) {
+        return wl_display_roundtrip_queue(eq->wl_display, eq->wl_event_queue);
+    }
+    return wl_display_roundtrip(eq->wl_display);
 }
 
 // region XDG WmBase
