@@ -39,10 +39,22 @@ typedef enum {
     WSI_ERROR_ENUM_MAX = 0x7fffffff,
 } WsiResult;
 
+typedef enum {
+    WSI_EVENT_TYPE_CLOSE_WINDOW = 1,
+    WSI_EVENT_TYPE_RESIZE_WINDOW = 2,
+    WSI_EVENT_TYPE_MAX = 0x7fffffff,
+} WsiEventType;
+
 typedef struct {
     int32_t width;
     int32_t height;
 } WsiExtent;
+
+typedef struct {
+    WsiEventType type;
+    uint32_t flags;
+    int64_t time;
+} WsiEvent;
 
 #ifdef __cplusplus
 }

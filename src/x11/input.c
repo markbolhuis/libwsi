@@ -4,8 +4,6 @@
 #include <xcb/xcb.h>
 #include <xcb/xinput.h>
 
-#include "wsi/input.h"
-
 #include "utils.h"
 
 #include "platform_priv.h"

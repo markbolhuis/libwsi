@@ -44,11 +44,11 @@ fini(void)
 }
 
 WsiResult
-wsiCreatePlatform(WsiPlatform *pPlatform)
+wsiCreatePlatform(const WsiPlatformCreateInfo *pCreateInfo, WsiPlatform *pPlatform)
 {
     PFN_wsiCreatePlatform sym
         = (PFN_wsiCreatePlatform)dlsym(g_handle, "wsiCreatePlatform");
-    return sym(pPlatform);
+    return sym(pCreateInfo, pPlatform);
 }
 
 void
@@ -68,11 +68,11 @@ wsiGetDefaultEventQueue(WsiPlatform platform)
 }
 
 WsiResult
-wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
+wsiCreateEventQueue(WsiPlatform platform, const WsiEventQueueCreateInfo *pCreateInfo, WsiEventQueue *pEventQueue)
 {
     PFN_wsiCreateEventQueue sym
         = (PFN_wsiCreateEventQueue)dlsym(g_handle, "wsiCreateEventQueue");
-    return sym(platform, pEventQueue);
+    return sym(platform, pCreateInfo, pEventQueue);
 }
 
 void

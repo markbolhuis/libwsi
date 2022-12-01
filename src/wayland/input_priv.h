@@ -1,6 +1,8 @@
 #ifndef WSI_SRC_WAYLAND_INPUT_PRIVATE_H
 #define WSI_SRC_WAYLAND_INPUT_PRIVATE_H
 
+#include "wsi/input.h"
+
 enum wsi_wl_pointer_event {
     WSI_WL_POINTER_EVENT_NONE = 0,
     WSI_WL_POINTER_EVENT_ENTER = 1,

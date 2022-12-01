@@ -8,8 +8,6 @@
 #include <xdg-shell-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
 
-#include "wsi/window.h"
-
 #include "common_priv.h"
 #include "platform_priv.h"
 #include "output_priv.h"
@@ -112,7 +110,15 @@ wsi_window_configure(struct wsi_window *window)
                 0, 0);
         }
 
-        window->pfn_configure(window->user_data, be);
+        WsiResizeWindowEvent event = {
+            .base.type = WSI_EVENT_TYPE_RESIZE_WINDOW,
+            .base.flags = 0,
+            .base.time = 0,
+            .window = window,
+            .extent = be,
+        };
+
+        window->queue->pfn_callback(&event.base, window->queue->user_data);
     }
 
     uint32_t version = wl_surface_get_version(window->wl_surface);
@@ -248,7 +254,16 @@ xdg_toplevel_close(
     struct xdg_toplevel *xdg_toplevel)
 {
     struct wsi_window *window = data;
-    window->pfn_close(window->user_data);
+    struct wsi_event_queue *queue = window->queue;
+
+    WsiCloseWindowEvent event = {
+        .base.type = WSI_EVENT_TYPE_CLOSE_WINDOW,
+        .base.time = 0,
+        .base.flags = 0,
+        .window = window,
+    };
+
+    queue->pfn_callback(&event.base, queue->user_data);
 }
 
 static void
@@ -394,11 +409,9 @@ wsi_window_init(
     struct wsi_window *window)
 {
     window->platform = platform;
+    window->queue = info->eventQueue;
     window->api = WSI_API_NONE;
     window->user_extent = info->extent;
-    window->user_data = info->pUserData;
-    window->pfn_close = info->pfnClose;
-    window->pfn_configure = info->pfnConfigure;
 
     wl_list_init(&window->output_list);
 

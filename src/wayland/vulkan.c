@@ -3,14 +3,12 @@
 
 #include <wayland-util.h>
 
-#include "wsi/window.h"
-#include "wsi/vulkan.h"
-
-#include <vulkan/vulkan_wayland.h>
-
 #include "common_priv.h"
 #include "platform_priv.h"
 #include "window_priv.h"
+
+#include "wsi/vulkan.h"
+#include <vulkan/vulkan_wayland.h>
 
 const uint32_t INSTANCE_EXTENSION_COUNT = 2;
 const char *INSTANCE_EXTENSION_NAMES[2] ={

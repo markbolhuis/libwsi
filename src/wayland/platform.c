@@ -11,8 +11,6 @@
 
 #include <xkbcommon/xkbcommon.h>
 
-#include "wsi/platform.h"
-
 #include "platform_priv.h"
 #include "input_priv.h"
 #include "output_priv.h"
@@ -397,14 +395,16 @@ static const struct wl_registry_listener wl_registry_listener = {
 // endregion
 
 static void
-wsi_platform_init_queue(struct wsi_platform *platform)
+wsi_platform_init_queue(struct wsi_platform *platform, const WsiEventQueueCreateInfo *info)
 {
     platform->queue.wl_display = platform->wl_display;
     platform->queue.wl_event_queue = NULL;
+    platform->queue.user_data = info->pUserData;
+    platform->queue.pfn_callback = info->pfnEventCallback;
 }
 
 static WsiResult
-wsi_platform_init(struct wsi_platform *platform)
+wsi_platform_init(const WsiPlatformCreateInfo *info, struct wsi_platform *platform)
 {
     WsiResult result;
 
@@ -419,7 +419,7 @@ wsi_platform_init(struct wsi_platform *platform)
     wl_list_init(&platform->window_list);
     wl_array_init(&platform->format_array);
 
-    wsi_platform_init_queue(platform);
+    wsi_platform_init_queue(platform, &info->queueInfo);
 
     platform->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (platform->xkb_context == NULL) {
@@ -478,14 +478,14 @@ wsi_platform_uninit(struct wsi_platform *platform)
 }
 
 WsiResult
-wsiCreatePlatform(WsiPlatform *pPlatform)
+wsiCreatePlatform(const WsiPlatformCreateInfo *pCreateInfo, WsiPlatform *pPlatform)
 {
     struct wsi_platform *platform = calloc(1, sizeof(*platform));
     if (platform == NULL) {
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    WsiResult result = wsi_platform_init(platform);
+    WsiResult result = wsi_platform_init(pCreateInfo, platform);
     if (result != WSI_SUCCESS) {
         free(platform);
         return result;
@@ -509,7 +509,7 @@ wsiGetDefaultEventQueue(WsiPlatform platform)
 }
 
 WsiResult
-wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
+wsiCreateEventQueue(WsiPlatform platform, const WsiEventQueueCreateInfo *pCreateInfo, WsiEventQueue *pEventQueue)
 {
     struct wsi_event_queue *eq = calloc(1, sizeof(struct wsi_event_queue));
     if (!eq) {

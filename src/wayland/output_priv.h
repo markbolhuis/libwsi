@@ -1,6 +1,8 @@
 #ifndef WSI_SRC_WAYLAND_OUTPUT_PRIVATE_H
 #define WSI_SRC_WAYLAND_OUTPUT_PRIVATE_H
 
+#include "wsi/output.h"
+
 struct wsi_output {
     struct wsi_global global;
     uint64_t id;

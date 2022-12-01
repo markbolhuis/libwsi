@@ -1,6 +1,8 @@
 #ifndef WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 #define WSI_SRC_WAYLAND_WINDOW_PRIVATE_H
 
+#include "wsi/window.h"
+
 struct wsi_output;
 
 enum wsi_xdg_event {
@@ -42,6 +44,7 @@ struct wsi_window_state {
 
 struct wsi_window {
     struct wsi_platform   *platform;
+    struct wsi_event_queue *queue;
     struct wsi_window     *parent;
     WsiExtent user_extent;
 
@@ -60,11 +63,6 @@ struct wsi_window {
     struct wsi_window_state pending;
     struct wsi_window_state current;
     struct wl_list output_list;
-
-    PFN_wsiCloseWindow pfn_close;
-    PFN_wsiConfigureWindow pfn_configure;
-
-    void *user_data;
     bool configured;
 };
 

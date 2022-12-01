@@ -4,8 +4,6 @@
 
 #include <xcb/xcb.h>
 
-#include "wsi/window.h"
-
 #include "utils.h"
 
 #include "common_priv.h"
@@ -21,12 +19,16 @@ wsi_window_xcb_configure_notify(
 {
     assert(event->window == window->xcb_window);
 
-    WsiExtent extent = {
-        .width = event->width,
-        .height = event->height
+    WsiResizeWindowEvent resize_event = {
+        .base.type = WSI_EVENT_TYPE_RESIZE_WINDOW,
+        .base.flags = 0,
+        .base.time = 0,
+        .window = window,
+        .extent.width = event->width,
+        .extent.height = event->height,
     };
 
-    window->pfn_configure(window->user_data, extent);
+    window->queue->pfn_callback(&resize_event.base, window->queue->user_data);
 }
 
 void
@@ -39,7 +41,14 @@ wsi_window_xcb_client_message(
     if (event->type == window->platform->xcb_atom_wm_protocols &&
         event->data.data32[0] == window->platform->xcb_atom_wm_delete_window)
     {
-        window->pfn_close(window->user_data);
+        WsiCloseWindowEvent close_event = {
+            .base.type = WSI_EVENT_TYPE_CLOSE_WINDOW,
+            .base.flags = 0,
+            .base.time = 0,
+            .window = window,
+        };
+
+        window->queue->pfn_callback(&close_event.base, window->queue->user_data);
     }
 }
 
@@ -58,13 +67,11 @@ wsiCreateWindow(
     }
 
     window->platform = platform;
+    window->queue = pCreateInfo->eventQueue;
     window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
     window->user_width = wsi_xcb_clamp(pCreateInfo->extent.width);
     window->user_height = wsi_xcb_clamp(pCreateInfo->extent.height);
-    window->pfn_close = pCreateInfo->pfnClose;
-    window->pfn_configure = pCreateInfo->pfnConfigure;
-    window->user_data = pCreateInfo->pUserData;
 
     if (pCreateInfo->parent) {
         window->xcb_parent = pCreateInfo->parent->xcb_window;

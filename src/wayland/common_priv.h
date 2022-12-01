@@ -1,6 +1,8 @@
 #ifndef WSI_SRC_WAYLAND_COMMON_PRIVATE_H
 #define WSI_SRC_WAYLAND_COMMON_PRIVATE_H
 
+#include "wsi/common.h"
+
 static inline bool
 wsi_extent_equal(WsiExtent a, WsiExtent b)
 {

@@ -10,8 +10,6 @@
 
 #include <xkbcommon/xkbcommon.h>
 
-#include "wsi/input.h"
-
 #include "platform_priv.h"
 #include "input_priv.h"
 

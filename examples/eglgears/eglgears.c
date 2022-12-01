@@ -308,24 +308,38 @@ create_gears()
 }
 
 static void
-handle_window_close(void *data)
+on_event(const WsiEvent *pEvent, void *pUserData)
 {
-    g_running = false;
+    switch (pEvent->type) {
+        case WSI_EVENT_TYPE_CLOSE_WINDOW: {
+            g_running = false;
+            break;
+        }
+        case WSI_EVENT_TYPE_RESIZE_WINDOW: {
+            const WsiResizeWindowEvent *resize = (const WsiResizeWindowEvent *)pEvent;
+            if (resize->extent.width != g_extent.width ||
+                resize->extent.height != g_extent.height)
+            {
+                g_extent = resize->extent;
+                g_resized = true;
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }
-
-static void
-handle_window_configure(void *data, WsiExtent extent)
-{
-    g_extent = extent;
-    g_resized = true;
-}
-
 int
 main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
 
-    WsiResult res = wsiCreatePlatform(&g_platform);
+    WsiPlatformCreateInfo platform_info = {
+        .queueInfo.pUserData = NULL,
+        .queueInfo.pfnEventCallback = on_event,
+    };
+
+    WsiResult res = wsiCreatePlatform(&platform_info, &g_platform);
     if (res != WSI_SUCCESS) {
         fprintf(stderr, "wsiCreatePlatform failed: %d\n", res);
         goto err_wsi_platform;
@@ -387,8 +401,6 @@ main(int argc, char *argv[])
     info.eventQueue = g_event_queue;
     info.extent = g_extent;
     info.pTitle = "Gears";
-    info.pfnClose = handle_window_close;
-    info.pfnConfigure = handle_window_configure;
 
     res = wsiCreateWindow(g_platform, &info, &g_window);
     if (res != WSI_SUCCESS) {

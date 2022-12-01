@@ -145,29 +145,6 @@ lookat(vec3 eye, vec3 at, vec3 up, mat4 out)
 
 // endregion
 
-// region Wsi Callbacks
-
-static void
-window_configure(void *user_data, WsiExtent extent)
-{
-    struct demo *demo = user_data;
-    if (extent.width != demo->window_extent.width ||
-        extent.height != demo->window_extent.height)
-    {
-        demo->window_extent = extent;
-        demo->resized = true;
-    }
-}
-
-static void
-window_close(void *user_data)
-{
-    struct demo *demo = user_data;
-    demo->closed = true;
-}
-
-// endregion
-
 
 static char  *
 open_file(const char *filename, size_t *size)
@@ -1209,9 +1186,6 @@ demo_create_window(struct demo *demo)
         .extent.width = 600,
         .extent.height = 600,
         .pTitle = "VkCube",
-        .pfnClose = window_close,
-        .pfnConfigure = window_configure,
-        .pUserData = demo,
     };
 
     WsiResult res = wsiCreateWindow(demo->platform, &window_info, &demo->window);
@@ -1280,9 +1254,38 @@ demo_destroy_instance(struct demo *demo)
 }
 
 static void
+demo_on_event(const WsiEvent *pEvent, void *pUserData)
+{
+    struct demo *demo = pUserData;
+    switch (pEvent->type) {
+    case WSI_EVENT_TYPE_CLOSE_WINDOW: {
+        demo->closed = true;
+        break;
+    }
+    case WSI_EVENT_TYPE_RESIZE_WINDOW: {
+        const WsiResizeWindowEvent *resize = (const WsiResizeWindowEvent *)pEvent;
+        if (resize->extent.width != demo->window_extent.width ||
+            resize->extent.height != demo->window_extent.height)
+        {
+            demo->window_extent = resize->extent;
+            demo->resized = true;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void
 demo_create_platform(struct demo *demo)
 {
-    WsiResult res = wsiCreatePlatform(&demo->platform);
+    WsiPlatformCreateInfo info = {
+        .queueInfo.pfnEventCallback = demo_on_event,
+        .queueInfo.pUserData = demo,
+    };
+
+    WsiResult res = wsiCreatePlatform(&info, &demo->platform);
     assert(res == WSI_SUCCESS);
 
     demo->event_queue = wsiGetDefaultEventQueue(demo->platform);

@@ -7,12 +7,11 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "wsi/window.h"
-#include "wsi/egl.h"
-
 #include "common_priv.h"
 #include "platform_priv.h"
 #include "window_priv.h"
+
+#include "wsi/egl.h"
 
 WsiResult
 wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)

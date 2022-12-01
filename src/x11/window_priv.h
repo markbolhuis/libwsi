@@ -1,8 +1,11 @@
 #ifndef WSI_SRC_XCB_WINDOW_PRIVATE_H
 #define WSI_SRC_XCB_WINDOW_PRIVATE_H
 
+#include "wsi/window.h"
+
 struct wsi_window {
     struct wsi_platform *platform;
+    struct wsi_event_queue *queue;
 
     struct wsi_list link;
 
@@ -14,11 +17,6 @@ struct wsi_window {
 
     uint16_t user_width;
     uint16_t user_height;
-
-    void *user_data;
-
-    PFN_wsiCloseWindow pfn_close;
-    PFN_wsiConfigureWindow pfn_configure;
 };
 
 void

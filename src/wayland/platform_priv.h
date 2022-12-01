@@ -1,9 +1,13 @@
 #ifndef WSI_SRC_WAYLAND_PLATFORM_PRIVATE_H
 #define WSI_SRC_WAYLAND_PLATFORM_PRIVATE_H
 
+#include "wsi/platform.h"
+
 struct wsi_event_queue {
     struct wl_display *wl_display;
     struct wl_event_queue *wl_event_queue; // Must be NULL if the default
+    PFN_wsiEventCallback pfn_callback;
+    void *user_data;
 };
 
 struct wsi_global {

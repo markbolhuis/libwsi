@@ -3,9 +3,6 @@
 
 #include <xcb/xcb.h>
 
-#include "wsi/platform.h"
-#include "wsi/window.h"
-
 #include "utils.h"
 
 #include "common_priv.h"
@@ -94,7 +91,7 @@ wsi_find_window(struct wsi_platform *platform, xcb_window_t window)
 }
 
 static WsiResult
-wsi_platform_init(struct wsi_platform *platform)
+wsi_platform_init(const WsiPlatformCreateInfo *pCreateInfo, struct wsi_platform *platform)
 {
     WsiResult result;
 
@@ -107,7 +104,9 @@ wsi_platform_init(struct wsi_platform *platform)
         goto err_connect;
     }
 
-    platform->default_queue.platform = platform;
+    platform->queue.platform = platform;
+    platform->queue.user_data = pCreateInfo->queueInfo.pUserData;
+    platform->queue.pfn_callback = pCreateInfo->queueInfo.pfnEventCallback;
 
     const xcb_setup_t *setup = xcb_get_setup(platform->xcb_connection);
 
@@ -145,14 +144,14 @@ wsi_platform_uninit(struct wsi_platform *platform)
 }
 
 WsiResult
-wsiCreatePlatform(WsiPlatform *pPlatform)
+wsiCreatePlatform(const WsiPlatformCreateInfo *pCreateInfo, WsiPlatform *pPlatform)
 {
     struct wsi_platform *p = calloc(1, sizeof(struct wsi_platform));
     if (!p) {
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    WsiResult result = wsi_platform_init(p);
+    WsiResult result = wsi_platform_init(pCreateInfo, p);
     if (result != WSI_SUCCESS) {
         free(p);
         return result;
@@ -172,11 +171,11 @@ wsiDestroyPlatform(WsiPlatform platform)
 WsiEventQueue
 wsiGetDefaultEventQueue(WsiPlatform platform)
 {
-    return &platform->default_queue;
+    return &platform->queue;
 }
 
 WsiResult
-wsiCreateEventQueue(WsiPlatform platform, WsiEventQueue *pEventQueue)
+wsiCreateEventQueue(WsiPlatform platform, const WsiEventQueueCreateInfo *pCreateInfo, WsiEventQueue *pEventQueue)
 {
     // TODO: Unimplemented
     abort();
