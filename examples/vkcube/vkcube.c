@@ -933,7 +933,6 @@ demo_create_swapchain(struct demo *demo, VkSwapchainKHR oldSwapchain)
         info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     }
 
-    info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     info.presentMode = demo->present_mode;
     info.clipped = VK_TRUE;
     info.oldSwapchain = oldSwapchain;
