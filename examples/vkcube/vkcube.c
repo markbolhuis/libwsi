@@ -1138,11 +1138,6 @@ demo_pick_physical_device(struct demo *demo)
         VkQueueFamilyProperties queue_family_props[MAX_QUEUE_COUNT];
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_count, queue_family_props);
 
-        if (props.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-            props.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-            continue;
-        }
-
         uint32_t graphics_family = VK_QUEUE_FAMILY_IGNORED;
         uint32_t present_family = VK_QUEUE_FAMILY_IGNORED;
 
