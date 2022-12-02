@@ -183,6 +183,9 @@ open_file(const char *filename, size_t *size)
 
 
 static void
+demo_resize(struct demo *demo);
+
+static void
 demo_begin_frame(struct demo *demo)
 {
     uint32_t frame_index = demo->frame_index;
@@ -208,7 +211,10 @@ demo_begin_frame(struct demo *demo)
         demo->acquire_semaphores[frame_index],
         VK_NULL_HANDLE,
         &demo->image_index);
-    assert(res == VK_SUCCESS);
+
+    if (res == VK_ERROR_OUT_OF_DATE_KHR) {
+        demo_resize(demo);
+    }
 }
 
 static void
@@ -321,7 +327,9 @@ demo_end_frame(struct demo *demo)
     };
 
     res = vkQueuePresentKHR(demo->present_queue, &presentInfo);
-    assert(res == VK_SUCCESS);
+    if (res == VK_ERROR_OUT_OF_DATE_KHR) {
+        demo_resize(demo);
+    }
 
     demo->frame_index = (demo->frame_index + 1) % NUM_FRAMES;
 }
