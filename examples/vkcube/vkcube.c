@@ -38,6 +38,8 @@ struct demo {
     uint32_t              swapchain_image_count;
     VkImage               *swapchain_images;
     VkImageView           *swapchain_image_views;
+    VkRenderPass          render_pass;
+    VkFramebuffer         *frame_buffers;
     VkFence               fences[NUM_FRAMES];
     VkSemaphore           acquire_semaphores[NUM_FRAMES];
     VkSemaphore           present_semaphores[NUM_FRAMES];
@@ -212,8 +214,7 @@ demo_begin_frame(struct demo *demo)
 static void
 demo_record_frame(struct demo *demo, float time)
 {
-    uint32_t image_index = demo->image_index;
-    uint32_t frame_index = demo->frame_index;
+    VkCommandBuffer cmd_buf = demo->cmd_buffers[demo->frame_index];
 
     VkCommandBufferBeginInfo begin_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -222,86 +223,41 @@ demo_record_frame(struct demo *demo, float time)
         .pInheritanceInfo = VK_NULL_HANDLE,
     };
 
-    VkResult res = vkBeginCommandBuffer(demo->cmd_buffers[frame_index], &begin_info);
+    VkResult res = vkBeginCommandBuffer(cmd_buf, &begin_info);
     assert(res == VK_SUCCESS);
 
-    VkImageSubresourceRange range = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseMipLevel = 0,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .baseArrayLayer = 0,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-    };
-
-    VkImageMemoryBarrier imb1 = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = VK_NULL_HANDLE,
-        .srcAccessMask = VK_ACCESS_NONE,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = demo->swapchain_images[image_index],
-        .subresourceRange = range,
-    };
-
-    vkCmdPipelineBarrier(
-        demo->cmd_buffers[frame_index],
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        0,
-        0, VK_NULL_HANDLE,
-        0, VK_NULL_HANDLE,
-        1, &imb1);
-
-    VkClearValue clear_value = {{
-        .float32 = { 0.0f, 0.0f, 0.0f, 0.8f },
-    }};
-
-    VkRenderingAttachmentInfo color_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .pNext = VK_NULL_HANDLE,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = clear_value,
-        .imageView = demo->swapchain_image_views[image_index],
-        .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-        .resolveMode = VK_RESOLVE_MODE_NONE,
-        .resolveImageView = VK_NULL_HANDLE,
-        .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    };
+    VkClearValue clear_values[1];
+    clear_values[0].color.float32[0] = 0.0f;
+    clear_values[0].color.float32[1] = 0.0f;
+    clear_values[0].color.float32[2] = 0.0f;
+    clear_values[0].color.float32[3] = 0.8f;
 
     VkRect2D render_area = {
         .offset = { 0, 0 },
         .extent = demo->swapchain_extent,
     };
 
-    VkRenderingInfo rendering_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .pNext = NULL,
-        .flags = 0,
+    VkRenderPassBeginInfo render_pass_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .pNext = VK_NULL_HANDLE,
+        .renderPass = demo->render_pass,
+        .framebuffer = demo->frame_buffers[demo->image_index],
         .renderArea = render_area,
-        .layerCount = 1,
-        .viewMask = 0,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_info,
-        .pDepthAttachment = VK_NULL_HANDLE,
-        .pStencilAttachment = VK_NULL_HANDLE,
+        .clearValueCount = array_size(clear_values),
+        .pClearValues = clear_values,
     };
 
-    vkCmdBeginRendering(demo->cmd_buffers[frame_index], &rendering_info);
-
-    vkCmdBindPipeline(demo->cmd_buffers[frame_index], VK_PIPELINE_BIND_POINT_GRAPHICS, demo->pipeline);
+    vkCmdBeginRenderPass(cmd_buf, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, demo->pipeline);
 
     float wf = (float)demo->swapchain_extent.width;
     float hf = (float)demo->swapchain_extent.height;
 
     VkViewport viewport = { 0.0f, 0.0f, wf, hf, 0.0f, 1.0f };
-    vkCmdSetViewport(demo->cmd_buffers[frame_index], 0, 1, &viewport);
+    vkCmdSetViewport(cmd_buf, 0, 1, &viewport);
 
     VkRect2D scissor = { { 0, 0 }, demo->swapchain_extent };
-    vkCmdSetScissor(demo->cmd_buffers[frame_index], 0, 1, &scissor);
+    vkCmdSetScissor(cmd_buf, 0, 1, &scissor);
 
     mat4 model = GLM_MAT4_IDENTITY_INIT;
     glm_rotate_x(model, time, model);
@@ -322,42 +278,13 @@ demo_record_frame(struct demo *demo, float time)
     struct push_constants push = {0};
     glm_mat4_mulN((mat4 *[]){&proj, &view, &model}, 3, push.mvp);
 
-    vkCmdPushConstants(
-        demo->cmd_buffers[frame_index],
-        demo->pipeline_layout,
-        VK_SHADER_STAGE_VERTEX_BIT,
-        0,
-        sizeof(push),
-        &push);
+    vkCmdPushConstants(cmd_buf, demo->pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+    vkCmdBindIndexBuffer(cmd_buf, demo->index_buffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindVertexBuffers(cmd_buf, 0, 1, &demo->vertex_buffer, (VkDeviceSize[]){0 });
+    vkCmdDrawIndexed(cmd_buf, array_size(g_indices), 1, 0, 0, 0);
+    vkCmdEndRenderPass(cmd_buf);
 
-    vkCmdBindIndexBuffer(demo->cmd_buffers[frame_index], demo->index_buffer, 0, VK_INDEX_TYPE_UINT16);
-    vkCmdBindVertexBuffers(demo->cmd_buffers[frame_index], 0, 1, &demo->vertex_buffer, (VkDeviceSize[]){ 0 });
-    vkCmdDrawIndexed(demo->cmd_buffers[frame_index], array_size(g_indices), 1, 0, 0, 0);
-    vkCmdEndRendering(demo->cmd_buffers[frame_index]);
-
-    VkImageMemoryBarrier imb2 = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = VK_NULL_HANDLE,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_NONE,
-        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = demo->swapchain_images[image_index],
-        .subresourceRange = range,
-    };
-
-    vkCmdPipelineBarrier(
-        demo->cmd_buffers[frame_index],
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        0,
-        0, VK_NULL_HANDLE,
-        0, VK_NULL_HANDLE,
-        1, &imb2);
-
-    res = vkEndCommandBuffer(demo->cmd_buffers[frame_index]);
+    res = vkEndCommandBuffer(cmd_buf);
     assert(res == VK_SUCCESS);
 }
 
@@ -739,7 +666,7 @@ demo_create_pipeline(struct demo *demo)
         .pColorBlendState = &colorBlendInfo,
         .pDynamicState = &dynamicStateInfo,
         .layout = demo->pipeline_layout,
-        .renderPass = VK_NULL_HANDLE,
+        .renderPass = demo->render_pass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
@@ -801,6 +728,106 @@ demo_destroy_pipeline_layout(struct demo *demo)
 {
     vkDestroyPipelineLayout(demo->device, demo->pipeline_layout, VK_NULL_HANDLE);
     demo->pipeline_layout = VK_NULL_HANDLE;
+}
+
+static void
+demo_create_frame_buffers(struct demo *demo)
+{
+    demo->frame_buffers = calloc(demo->swapchain_image_count, sizeof(VkFramebuffer));
+    assert(demo->frame_buffers);
+
+    for (uint32_t i = 0; i < demo->swapchain_image_count; i++) {
+        VkImageView attachments[] = {
+            demo->swapchain_image_views[i],
+        };
+
+        VkFramebufferCreateInfo fb_info = {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .flags = 0,
+            .renderPass = demo->render_pass,
+            .attachmentCount = array_size(attachments),
+            .pAttachments = attachments,
+            .width = demo->swapchain_extent.width,
+            .height = demo->swapchain_extent.height,
+            .layers = 1,
+        };
+
+        VkResult res = vkCreateFramebuffer(
+            demo->device,
+            &fb_info,
+            VK_NULL_HANDLE,
+            &demo->frame_buffers[i]);
+        assert(res == VK_SUCCESS);
+    }
+}
+
+static void
+demo_destroy_frame_buffers(struct demo *demo)
+{
+    for (uint32_t i = 0; i < demo->swapchain_image_count; i++) {
+        vkDestroyFramebuffer(demo->device, demo->frame_buffers[i], VK_NULL_HANDLE);
+    }
+    free(demo->frame_buffers);
+    demo->frame_buffers = NULL;
+}
+
+static void
+demo_create_renderpass(struct demo *demo)
+{
+    VkAttachmentDescription attachments[1];
+    attachments[0].format = demo->surface_format.format;
+    attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    attachments[0].flags = 0;
+
+    VkAttachmentReference color_reference = {
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    VkSubpassDescription subpasses[1];
+    subpasses[0].flags = 0;
+    subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpasses[0].inputAttachmentCount = 0;
+    subpasses[0].pInputAttachments = NULL;
+    subpasses[0].colorAttachmentCount = 1;
+    subpasses[0].pColorAttachments = &color_reference;
+    subpasses[0].pResolveAttachments = NULL;
+    subpasses[0].pDepthStencilAttachment = NULL;
+    subpasses[0].preserveAttachmentCount = 0;
+    subpasses[0].pPreserveAttachments = NULL;
+
+    VkRenderPassCreateInfo rp_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = VK_NULL_HANDLE,
+        .flags = 0,
+        .attachmentCount = array_size(attachments),
+        .pAttachments = attachments,
+        .subpassCount = array_size(subpasses),
+        .pSubpasses = subpasses,
+        .dependencyCount = 0,
+        .pDependencies = NULL,
+    };
+
+    VkResult result = vkCreateRenderPass(
+        demo->device,
+        &rp_info,
+        VK_NULL_HANDLE,
+        &demo->render_pass);
+    assert(result == VK_SUCCESS);
+}
+
+static void
+demo_destroy_renderpass(struct demo *demo)
+{
+    vkDestroyRenderPass(demo->device, demo->render_pass, VK_NULL_HANDLE);
+    demo->render_pass = VK_NULL_HANDLE;
 }
 
 static void
@@ -1081,15 +1108,9 @@ demo_create_device(struct demo *demo)
     VkPhysicalDeviceFeatures features = {0};
     features.fillModeNonSolid = VK_TRUE;
 
-    VkPhysicalDeviceDynamicRenderingFeatures dyn_features = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
-        .pNext = VK_NULL_HANDLE,
-        .dynamicRendering = VK_TRUE,
-    };
-
     VkDeviceCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &dyn_features,
+        .pNext = VK_NULL_HANDLE,
         .flags = 0,
         .queueCreateInfoCount = queue_count,
         .pQueueCreateInfos = queue_infos,
@@ -1219,7 +1240,7 @@ demo_create_instance(struct demo *demo)
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pNext = VK_NULL_HANDLE,
-        .apiVersion = VK_API_VERSION_1_3,
+        .apiVersion = VK_API_VERSION_1_0,
         .pApplicationName = "VkCube",
         .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
         .pEngineName = "VkCube",
@@ -1301,10 +1322,12 @@ demo_resize(struct demo *demo)
     VkResult res = vkDeviceWaitIdle(demo->device);
     assert(res == VK_SUCCESS);
 
+    demo_destroy_frame_buffers(demo);
     demo_destroy_image_views(demo);
     demo_destroy_swapchain(demo, &oldSwapchain);
     demo_create_swapchain(demo, oldSwapchain);
     demo_create_image_views(demo);
+    demo_create_frame_buffers(demo);
 
     vkDestroySwapchainKHR(demo->device, oldSwapchain, NULL);
 }
@@ -1330,6 +1353,8 @@ main(int argc, char **argv)
     demo_create_command_buffers(&demo);
     demo_create_swapchain(&demo, VK_NULL_HANDLE);
     demo_create_image_views(&demo);
+    demo_create_renderpass(&demo);
+    demo_create_frame_buffers(&demo);
     demo_create_pipeline_layout(&demo);
     demo_create_pipeline(&demo);
     demo_create_vertex_buffer(&demo);
@@ -1373,6 +1398,8 @@ main(int argc, char **argv)
     demo_destroy_vertex_buffer(&demo);
     demo_destroy_pipeline(&demo);
     demo_destroy_pipeline_layout(&demo);
+    demo_destroy_frame_buffers(&demo);
+    demo_destroy_renderpass(&demo);
     demo_destroy_image_views(&demo);
     demo_destroy_swapchain(&demo, NULL);
     demo_destroy_command_buffers(&demo);
