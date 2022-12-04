@@ -16,6 +16,20 @@
 
 #define NUM_FRAMES 3
 
+struct vertex {
+    vec3 pos;
+    vec3 color;
+    vec3 normal;
+    vec2 uv;
+};
+
+struct mesh {
+    struct vertex *vertices;
+    uint32_t vertex_count;
+    uint16_t *indices;
+    uint32_t index_count;
+};
+
 struct demo {
     WsiPlatform           platform;
     WsiEventQueue         event_queue;
@@ -53,46 +67,65 @@ struct demo {
     VkDeviceMemory        vertex_memory;
     VkBuffer              index_buffer;
     VkDeviceMemory        index_memory;
-};
 
-struct vertex {
-    vec3 pos;
-    vec3 color;
-    vec3 normal;
-    vec2 uv;
+    struct mesh mesh;
 };
 
 struct push_constants {
     mat4 mvp;
 };
 
-// region Cube
+// region Mesh
 
-static const struct vertex g_vertices[8] = {
-    {{  0.0f,  0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  1.0f,  0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  1.0f,  1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  0.0f,  1.0f, 0.0f }, { 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  0.0f,  0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  1.0f,  0.0f, 1.0f }, { 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  1.0f,  1.0f, 1.0f }, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-    {{  0.0f,  1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
-};
+static void
+mesh_generate(struct mesh *mesh)
+{
+    struct vertex vertices[] = {
+        {{ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 1.0f, 1.0f, 1.0f }, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+        {{ 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }},
+    };
 
-static const uint16_t g_indices[36] = {
-    0, 2, 1,
-    0, 3, 2,
-    0, 1, 5,
-    0, 5, 4,
-    0, 4, 7,
-    0, 7, 3,
-    1, 2, 6,
-    1, 6, 5,
-    2, 3, 7,
-    2, 7, 6,
-    4, 5, 6,
-    4, 6, 7,
-};
+    uint16_t indices[] = {
+        0, 2, 1,
+        0, 3, 2,
+        0, 1, 5,
+        0, 5, 4,
+        0, 4, 7,
+        0, 7, 3,
+        1, 2, 6,
+        1, 6, 5,
+        2, 3, 7,
+        2, 7, 6,
+        4, 5, 6,
+        4, 6, 7,
+    };
+
+    mesh->vertex_count = array_size(vertices);
+    mesh->vertices = malloc(sizeof(vertices));
+    memcpy(mesh->vertices, vertices, sizeof(vertices));
+
+    mesh->index_count = array_size(indices);
+    mesh->indices = malloc(sizeof(vertices));
+    memcpy(mesh->indices, indices, sizeof(indices));
+}
+
+static void
+mesh_destroy(struct mesh *mesh)
+{
+    free(mesh->vertices);
+    mesh->vertices = NULL;
+    mesh->vertex_count = 0;
+
+    free(mesh->indices);
+    mesh->indices = NULL;
+    mesh->index_count = 0;
+}
 
 // endregion
 
@@ -287,7 +320,7 @@ demo_record_frame(struct demo *demo, float time)
     vkCmdPushConstants(cmd_buf, demo->pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
     vkCmdBindIndexBuffer(cmd_buf, demo->index_buffer, 0, VK_INDEX_TYPE_UINT16);
     vkCmdBindVertexBuffers(cmd_buf, 0, 1, &demo->vertex_buffer, (VkDeviceSize[]){0 });
-    vkCmdDrawIndexed(cmd_buf, array_size(g_indices), 1, 0, 0, 0);
+    vkCmdDrawIndexed(cmd_buf, demo->mesh.index_count, 1, 0, 0, 0);
     vkCmdEndRenderPass(cmd_buf);
 
     res = vkEndCommandBuffer(cmd_buf);
@@ -359,11 +392,16 @@ demo_find_memory_type(
 static void
 demo_create_index_buffer(struct demo *demo)
 {
-    VkBufferCreateInfo buffer_info = {0};
-    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size = sizeof(g_indices);
-    buffer_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkBufferCreateInfo buffer_info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = VK_NULL_HANDLE,
+        .flags = 0,
+        .size = demo->mesh.index_count * sizeof(uint16_t),
+        .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = NULL,
+    };
 
     VkBuffer buffer;
     VkResult res = vkCreateBuffer(demo->device, &buffer_info, NULL, &buffer);
@@ -395,7 +433,7 @@ demo_create_index_buffer(struct demo *demo)
     void *data;
     res = vkMapMemory(demo->device, memory, 0, mem_reqs.size, 0, &data);
     assert(res == VK_SUCCESS);
-    memcpy(data, g_indices, sizeof(g_indices));
+    memcpy(data, demo->mesh.indices, demo->mesh.index_count * sizeof(uint16_t));
     vkUnmapMemory(demo->device, memory);
 
     demo->index_buffer = buffer;
@@ -419,7 +457,7 @@ demo_create_vertex_buffer(struct demo *demo)
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = VK_NULL_HANDLE,
         .flags = 0,
-        .size = sizeof(g_vertices),
+        .size = demo->mesh.vertex_count * sizeof(struct vertex),
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
@@ -456,9 +494,7 @@ demo_create_vertex_buffer(struct demo *demo)
     void *data;
     res = vkMapMemory(demo->device, memory, 0, req.size, 0, &data);
     assert(res == VK_SUCCESS);
-
-    memcpy(data, g_vertices, sizeof(g_vertices));
-
+    memcpy(data, demo->mesh.vertices, demo->mesh.vertex_count * sizeof(struct vertex));
     vkUnmapMemory(demo->device, memory);
 
     demo->vertex_buffer = buffer;
@@ -706,10 +742,9 @@ demo_destroy_pipeline(struct demo *demo)
 static void
 demo_create_pipeline_layout(struct demo *demo)
 {
-    VkPushConstantRange ranges[1];
-    ranges[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    ranges[0].offset = 0;
-    ranges[0].size = sizeof(struct push_constants);
+    VkPushConstantRange ranges[] = {
+        { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(struct push_constants) },
+    };
 
     VkPipelineLayoutCreateInfo pipeline_layout = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -717,7 +752,7 @@ demo_create_pipeline_layout(struct demo *demo)
         .flags = 0,
         .setLayoutCount = 0,
         .pSetLayouts = NULL,
-        .pushConstantRangeCount = 1,
+        .pushConstantRangeCount = array_size(ranges),
         .pPushConstantRanges = ranges,
     };
 
@@ -1365,6 +1400,9 @@ main(int argc, char **argv)
     demo_create_frame_buffers(&demo);
     demo_create_pipeline_layout(&demo);
     demo_create_pipeline(&demo);
+
+    mesh_generate(&demo.mesh);
+
     demo_create_vertex_buffer(&demo);
     demo_create_index_buffer(&demo);
 
@@ -1404,6 +1442,9 @@ main(int argc, char **argv)
 
     demo_destroy_index_buffer(&demo);
     demo_destroy_vertex_buffer(&demo);
+
+    mesh_destroy(&demo.mesh);
+
     demo_destroy_pipeline(&demo);
     demo_destroy_pipeline_layout(&demo);
     demo_destroy_frame_buffers(&demo);
