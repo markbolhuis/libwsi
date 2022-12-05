@@ -561,31 +561,16 @@ demo_create_pipeline(struct demo *demo)
 
     // region Vertex Input
 
-    VkVertexInputBindingDescription bindingDesc[1] = {0};
-    bindingDesc[0].binding   = 0;
-    bindingDesc[0].stride    = sizeof(struct vertex);
-    bindingDesc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    VkVertexInputBindingDescription bindingDesc[] = {
+        { 0, sizeof(struct vertex), VK_VERTEX_INPUT_RATE_VERTEX },
+    };
 
-    VkVertexInputAttributeDescription attrDesc[4] = {0};
-    attrDesc[0].binding  = 0;
-    attrDesc[0].location = 0;
-    attrDesc[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    attrDesc[0].offset   = offsetof(struct vertex, pos);
-
-    attrDesc[1].binding  = 0;
-    attrDesc[1].location = 1;
-    attrDesc[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    attrDesc[1].offset   = offsetof(struct vertex, color);
-
-    attrDesc[2].binding  = 0;
-    attrDesc[2].location = 2;
-    attrDesc[2].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    attrDesc[2].offset   = offsetof(struct vertex, normal);
-
-    attrDesc[3].binding  = 0;
-    attrDesc[3].location = 3;
-    attrDesc[3].format   = VK_FORMAT_R32G32_SFLOAT;
-    attrDesc[3].offset   = offsetof(struct vertex, uv);
+    VkVertexInputAttributeDescription attrDesc[] = {
+        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(struct vertex, pos)},
+        { 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(struct vertex, color)},
+        { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(struct vertex, normal)},
+        { 3, 0, VK_FORMAT_R32G32_SFLOAT,    offsetof(struct vertex, uv)},
+    };
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
     vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
