@@ -111,7 +111,7 @@ mesh_generate(struct mesh *mesh)
     memcpy(mesh->vertices, vertices, sizeof(vertices));
 
     mesh->index_count = array_size(indices);
-    mesh->indices = malloc(sizeof(vertices));
+    mesh->indices = malloc(sizeof(indices));
     memcpy(mesh->indices, indices, sizeof(indices));
 }
 
