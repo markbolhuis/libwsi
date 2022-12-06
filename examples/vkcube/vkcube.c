@@ -56,7 +56,7 @@ struct demo {
     VkFramebuffer         *frame_buffers;
     VkFence               fences[NUM_FRAMES];
     VkSemaphore           acquire_semaphores[NUM_FRAMES];
-    VkSemaphore           present_semaphores[NUM_FRAMES];
+    VkSemaphore           render_semaphores[NUM_FRAMES];
     VkCommandPool         cmd_pool;
     VkCommandBuffer       cmd_buffers[NUM_FRAMES];
     uint32_t              image_index;
@@ -339,7 +339,7 @@ demo_end_frame(struct demo *demo)
         .pCommandBuffers = &demo->cmd_buffers[frame_index],
         .pWaitSemaphores = &demo->acquire_semaphores[frame_index],
         .waitSemaphoreCount = 1,
-        .pSignalSemaphores = &demo->present_semaphores[frame_index],
+        .pSignalSemaphores = &demo->render_semaphores[frame_index],
         .signalSemaphoreCount = 1,
         .pWaitDstStageMask = (VkPipelineStageFlags[]){
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
@@ -351,7 +351,7 @@ demo_end_frame(struct demo *demo)
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = VK_NULL_HANDLE,
-        .pWaitSemaphores = &demo->present_semaphores[frame_index],
+        .pWaitSemaphores = &demo->render_semaphores[frame_index],
         .waitSemaphoreCount = 1,
         .pImageIndices = &demo->image_index,
         .pSwapchains = &demo->swapchain,
@@ -1080,7 +1080,7 @@ demo_create_sync_objects(struct demo *demo)
         res = vkCreateSemaphore(demo->device, &semaphore_info, NULL, &demo->acquire_semaphores[i]);
         assert(res == VK_SUCCESS);
 
-        res = vkCreateSemaphore(demo->device, &semaphore_info, NULL, &demo->present_semaphores[i]);
+        res = vkCreateSemaphore(demo->device, &semaphore_info, NULL, &demo->render_semaphores[i]);
         assert(res == VK_SUCCESS);
     }
 }
@@ -1095,8 +1095,8 @@ demo_destroy_sync_objects(struct demo *demo)
         vkDestroySemaphore(demo->device, demo->acquire_semaphores[i], NULL);
         demo->acquire_semaphores[i] = VK_NULL_HANDLE;
 
-        vkDestroySemaphore(demo->device, demo->present_semaphores[i], NULL);
-        demo->present_semaphores[i] = VK_NULL_HANDLE;
+        vkDestroySemaphore(demo->device, demo->render_semaphores[i], NULL);
+        demo->render_semaphores[i] = VK_NULL_HANDLE;
     }
 }
 
