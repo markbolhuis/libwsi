@@ -1219,6 +1219,8 @@ demo_pick_physical_device(struct demo *demo)
         demo->physical_device = device;
         break;
     }
+
+    assert(demo->physical_device != VK_NULL_HANDLE);
 }
 
 static void
