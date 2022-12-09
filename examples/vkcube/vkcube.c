@@ -369,24 +369,18 @@ demo_end_frame(struct demo *demo)
 
 
 static uint32_t
-demo_find_memory_type(
-    VkPhysicalDevice physical_device,
-    uint32_t typeFilter,
-    VkMemoryPropertyFlags properties)
+demo_find_memory_type(VkPhysicalDevice dev, uint32_t filter, VkMemoryPropertyFlags flags)
 {
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physical_device, &memProperties);
+    VkPhysicalDeviceMemoryProperties props;
+    vkGetPhysicalDeviceMemoryProperties(dev, &props);
 
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if ((typeFilter & (1 << i)) &&
-            (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-        {
+    for (uint32_t i = 0; i < props.memoryTypeCount; i++) {
+        if ((filter & (1 << i)) && (props.memoryTypes[i].propertyFlags & flags) == flags) {
             return i;
         }
     }
 
-    assert(0);
-    return 0;
+    return UINT32_MAX;
 }
 
 static void
@@ -415,6 +409,7 @@ demo_create_index_buffer(struct demo *demo)
         mem_reqs.memoryTypeBits,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    assert(index != UINT32_MAX);
 
     VkMemoryAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -476,6 +471,7 @@ demo_create_vertex_buffer(struct demo *demo)
         req.memoryTypeBits,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    assert(index != UINT32_MAX);
 
     VkMemoryAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
