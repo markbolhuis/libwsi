@@ -47,7 +47,7 @@
 static WsiPlatform   g_platform;
 static WsiEventQueue g_event_queue;
 static WsiWindow     g_window;
-static WsiExtent     g_extent = { 300, 300 };
+static WsiExtent     g_extent;
 
 static bool g_running = true;
 static bool g_resized = false;
@@ -235,6 +235,7 @@ draw()
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glTranslatef(0.0f, 0.0f, -40.0f);
+        g_resized = false;
     }
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.8f);
@@ -329,6 +330,7 @@ on_event(const WsiEvent *pEvent, void *pUserData)
             break;
     }
 }
+
 int
 main(int argc, char *argv[])
 {
@@ -399,7 +401,8 @@ main(int argc, char *argv[])
 
     WsiWindowCreateInfo info = {0};
     info.eventQueue = g_event_queue;
-    info.extent = g_extent;
+    info.extent.width = 300;
+    info.extent.height = 300;
     info.pTitle = "Gears";
 
     res = wsiCreateWindow(g_platform, &info, &g_window);
@@ -437,11 +440,6 @@ main(int argc, char *argv[])
     float epoch_d = (float)epoch.tv_sec + (float)epoch.tv_nsec / 1000000000.0f;
 
     while(true) {
-        res = wsiDispatchEvents(g_event_queue, 0);
-        if (res != WSI_SUCCESS || !g_running) {
-            break;
-        }
-
         draw();
 
         struct timespec now;
@@ -449,6 +447,11 @@ main(int argc, char *argv[])
         float now_d = (float)now.tv_sec + (float)now.tv_nsec / 1000000000.0f;
 
         g_angle = fmodf(70.0f * (now_d - epoch_d), 360.0f);
+
+        res = wsiDispatchEvents(g_event_queue, 0);
+        if (res != WSI_SUCCESS || !g_running) {
+            break;
+        }
     }
 
     ret = EXIT_SUCCESS;
