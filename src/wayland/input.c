@@ -568,7 +568,7 @@ wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
 
     uint32_t count = 0;
     struct wsi_seat *seat;
-    wl_list_for_each(seat, &platform->seat_list, link) {
+    wl_list_for_each_reverse(seat, &platform->seat_list, link) {
         if (count >= *pSeatCount) {
             return WSI_INCOMPLETE;
         }
