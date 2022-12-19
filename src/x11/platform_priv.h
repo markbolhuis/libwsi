@@ -5,8 +5,6 @@
 
 struct wsi_event_queue {
     struct wsi_platform *platform;
-    PFN_wsiEventCallback pfn_callback;
-    void *user_data;
 };
 
 struct wsi_platform {

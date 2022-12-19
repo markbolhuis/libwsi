@@ -19,16 +19,16 @@ wsi_window_xcb_configure_notify(
 {
     assert(event->window == window->xcb_window);
 
-    WsiResizeWindowEvent resize_event = {
-        .base.type = WSI_EVENT_TYPE_RESIZE_WINDOW,
+    WsiConfigureWindowEvent info = {
+        .base.type = WSI_EVENT_TYPE_CONFIGURE_WINDOW,
         .base.flags = 0,
-        .base.time = 0,
+        .base.serial = event->sequence,
         .window = window,
         .extent.width = event->width,
         .extent.height = event->height,
     };
 
-    window->queue->pfn_callback(&resize_event.base, window->queue->user_data);
+    window->pfn_configure(window->user_data, &info);
 }
 
 void
@@ -41,14 +41,15 @@ wsi_window_xcb_client_message(
     if (event->type == window->platform->xcb_atom_wm_protocols &&
         event->data.data32[0] == window->platform->xcb_atom_wm_delete_window)
     {
-        WsiCloseWindowEvent close_event = {
+        WsiCloseWindowEvent info = {
             .base.type = WSI_EVENT_TYPE_CLOSE_WINDOW,
             .base.flags = 0,
+            .base.serial = event->sequence,
             .base.time = 0,
             .window = window,
         };
 
-        window->queue->pfn_callback(&close_event.base, window->queue->user_data);
+        window->pfn_close(window->user_data, &info);
     }
 }
 
@@ -72,6 +73,9 @@ wsiCreateWindow(
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
     window->user_width = wsi_xcb_clamp(pCreateInfo->extent.width);
     window->user_height = wsi_xcb_clamp(pCreateInfo->extent.height);
+    window->user_data = pCreateInfo->pUserData;
+    window->pfn_configure = pCreateInfo->pfnConfigureWindow;
+    window->pfn_close = pCreateInfo->pfnCloseWindow;
 
     if (pCreateInfo->parent) {
         window->xcb_parent = pCreateInfo->parent->xcb_window;

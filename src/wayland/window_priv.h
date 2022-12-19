@@ -64,6 +64,10 @@ struct wsi_window {
     struct wsi_window_state current;
     struct wl_list output_list;
     bool configured;
+
+    void *user_data;
+    PFN_wsiConfigureWindow pfn_configure;
+    PFN_wsiCloseWindow     pfn_close;
 };
 
 void

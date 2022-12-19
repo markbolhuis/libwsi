@@ -110,15 +110,16 @@ wsi_window_configure(struct wsi_window *window)
                 0, 0);
         }
 
-        WsiResizeWindowEvent event = {
-            .base.type = WSI_EVENT_TYPE_RESIZE_WINDOW,
+        WsiConfigureWindowEvent info = {
+            .base.type = WSI_EVENT_TYPE_CONFIGURE_WINDOW,
             .base.flags = 0,
+            .base.serial = window->serial,
             .base.time = 0,
             .window = window,
             .extent = be,
         };
 
-        window->queue->pfn_callback(&event.base, window->queue->user_data);
+        window->pfn_configure(window->user_data, &info);
     }
 
     uint32_t version = wl_surface_get_version(window->wl_surface);
@@ -254,16 +255,16 @@ xdg_toplevel_close(
     struct xdg_toplevel *xdg_toplevel)
 {
     struct wsi_window *window = data;
-    struct wsi_event_queue *queue = window->queue;
 
-    WsiCloseWindowEvent event = {
+    WsiCloseWindowEvent info = {
         .base.type = WSI_EVENT_TYPE_CLOSE_WINDOW,
-        .base.time = 0,
         .base.flags = 0,
+        .base.serial = 0,
+        .base.time = 0,
         .window = window,
     };
 
-    queue->pfn_callback(&event.base, queue->user_data);
+    window->pfn_close(window->user_data, &info);
 }
 
 static void
@@ -412,6 +413,9 @@ wsi_window_init(
     window->queue = info->eventQueue;
     window->api = WSI_API_NONE;
     window->user_extent = info->extent;
+    window->user_data = info->pUserData;
+    window->pfn_close = info->pfnCloseWindow;
+    window->pfn_configure = info->pfnConfigureWindow;
 
     wl_list_init(&window->output_list);
 
@@ -480,6 +484,8 @@ wsiCreateWindow(
     const WsiWindowCreateInfo *pCreateInfo,
     WsiWindow *pWindow)
 {
+    assert(pCreateInfo->sType == WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO);
+
     if (platform->xdg_wm_base == NULL) {
         return WSI_ERROR_UNSUPPORTED;
     }

@@ -105,8 +105,6 @@ wsi_platform_init(const WsiPlatformCreateInfo *pCreateInfo, struct wsi_platform 
     }
 
     platform->queue.platform = platform;
-    platform->queue.user_data = pCreateInfo->queueInfo.pUserData;
-    platform->queue.pfn_callback = pCreateInfo->queueInfo.pfnEventCallback;
 
     const xcb_setup_t *setup = xcb_get_setup(platform->xcb_connection);
 

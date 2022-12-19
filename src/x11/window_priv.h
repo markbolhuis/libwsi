@@ -17,6 +17,10 @@ struct wsi_window {
 
     uint16_t user_width;
     uint16_t user_height;
+
+    void *user_data;
+    PFN_wsiConfigureWindow pfn_configure;
+    PFN_wsiCloseWindow pfn_close;
 };
 
 void

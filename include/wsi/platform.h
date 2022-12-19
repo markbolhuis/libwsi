@@ -7,15 +7,15 @@
 extern "C" {
 #endif
 
-typedef void (*PFN_wsiEventCallback)(const WsiEvent *pEvent, void *pUserData);
-
-typedef struct {
-    void *pUserData;
-    PFN_wsiEventCallback pfnEventCallback;
+typedef struct WsiEventQueueCreateInfo {
+    uint32_t sType;
+    const void *pNext;
 } WsiEventQueueCreateInfo;
 
-typedef struct {
-    WsiEventQueueCreateInfo queueInfo;
+typedef struct WsiPlatformCreateInfo {
+    uint32_t sType;
+    const void *pNext;
+    const WsiEventQueueCreateInfo *pEventQueueInfo;
 } WsiPlatformCreateInfo;
 
 typedef WsiResult (*PFN_wsiCreatePlatform)(const WsiPlatformCreateInfo *pCreateInfo, WsiPlatform *pPlatform);

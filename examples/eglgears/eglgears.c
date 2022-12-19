@@ -309,26 +309,16 @@ create_gears()
 }
 
 static void
-on_event(const WsiEvent *pEvent, void *pUserData)
+close_window(void *pUserData, const WsiCloseWindowEvent *pInfo)
 {
-    switch (pEvent->type) {
-        case WSI_EVENT_TYPE_CLOSE_WINDOW: {
-            g_running = false;
-            break;
-        }
-        case WSI_EVENT_TYPE_RESIZE_WINDOW: {
-            const WsiResizeWindowEvent *resize = (const WsiResizeWindowEvent *)pEvent;
-            if (resize->extent.width != g_extent.width ||
-                resize->extent.height != g_extent.height)
-            {
-                g_extent = resize->extent;
-                g_resized = true;
-            }
-            break;
-        }
-        default:
-            break;
-    }
+    g_running = false;
+}
+
+static void
+configure_window(void *pUserData, const WsiConfigureWindowEvent *pInfo)
+{
+    g_extent = pInfo->extent;
+    g_resized = true;
 }
 
 int
@@ -336,9 +326,15 @@ main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
 
+    WsiEventQueueCreateInfo event_queue_info = {
+        .sType = WSI_STRUCTURE_TYPE_EVENT_QUEUE_CREATE_INFO,
+        .pNext = NULL,
+    };
+
     WsiPlatformCreateInfo platform_info = {
-        .queueInfo.pUserData = NULL,
-        .queueInfo.pfnEventCallback = on_event,
+        .sType = WSI_STRUCTURE_TYPE_PLATFORM_CREATE_INFO,
+        .pNext = NULL,
+        .pEventQueueInfo = &event_queue_info,
     };
 
     WsiResult res = wsiCreatePlatform(&platform_info, &g_platform);
@@ -399,11 +395,17 @@ main(int argc, char *argv[])
         goto err_egl_context;
     }
 
-    WsiWindowCreateInfo info = {0};
-    info.eventQueue = g_event_queue;
-    info.extent.width = 300;
-    info.extent.height = 300;
-    info.pTitle = "Gears";
+    WsiWindowCreateInfo info = {
+        .sType = WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO,
+        .pNext = NULL,
+        .eventQueue = g_event_queue,
+        .extent.width = 300,
+        .extent.height = 300,
+        .pTitle = "Gears",
+        .pUserData = NULL,
+        .pfnCloseWindow = close_window,
+        .pfnConfigureWindow = configure_window,
+    };
 
     res = wsiCreateWindow(g_platform, &info, &g_window);
     if (res != WSI_SUCCESS) {

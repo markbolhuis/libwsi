@@ -7,22 +7,30 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct WsiConfigureWindowEvent {
+    WsiEvent base;
+    WsiWindow window;
+    WsiExtent extent;
+} WsiConfigureWindowEvent;
+
+typedef struct WsiCloseWindowEvent {
     WsiEvent base;
     WsiWindow window;
 } WsiCloseWindowEvent;
 
-typedef struct {
-    WsiEvent base;
-    WsiWindow window;
-    WsiExtent extent;
-} WsiResizeWindowEvent;
+typedef void (*PFN_wsiConfigureWindow)(void *pUserData, const WsiConfigureWindowEvent *pConfig);
+typedef void (*PFN_wsiCloseWindow)(void *pUserData, const WsiCloseWindowEvent *pClose);
 
-typedef struct {
+typedef struct WsiWindowCreateInfo {
+    WsiStructureType sType;
+    const void *pNext;
     WsiEventQueue eventQueue;
     WsiWindow parent;
     WsiExtent extent;
     const char *pTitle;
+    void *pUserData;
+    PFN_wsiConfigureWindow pfnConfigureWindow;
+    PFN_wsiCloseWindow pfnCloseWindow;
 } WsiWindowCreateInfo;
 
 typedef WsiResult (*PFN_wsiCreateWindow)(WsiPlatform platform, const WsiWindowCreateInfo *pCreateInfo, WsiWindow *pWindow);

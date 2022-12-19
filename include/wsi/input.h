@@ -7,12 +7,16 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct WsiPointerCreateInfo {
+    WsiStructureType sType;
+    const void *pNext;
     WsiEventQueue eventQueue;
     WsiSeat seat;
 } WsiPointerCreateInfo;
 
-typedef struct {
+typedef struct WsiKeyboardCreateInfo {
+    WsiStructureType sType;
+    const void *pNext;
     WsiEventQueue eventQueue;
     WsiSeat seat;
 } WsiKeyboardCreateInfo;

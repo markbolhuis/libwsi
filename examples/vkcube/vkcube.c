@@ -1220,13 +1220,37 @@ demo_pick_physical_device(struct demo *demo)
 }
 
 static void
+demo_close_window(void *pUserData, const WsiCloseWindowEvent *pEvent)
+{
+    struct demo *demo = pUserData;
+    demo->closed = true;
+}
+
+static void
+demo_configure_window(void *pUserData, const WsiConfigureWindowEvent *pEvent)
+{
+    struct demo *demo = pUserData;
+    if (demo->window_extent.width != pEvent->extent.width ||
+        demo->window_extent.height != pEvent->extent.height)
+    {
+        demo->window_extent = pEvent->extent;
+        demo->resized = true;
+    }
+}
+
+static void
 demo_create_window(struct demo *demo)
 {
     WsiWindowCreateInfo window_info = {
+        .sType = WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO,
+        .pNext = NULL,
         .eventQueue = demo->event_queue,
         .extent.width = 600,
         .extent.height = 600,
         .pTitle = "VkCube",
+        .pUserData = demo,
+        .pfnCloseWindow = demo_close_window,
+        .pfnConfigureWindow = demo_configure_window,
     };
 
     WsiResult res = wsiCreateWindow(demo->platform, &window_info, &demo->window);
@@ -1295,35 +1319,17 @@ demo_destroy_instance(struct demo *demo)
 }
 
 static void
-demo_on_event(const WsiEvent *pEvent, void *pUserData)
-{
-    struct demo *demo = pUserData;
-    switch (pEvent->type) {
-    case WSI_EVENT_TYPE_CLOSE_WINDOW: {
-        demo->closed = true;
-        break;
-    }
-    case WSI_EVENT_TYPE_RESIZE_WINDOW: {
-        const WsiResizeWindowEvent *resize = (const WsiResizeWindowEvent *)pEvent;
-        if (resize->extent.width != demo->window_extent.width ||
-            resize->extent.height != demo->window_extent.height)
-        {
-            demo->window_extent = resize->extent;
-            demo->resized = true;
-        }
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static void
 demo_create_platform(struct demo *demo)
 {
+    WsiEventQueueCreateInfo eq_info = {
+        .sType = WSI_STRUCTURE_TYPE_EVENT_QUEUE_CREATE_INFO,
+        .pNext = NULL,
+    };
+
     WsiPlatformCreateInfo info = {
-        .queueInfo.pfnEventCallback = demo_on_event,
-        .queueInfo.pUserData = demo,
+        .sType = WSI_STRUCTURE_TYPE_PLATFORM_CREATE_INFO,
+        .pNext = NULL,
+        .pEventQueueInfo = &eq_info,
     };
 
     WsiResult res = wsiCreatePlatform(&info, &demo->platform);

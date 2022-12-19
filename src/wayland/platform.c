@@ -399,8 +399,6 @@ wsi_platform_init_queue(struct wsi_platform *platform, const WsiEventQueueCreate
 {
     platform->queue.wl_display = platform->wl_display;
     platform->queue.wl_event_queue = NULL;
-    platform->queue.user_data = info->pUserData;
-    platform->queue.pfn_callback = info->pfnEventCallback;
 }
 
 static WsiResult
@@ -419,7 +417,7 @@ wsi_platform_init(const WsiPlatformCreateInfo *info, struct wsi_platform *platfo
     wl_list_init(&platform->window_list);
     wl_array_init(&platform->format_array);
 
-    wsi_platform_init_queue(platform, &info->queueInfo);
+    wsi_platform_init_queue(platform, info->pEventQueueInfo);
 
     platform->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (platform->xkb_context == NULL) {
