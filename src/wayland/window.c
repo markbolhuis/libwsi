@@ -451,7 +451,7 @@ wsi_window_init(
 
     int ret = 0;
     while(!window->configured && ret >= 0) {
-        ret = wl_display_dispatch(platform->wl_display);
+        ret = wsi_event_queue_dispatch(window->queue);
     }
 
     wl_list_insert(&platform->window_list, &window->link);
