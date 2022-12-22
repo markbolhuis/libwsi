@@ -381,7 +381,7 @@ wsiEnumerateOutputs(WsiPlatform platform, uint32_t *pCount, WsiOutput *pOutputs)
 
     uint32_t count = 0;
     struct wsi_output *output;
-    wl_list_for_each(output, &platform->output_list, link) {
+    wl_list_for_each_reverse(output, &platform->output_list, link) {
         if (count >= *pCount) {
             return WSI_INCOMPLETE;
         }
