@@ -7,10 +7,11 @@ struct wsi_output;
 
 enum wsi_xdg_event {
     WSI_XDG_EVENT_NONE = 0,
-    WSI_XDG_EVENT_CONFIGURE = 1,
-    WSI_XDG_EVENT_BOUNDS = 2,
-    WSI_XDG_EVENT_WM_CAPABILITIES = 4,
-    WSI_XDG_EVENT_DECORATION = 8,
+    WSI_XDG_EVENT_SCALE = 1,
+    WSI_XDG_EVENT_CONFIGURE = 2,
+    WSI_XDG_EVENT_BOUNDS = 4,
+    WSI_XDG_EVENT_WM_CAPABILITIES = 8,
+    WSI_XDG_EVENT_DECORATION = 16,
 };
 
 enum wsi_xdg_capabilities {

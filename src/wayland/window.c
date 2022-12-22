@@ -27,8 +27,8 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
     return extent;
 }
 
-static void
-wsi_window_rescale(struct wsi_window *window)
+static int32_t
+wsi_window_calculate_output_max_scale(struct wsi_window *window)
 {
     int32_t max_scale = 1;
 
@@ -41,7 +41,7 @@ wsi_window_rescale(struct wsi_window *window)
         }
     }
 
-    window->pending.scale = max_scale;
+    return max_scale;
 }
 
 static struct wsi_window_output *
@@ -152,23 +152,43 @@ wsi_window_set_initial_state(struct wsi_window *window)
     }
 }
 
-void
-wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
+static bool
+wsi_window_add_output(struct wsi_window *window, struct wl_output *wl_output)
 {
-    struct wsi_window_output *wo = wsi_window_find_output(w, o->wl_output);
+    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
+    if (wo) {
+        return false;
+    }
+
+    wo = calloc(1, sizeof(*wo));
     if (!wo) {
-        return;
+        return false;
+    }
+
+    wo->wl_output = wl_output;
+    wl_list_insert(&window->output_list, &wo->link);
+    return true;
+}
+
+static bool
+wsi_window_remove_output(struct wsi_window *window, struct wl_output *wl_output)
+{
+    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
+    if (!wo) {
+        return false;
     }
 
     wl_list_remove(&wo->link);
     free(wo);
+    return true;
+}
 
-    if (wl_surface_get_version(w->wl_surface) >=
-        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
-    {
-        wsi_window_rescale(w);
-        wsi_window_configure(w);
-    }
+void
+wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
+{
+    // TODO: Some compositors like KDE send a wl_output.leave event before destroying
+    //  the wl_output object. Others like Sway do not, so the window scale needs to be
+    //  updated when the wl_output object is destroyed.
 }
 
 // region XDG Toplevel Decoration
@@ -351,25 +371,20 @@ wl_surface_enter(
 {
     struct wsi_window *window = data;
 
-    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
-    if (wo) {
+    bool added = wsi_window_add_output(window, wl_output);
+    if (!added) {
         return;
     }
 
-    wo = calloc(1, sizeof(struct wsi_window_output));
-    if (!wo) {
+    uint32_t version = wl_surface_get_version(wl_surface);
+    if (version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
         return;
     }
 
-    wo->wl_output = wl_output;
-    wl_list_insert(&window->output_list, &wo->link);
+    window->event_mask |= WSI_XDG_EVENT_SCALE;
+    window->pending.scale = wsi_window_calculate_output_max_scale(window);
 
-    if (wl_surface_get_version(wl_surface) >=
-        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
-    {
-        wsi_window_rescale(window);
-        wsi_window_configure(window);
-    }
+    wsi_window_configure(window);
 }
 
 static void
@@ -380,20 +395,20 @@ wl_surface_leave(
 {
     struct wsi_window *window = data;
 
-    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
-    if (!wo) {
+    bool removed = wsi_window_remove_output(window, wl_output);
+    if (!removed) {
         return;
     }
 
-    wl_list_remove(&wo->link);
-    free(wo);
-
-    if (wl_surface_get_version(wl_surface) >=
-        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
-    {
-        wsi_window_rescale(window);
-        wsi_window_configure(window);
+    uint32_t version = wl_surface_get_version(wl_surface);
+    if (version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
+        return;
     }
+
+    window->event_mask |= WSI_XDG_EVENT_SCALE;
+    window->pending.scale = wsi_window_calculate_output_max_scale(window);
+
+    wsi_window_configure(window);
 }
 
 static const struct wl_surface_listener wl_surface_listener = {
