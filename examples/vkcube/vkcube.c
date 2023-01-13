@@ -899,6 +899,68 @@ demo_destroy_image_views(struct demo *demo)
 }
 
 static void
+demo_select_present_mode(struct demo *demo, bool unlocked, bool tearing)
+{
+    VkPresentModeKHR modes[8];
+    uint32_t mode_count = array_size(modes);
+
+    VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+        demo->physical_device,
+        demo->surface,
+        &mode_count,
+        modes);
+    assert(result == VK_SUCCESS);
+
+    VkPresentModeKHR priority[3];
+    uint32_t priority_count = 0;
+
+    if (unlocked) {
+        if (tearing) {
+            priority[priority_count++] = VK_PRESENT_MODE_IMMEDIATE_KHR;
+        }
+        priority[priority_count++] = VK_PRESENT_MODE_MAILBOX_KHR;
+    }
+    if (tearing) {
+        priority[priority_count++] = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+    }
+
+    VkPresentModeKHR selected = VK_PRESENT_MODE_FIFO_KHR;
+    for (uint32_t i = 0; i < priority_count; i++) {
+        for (uint32_t j = 0; j < mode_count; j++) {
+            if (modes[j] == priority[i]) {
+                selected = modes[j];
+                goto done;
+            }
+        }
+    }
+
+done:
+    demo->present_mode = selected;
+}
+
+static void
+demo_select_surface_format(struct demo *demo)
+{
+    VkSurfaceFormatKHR formats[32];
+    uint32_t format_count = array_size(formats);
+
+    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(
+        demo->physical_device,
+        demo->surface,
+        &format_count,
+        formats);
+    assert(result == VK_SUCCESS);
+
+    for (uint32_t i = 0; i < format_count; ++i) {
+        if (formats[i].format == VK_FORMAT_R8G8B8A8_UNORM) {
+            demo->surface_format = formats[i];
+        }
+    }
+
+    demo->surface_format = formats[0];
+}
+
+static void
 demo_create_swapchain(struct demo *demo, VkSwapchainKHR oldSwapchain)
 {
     VkSurfaceCapabilitiesKHR surface_caps;
@@ -913,38 +975,6 @@ demo_create_swapchain(struct demo *demo, VkSwapchainKHR oldSwapchain)
         extent.height = (uint32_t)demo->window_extent.height;
     }
     demo->swapchain_extent = extent;
-
-    // VkPresentModeKHR present_modes[8];
-    // uint32_t present_mode_count = array_size(present_modes);
-    // result = vkGetPhysicalDeviceSurfacePresentModesKHR(
-    //     demo->physical_device,
-    //     demo->surface,
-    //     &present_mode_count,
-    //     present_modes);
-
-    demo->present_mode = VK_PRESENT_MODE_FIFO_KHR;
-    // for (uint32_t i = 0; i < present_mode_count; i++) {
-    //     if (present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-    //         demo->present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
-    //         break;
-    //     }
-    // }
-
-    VkSurfaceFormatKHR surface_formats[16];
-    uint32_t surface_format_count = array_size(surface_formats);
-    result = vkGetPhysicalDeviceSurfaceFormatsKHR(
-        demo->physical_device,
-        demo->surface,
-        &surface_format_count,
-        surface_formats);
-
-    demo->surface_format = surface_formats[0];
-    for (uint32_t i = 0; i < surface_format_count; i++) {
-        if (surface_formats[i].format == VK_FORMAT_B8G8R8A8_SRGB) {
-            demo->surface_format = surface_formats[i];
-            break;
-        }
-    }
 
     VkSwapchainCreateInfoKHR info = {0};
     info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -1383,6 +1413,8 @@ main(int argc, char **argv)
     demo_create_device(&demo);
     demo_create_sync_objects(&demo);
     demo_create_command_buffers(&demo);
+    demo_select_surface_format(&demo);
+    demo_select_present_mode(&demo, true, false);
     demo_create_swapchain(&demo, VK_NULL_HANDLE);
     demo_create_image_views(&demo);
     demo_create_renderpass(&demo);
@@ -1417,7 +1449,6 @@ main(int argc, char **argv)
         int64_t dt = now - last_time;
         last_time = now;
 
-        now = get_time_ns();
         timef += (float)dt / 1000000000.0f;
         timef = fmodf(timef, 6.28318530718f);
 
