@@ -57,7 +57,7 @@ typedef struct WsiExtent {
     int32_t height;
 } WsiExtent;
 
-typedef struct {
+typedef struct WsiEvent {
     WsiEventType type;
     uint32_t flags;
     uint32_t serial;
