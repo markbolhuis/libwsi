@@ -257,9 +257,9 @@ demo_record_frame(struct demo *demo, float time)
 
     VkCommandBufferBeginInfo begin_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
-        .pInheritanceInfo = VK_NULL_HANDLE,
+        .pInheritanceInfo = NULL,
     };
 
     VkResult res = vkBeginCommandBuffer(cmd_buf, &begin_info);
@@ -278,7 +278,7 @@ demo_record_frame(struct demo *demo, float time)
 
     VkRenderPassBeginInfo render_pass_info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .renderPass = demo->render_pass,
         .framebuffer = demo->frame_buffers[demo->image_index],
         .renderArea = render_area,
@@ -332,34 +332,35 @@ demo_end_frame(struct demo *demo)
 {
     uint32_t frame_index = demo->frame_index;
 
-    VkSubmitInfo submitInfo = {
+    VkSubmitInfo submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &demo->acquire_semaphores[frame_index],
+        .pWaitDstStageMask = (VkPipelineStageFlags []) {
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        },
         .commandBufferCount = 1,
         .pCommandBuffers = &demo->cmd_buffers[frame_index],
-        .pWaitSemaphores = &demo->acquire_semaphores[frame_index],
-        .waitSemaphoreCount = 1,
-        .pSignalSemaphores = &demo->render_semaphores[frame_index],
         .signalSemaphoreCount = 1,
-        .pWaitDstStageMask = (VkPipelineStageFlags[]){
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
+        .pSignalSemaphores = &demo->render_semaphores[frame_index],
     };
 
-    VkResult res = vkQueueSubmit(demo->graphics_queue, 1, &submitInfo, demo->fences[frame_index]);
+    VkResult res = vkQueueSubmit(demo->graphics_queue, 1, &submit_info, demo->fences[frame_index]);
     assert(res == VK_SUCCESS);
 
-    VkPresentInfoKHR presentInfo = {
+    VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = VK_NULL_HANDLE,
-        .pWaitSemaphores = &demo->render_semaphores[frame_index],
+        .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pImageIndices = &demo->image_index,
-        .pSwapchains = &demo->swapchain,
+        .pWaitSemaphores = &demo->render_semaphores[frame_index],
         .swapchainCount = 1,
+        .pSwapchains = &demo->swapchain,
+        .pImageIndices = &demo->image_index,
         .pResults = NULL,
     };
 
-    res = vkQueuePresentKHR(demo->present_queue, &presentInfo);
+    res = vkQueuePresentKHR(demo->present_queue, &present_info);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) {
         demo_resize(demo);
     }
@@ -388,7 +389,7 @@ demo_create_index_buffer(struct demo *demo)
 {
     VkBufferCreateInfo buffer_info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
         .size = demo->mesh.index_count * sizeof(uint16_t),
         .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -413,7 +414,7 @@ demo_create_index_buffer(struct demo *demo)
 
     VkMemoryAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .allocationSize = mem_reqs.size,
         .memoryTypeIndex = index,
     };
@@ -450,7 +451,7 @@ demo_create_vertex_buffer(struct demo *demo)
 {
     VkBufferCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
         .size = demo->mesh.vertex_count * sizeof(struct vertex),
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -460,7 +461,7 @@ demo_create_vertex_buffer(struct demo *demo)
     };
 
     VkBuffer buffer;
-    VkResult res = vkCreateBuffer(demo->device, &info, VK_NULL_HANDLE, &buffer);
+    VkResult res = vkCreateBuffer(demo->device, &info, NULL, &buffer);
     assert(res == VK_SUCCESS);
 
     VkMemoryRequirements req = {0};
@@ -475,13 +476,13 @@ demo_create_vertex_buffer(struct demo *demo)
 
     VkMemoryAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .allocationSize = req.size,
         .memoryTypeIndex = index,
     };
 
     VkDeviceMemory memory;
-    res = vkAllocateMemory(demo->device, &alloc_info, VK_NULL_HANDLE, &memory);
+    res = vkAllocateMemory(demo->device, &alloc_info, NULL, &memory);
     assert(res == VK_SUCCESS);
 
     res = vkBindBufferMemory(demo->device, buffer, memory, 0);
@@ -500,10 +501,10 @@ demo_create_vertex_buffer(struct demo *demo)
 static void
 demo_destroy_vertex_buffer(struct demo *demo)
 {
-    vkDestroyBuffer(demo->device, demo->vertex_buffer, VK_NULL_HANDLE);
+    vkDestroyBuffer(demo->device, demo->vertex_buffer, NULL);
     demo->vertex_buffer = VK_NULL_HANDLE;
 
-    vkFreeMemory(demo->device, demo->vertex_memory, VK_NULL_HANDLE);
+    vkFreeMemory(demo->device, demo->vertex_memory, NULL);
     demo->vertex_memory = VK_NULL_HANDLE;
 }
 
@@ -535,161 +536,198 @@ demo_create_pipeline(struct demo *demo)
 
     VkPipelineShaderStageCreateInfo shader_stages[2] = {0};
 
-    VkShaderModule vertModule;
-    VkResult res = demo_create_shader_module(demo->device, "vkcube.vert.spv", &vertModule);
+    VkShaderModule vert_module;
+    VkResult res = demo_create_shader_module(demo->device, "vkcube.vert.spv", &vert_module);
     assert(res == VK_SUCCESS);
 
     shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-    shader_stages[0].module = vertModule;
+    shader_stages[0].module = vert_module;
     shader_stages[0].pName  = "main";
 
-    VkShaderModule fragModule;
-    res = demo_create_shader_module(demo->device, "vkcube.frag.spv", &fragModule);
+    VkShaderModule frag_module;
+    res = demo_create_shader_module(demo->device, "vkcube.frag.spv", &frag_module);
     assert(res == VK_SUCCESS);
 
     shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shader_stages[1].module = fragModule;
+    shader_stages[1].module = frag_module;
     shader_stages[1].pName  = "main";
 
     // endregion
 
     // region Vertex Input
 
-    VkVertexInputBindingDescription bindingDesc[] = {
+    VkVertexInputBindingDescription binding_desc[] = {
         { 0, sizeof(struct vertex), VK_VERTEX_INPUT_RATE_VERTEX },
     };
 
-    VkVertexInputAttributeDescription attrDesc[] = {
+    VkVertexInputAttributeDescription attribute_desc[] = {
         { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(struct vertex, pos)},
         { 1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(struct vertex, color)},
         { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(struct vertex, normal)},
         { 3, 0, VK_FORMAT_R32G32_SFLOAT,    offsetof(struct vertex, uv)},
     };
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
-    vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.pVertexBindingDescriptions      = bindingDesc;
-    vertexInputInfo.vertexBindingDescriptionCount   = array_size(bindingDesc);
-    vertexInputInfo.pVertexAttributeDescriptions    = attrDesc;
-    vertexInputInfo.vertexAttributeDescriptionCount = array_size(attrDesc);
+    VkPipelineVertexInputStateCreateInfo vertex_input_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .vertexBindingDescriptionCount = array_size(binding_desc),
+        .pVertexBindingDescriptions = binding_desc,
+        .vertexAttributeDescriptionCount = array_size(attribute_desc),
+        .pVertexAttributeDescriptions = attribute_desc,
+    };
 
     // endregion
 
     // region Assembly
 
-    VkPipelineInputAssemblyStateCreateInfo assemblyInfo = {0};
-    assemblyInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    assemblyInfo.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    assemblyInfo.primitiveRestartEnable = VK_FALSE;
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE,
+    };
 
     // endregion
 
     // region Tesselation
 
-    VkPipelineTessellationStateCreateInfo tessellationInfo = {0};
-    tessellationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+    VkPipelineTessellationStateCreateInfo tessellation_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .patchControlPoints = 0,
+    };
 
     // endregion
 
     // region Viewport State
 
-    VkPipelineViewportStateCreateInfo viewportInfo = {};
-    viewportInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportInfo.pScissors     = NULL; // Ignored due to dynamic state
-    viewportInfo.scissorCount  = 1;
-    viewportInfo.pViewports    = NULL; // Ignored due to dynamic state
-    viewportInfo.viewportCount = 1;
+    VkPipelineViewportStateCreateInfo viewport_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .pViewports = NULL,
+        .viewportCount = 1,
+        .pScissors = NULL,
+        .scissorCount = 1,
+    };
 
     // endregion
 
     // region Rasterization
 
-    VkPipelineRasterizationStateCreateInfo rasterizationInfo = {0};
-    rasterizationInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizationInfo.depthClampEnable        = VK_FALSE;
-    rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
-    rasterizationInfo.polygonMode             = VK_POLYGON_MODE_FILL;
-    rasterizationInfo.lineWidth               = 1.0f;
-    rasterizationInfo.cullMode                = VK_CULL_MODE_BACK_BIT;
-    rasterizationInfo.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rasterizationInfo.depthBiasEnable         = VK_FALSE;
+    VkPipelineRasterizationStateCreateInfo rasterization_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .depthBiasConstantFactor = 0.0f,
+        .depthBiasClamp = 0.0f,
+        .depthBiasSlopeFactor    = 0.0f,
+        .lineWidth = 1.0f,
+    };
 
     // endregion
 
     // region Multisample
 
-    VkPipelineMultisampleStateCreateInfo multisampleInfo = {};
-    multisampleInfo.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampleInfo.sampleShadingEnable  = VK_FALSE;
-    multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkPipelineMultisampleStateCreateInfo multisample_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 0.0f,
+        .pSampleMask = NULL,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE,
+    };
 
     // endregion
 
     // region Depth Stencil
 
-    VkPipelineDepthStencilStateCreateInfo stencilInfo = {};
-    stencilInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    stencilInfo.depthTestEnable       = VK_TRUE;
-    stencilInfo.depthWriteEnable      = VK_TRUE;
-    stencilInfo.depthCompareOp        = VK_COMPARE_OP_LESS;
-    stencilInfo.depthBoundsTestEnable = VK_FALSE;
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+    };
 
     // endregion
 
     // region Color Blend
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
-                                        | VK_COLOR_COMPONENT_G_BIT
-                                        | VK_COLOR_COMPONENT_B_BIT
-                                        | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable    = VK_FALSE;
-    colorBlendAttachment.colorBlendOp   = VK_BLEND_OP_ADD;
+    VkPipelineColorBlendAttachmentState color_blend_attachment_state = {
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+                        | VK_COLOR_COMPONENT_G_BIT
+                        | VK_COLOR_COMPONENT_B_BIT
+                        | VK_COLOR_COMPONENT_A_BIT,
+    };
 
-    VkPipelineColorBlendStateCreateInfo colorBlendInfo = {};
-    colorBlendInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlendInfo.logicOpEnable     = VK_FALSE;
-    colorBlendInfo.logicOp           = VK_LOGIC_OP_COPY;
-    colorBlendInfo.pAttachments      = &colorBlendAttachment;
-    colorBlendInfo.attachmentCount   = 1;
-    colorBlendInfo.blendConstants[0] = 0.0f;
-    colorBlendInfo.blendConstants[1] = 0.0f;
-    colorBlendInfo.blendConstants[2] = 0.0f;
-    colorBlendInfo.blendConstants[3] = 0.0f;
+    VkPipelineColorBlendStateCreateInfo color_blend_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &color_blend_attachment_state,
+        .blendConstants = { 0.0f, 0.0f, 0.0f, 0.0f },
+    };
 
     // endregion
 
     // region Dynamic State
 
-    VkDynamicState dynStates[2] = {
+    VkDynamicState states[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
     };
 
-    VkPipelineDynamicStateCreateInfo dynamicStateInfo = {0};
-    dynamicStateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicStateInfo.dynamicStateCount = array_size(dynStates);
-    dynamicStateInfo.pDynamicStates    = dynStates;
+    VkPipelineDynamicStateCreateInfo dynamic_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .dynamicStateCount = array_size(states),
+        .pDynamicStates = states,
+    };
 
     // endregion
 
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
+    VkGraphicsPipelineCreateInfo pipeline_create_info = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
         .stageCount = array_size(shader_stages),
         .pStages = shader_stages,
-        .pVertexInputState = &vertexInputInfo,
-        .pInputAssemblyState = &assemblyInfo,
-        .pTessellationState = &tessellationInfo,
-        .pViewportState = &viewportInfo,
-        .pRasterizationState = &rasterizationInfo,
-        .pMultisampleState = &multisampleInfo,
-        .pDepthStencilState = &stencilInfo,
-        .pColorBlendState = &colorBlendInfo,
-        .pDynamicState = &dynamicStateInfo,
+        .pVertexInputState = &vertex_input_state,
+        .pInputAssemblyState = &input_assembly_state,
+        .pTessellationState = &tessellation_state,
+        .pViewportState = &viewport_state,
+        .pRasterizationState = &rasterization_state,
+        .pMultisampleState = &multisample_state,
+        .pDepthStencilState = &depth_stencil_state,
+        .pColorBlendState = &color_blend_state,
+        .pDynamicState = &dynamic_state,
         .layout = demo->pipeline_layout,
         .renderPass = demo->render_pass,
         .subpass = 0,
@@ -702,13 +740,13 @@ demo_create_pipeline(struct demo *demo)
         demo->device,
         VK_NULL_HANDLE,
         1,
-        &pipelineCreateInfo,
-        VK_NULL_HANDLE,
+        &pipeline_create_info,
+        NULL,
         &pipeline);
     assert(res == VK_SUCCESS);
 
-    vkDestroyShaderModule(demo->device, vertModule, VK_NULL_HANDLE);
-    vkDestroyShaderModule(demo->device, fragModule, VK_NULL_HANDLE);
+    vkDestroyShaderModule(demo->device, vert_module, NULL);
+    vkDestroyShaderModule(demo->device, frag_module, NULL);
 
     demo->pipeline = pipeline;
 }
@@ -716,7 +754,7 @@ demo_create_pipeline(struct demo *demo)
 static void
 demo_destroy_pipeline(struct demo *demo)
 {
-    vkDestroyPipeline(demo->device, demo->pipeline, VK_NULL_HANDLE);
+    vkDestroyPipeline(demo->device, demo->pipeline, NULL);
     demo->pipeline = VK_NULL_HANDLE;
 }
 
@@ -727,9 +765,9 @@ demo_create_pipeline_layout(struct demo *demo)
         { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(struct push_constants) },
     };
 
-    VkPipelineLayoutCreateInfo pipeline_layout = {
+    VkPipelineLayoutCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 0,
         .pSetLayouts = NULL,
@@ -738,11 +776,7 @@ demo_create_pipeline_layout(struct demo *demo)
     };
 
     VkPipelineLayout layout;
-    VkResult result = vkCreatePipelineLayout(
-        demo->device,
-        &pipeline_layout,
-        VK_NULL_HANDLE,
-        &layout);
+    VkResult result = vkCreatePipelineLayout(demo->device, &create_info, NULL, &layout);
     assert(result == VK_SUCCESS);
     demo->pipeline_layout = layout;
 }
@@ -750,7 +784,7 @@ demo_create_pipeline_layout(struct demo *demo)
 static void
 demo_destroy_pipeline_layout(struct demo *demo)
 {
-    vkDestroyPipelineLayout(demo->device, demo->pipeline_layout, VK_NULL_HANDLE);
+    vkDestroyPipelineLayout(demo->device, demo->pipeline_layout, NULL);
     demo->pipeline_layout = VK_NULL_HANDLE;
 }
 
@@ -767,7 +801,7 @@ demo_create_frame_buffers(struct demo *demo)
 
         VkFramebufferCreateInfo fb_info = {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = VK_NULL_HANDLE,
+            .pNext = NULL,
             .flags = 0,
             .renderPass = demo->render_pass,
             .attachmentCount = array_size(attachments),
@@ -777,11 +811,7 @@ demo_create_frame_buffers(struct demo *demo)
             .layers = 1,
         };
 
-        VkResult res = vkCreateFramebuffer(
-            demo->device,
-            &fb_info,
-            VK_NULL_HANDLE,
-            &demo->frame_buffers[i]);
+        VkResult res = vkCreateFramebuffer(demo->device, &fb_info, NULL, &demo->frame_buffers[i]);
         assert(res == VK_SUCCESS);
     }
 }
@@ -790,7 +820,7 @@ static void
 demo_destroy_frame_buffers(struct demo *demo)
 {
     for (uint32_t i = 0; i < demo->swapchain_image_count; i++) {
-        vkDestroyFramebuffer(demo->device, demo->frame_buffers[i], VK_NULL_HANDLE);
+        vkDestroyFramebuffer(demo->device, demo->frame_buffers[i], NULL);
     }
     free(demo->frame_buffers);
     demo->frame_buffers = NULL;
@@ -800,6 +830,7 @@ static void
 demo_create_renderpass(struct demo *demo)
 {
     VkAttachmentDescription attachments[1];
+    attachments[0].flags = 0;
     attachments[0].format = demo->surface_format.format;
     attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
     attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -808,11 +839,9 @@ demo_create_renderpass(struct demo *demo)
     attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    attachments[0].flags = 0;
 
-    VkAttachmentReference color_reference = {
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    VkAttachmentReference color_refs[1] = {
+        { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
     };
 
     VkSubpassDescription subpasses[1];
@@ -820,16 +849,16 @@ demo_create_renderpass(struct demo *demo)
     subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpasses[0].inputAttachmentCount = 0;
     subpasses[0].pInputAttachments = NULL;
-    subpasses[0].colorAttachmentCount = 1;
-    subpasses[0].pColorAttachments = &color_reference;
+    subpasses[0].colorAttachmentCount = array_size(color_refs),
+    subpasses[0].pColorAttachments = color_refs;
     subpasses[0].pResolveAttachments = NULL;
     subpasses[0].pDepthStencilAttachment = NULL;
     subpasses[0].preserveAttachmentCount = 0;
     subpasses[0].pPreserveAttachments = NULL;
 
-    VkRenderPassCreateInfo rp_info = {
+    VkRenderPassCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
         .attachmentCount = array_size(attachments),
         .pAttachments = attachments,
@@ -839,34 +868,39 @@ demo_create_renderpass(struct demo *demo)
         .pDependencies = NULL,
     };
 
-    VkResult result = vkCreateRenderPass(
-        demo->device,
-        &rp_info,
-        VK_NULL_HANDLE,
-        &demo->render_pass);
+    VkResult result = vkCreateRenderPass(demo->device, &create_info, NULL, &demo->render_pass);
     assert(result == VK_SUCCESS);
 }
 
 static void
 demo_destroy_renderpass(struct demo *demo)
 {
-    vkDestroyRenderPass(demo->device, demo->render_pass, VK_NULL_HANDLE);
+    vkDestroyRenderPass(demo->device, demo->render_pass, NULL);
     demo->render_pass = VK_NULL_HANDLE;
 }
 
 static void
-demo_create_image_views(struct demo *demo)
+demo_create_color_images(struct demo *demo)
 {
-    uint32_t image_count = demo->swapchain_image_count;
+    uint32_t image_count;
+    VkResult res =  vkGetSwapchainImagesKHR(demo->device, demo->swapchain, &image_count, NULL);
+    assert(res == VK_SUCCESS);
 
-    VkImageView *image_views = malloc(sizeof(VkImageView) * image_count);
+    VkImage *images = calloc(image_count, sizeof(VkImage));
+    assert(images);
+
+    res = vkGetSwapchainImagesKHR(demo->device, demo->swapchain, &image_count, images);
+    assert(res == VK_SUCCESS);
+
+    VkImageView *image_views = calloc(image_count, sizeof(VkImageView));
+    assert(image_views);
 
     for (uint32_t i = 0; i < image_count; i++) {
         VkImageViewCreateInfo view_info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .pNext = VK_NULL_HANDLE,
+            .pNext = NULL,
             .flags = 0,
-            .image = demo->swapchain_images[i],
+            .image = images[i],
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
             .format = demo->surface_format.format,
             .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -884,11 +918,13 @@ demo_create_image_views(struct demo *demo)
         assert(result == VK_SUCCESS);
     }
 
+    demo->swapchain_images = images;
+    demo->swapchain_image_count = image_count;
     demo->swapchain_image_views = image_views;
 }
 
 static void
-demo_destroy_image_views(struct demo *demo)
+demo_destroy_color_images(struct demo *demo)
 {
     for (uint32_t i = 0; i < demo->swapchain_image_count; i++) {
         vkDestroyImageView(demo->device, demo->swapchain_image_views[i], NULL);
@@ -896,6 +932,9 @@ demo_destroy_image_views(struct demo *demo)
 
     free(demo->swapchain_image_views);
     demo->swapchain_image_views = NULL;
+
+    free(demo->swapchain_images);
+    demo->swapchain_images = NULL;
 }
 
 static void
@@ -997,12 +1036,12 @@ demo_create_swapchain(struct demo *demo, VkSwapchainKHR oldSwapchain)
         info.queueFamilyIndexCount = 0;
         info.pQueueFamilyIndices = NULL;
     } else {
-        uint32_t indices[2] = {
+        uint32_t indices[] = {
             demo->graphics_family,
             demo->present_family,
         };
         info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        info.queueFamilyIndexCount = 2;
+        info.queueFamilyIndexCount = array_size(indices);
         info.pQueueFamilyIndices = indices;
     }
 
@@ -1020,30 +1059,11 @@ demo_create_swapchain(struct demo *demo, VkSwapchainKHR oldSwapchain)
 
     result = vkCreateSwapchainKHR(demo->device, &info, NULL, &demo->swapchain);
     assert(result == VK_SUCCESS);
-
-    result = vkGetSwapchainImagesKHR(
-        demo->device,
-        demo->swapchain,
-        &demo->swapchain_image_count,
-        NULL);
-    assert(result == VK_SUCCESS);
-
-    demo->swapchain_images = calloc(demo->swapchain_image_count, sizeof(VkImage));
-
-    result = vkGetSwapchainImagesKHR(
-        demo->device,
-        demo->swapchain,
-        &demo->swapchain_image_count,
-        demo->swapchain_images);
-    assert(result == VK_SUCCESS);
 }
 
 static void
 demo_destroy_swapchain(struct demo *demo, VkSwapchainKHR *pSwapchain)
 {
-    free(demo->swapchain_images);
-    demo->swapchain_images = NULL;
-
     if (pSwapchain != NULL) {
         *pSwapchain = demo->swapchain;
     } else {
@@ -1057,7 +1077,7 @@ demo_create_command_buffers(struct demo *demo)
 {
     VkCommandPoolCreateInfo pool_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = demo->graphics_family,
     };
@@ -1067,7 +1087,7 @@ demo_create_command_buffers(struct demo *demo)
 
     VkCommandBufferAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .commandPool = demo->cmd_pool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = NUM_FRAMES,
@@ -1081,7 +1101,12 @@ static void
 demo_destroy_command_buffers(struct demo *demo)
 {
     vkFreeCommandBuffers(demo->device, demo->cmd_pool, NUM_FRAMES, demo->cmd_buffers);
+    for (uint32_t i = 0; i < NUM_FRAMES; ++i) {
+        demo->cmd_buffers[i] = NULL;
+    }
+
     vkDestroyCommandPool(demo->device, demo->cmd_pool, NULL);
+    demo->cmd_pool = VK_NULL_HANDLE;
 }
 
 static void
@@ -1089,13 +1114,13 @@ demo_create_sync_objects(struct demo *demo)
 {
     VkFenceCreateInfo fence_info = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
 
     VkSemaphoreCreateInfo semaphore_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
     };
 
@@ -1129,13 +1154,10 @@ demo_destroy_sync_objects(struct demo *demo)
 static void
 demo_create_device(struct demo *demo)
 {
-    const char *device_extensions[16];
-    uint32_t device_extension_count = array_size(device_extensions);
+    const char *exts[16];
+    uint32_t ext_count = array_size(exts);
 
-    WsiResult wr = wsiEnumerateRequiredDeviceExtensions(
-        demo->platform,
-        &device_extension_count,
-        device_extensions);
+    WsiResult wr = wsiEnumerateRequiredDeviceExtensions(demo->platform, &ext_count, exts);
     assert(wr == WSI_SUCCESS);
 
     uint32_t queue_count = 1;
@@ -1164,14 +1186,14 @@ demo_create_device(struct demo *demo)
 
     VkDeviceCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .flags = 0,
         .queueCreateInfoCount = queue_count,
         .pQueueCreateInfos = queue_infos,
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = NULL,
-        .enabledExtensionCount = device_extension_count,
-        .ppEnabledExtensionNames = device_extensions,
+        .enabledExtensionCount = ext_count,
+        .ppEnabledExtensionNames = exts,
         .pEnabledFeatures = &features,
     };
 
@@ -1187,13 +1209,13 @@ demo_destroy_device(struct demo *demo)
 {
     vkDestroyDevice(demo->device, NULL);
 
-    demo->device = VK_NULL_HANDLE;
-    demo->graphics_queue = VK_NULL_HANDLE;
-    demo->present_queue = VK_NULL_HANDLE;
+    demo->device = NULL;
+    demo->graphics_queue = NULL;
+    demo->present_queue = NULL;
 }
 
 static void
-demo_pick_physical_device(struct demo *demo)
+demo_select_physical_device(struct demo *demo)
 {
     const uint32_t MAX_DEV_COUNT = 8;
     const uint32_t MAX_QUEUE_COUNT = 16;
@@ -1205,9 +1227,6 @@ demo_pick_physical_device(struct demo *demo)
 
     for (uint32_t i = 0; i < dev_count; ++i) {
         VkPhysicalDevice device = devices[i];
-
-        VkPhysicalDeviceProperties props = {};
-        vkGetPhysicalDeviceProperties(device, &props);
 
         uint32_t queue_count = MAX_QUEUE_COUNT;
         VkQueueFamilyProperties queue_family_props[MAX_QUEUE_COUNT];
@@ -1246,7 +1265,7 @@ demo_pick_physical_device(struct demo *demo)
         break;
     }
 
-    assert(demo->physical_device != VK_NULL_HANDLE);
+    assert(demo->physical_device != NULL);
 }
 
 static void
@@ -1319,7 +1338,7 @@ demo_create_instance(struct demo *demo)
 
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .apiVersion = VK_API_VERSION_1_0,
         .pApplicationName = "VkCube",
         .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
@@ -1329,7 +1348,7 @@ demo_create_instance(struct demo *demo)
 
     VkInstanceCreateInfo instance_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .pNext = VK_NULL_HANDLE,
+        .pNext = NULL,
         .pApplicationInfo = &app_info,
         .enabledLayerCount = inst_layer_count,
         .ppEnabledLayerNames = inst_layers,
@@ -1345,7 +1364,7 @@ static void
 demo_destroy_instance(struct demo *demo)
 {
     vkDestroyInstance(demo->instance, NULL);
-    demo->instance = VK_NULL_HANDLE;
+    demo->instance = NULL;
 }
 
 static void
@@ -1385,10 +1404,10 @@ demo_resize(struct demo *demo)
     assert(res == VK_SUCCESS);
 
     demo_destroy_frame_buffers(demo);
-    demo_destroy_image_views(demo);
+    demo_destroy_color_images(demo);
     demo_destroy_swapchain(demo, &oldSwapchain);
     demo_create_swapchain(demo, oldSwapchain);
-    demo_create_image_views(demo);
+    demo_create_color_images(demo);
     demo_create_frame_buffers(demo);
 
     vkDestroySwapchainKHR(demo->device, oldSwapchain, NULL);
@@ -1409,14 +1428,14 @@ main(int argc, char **argv)
     demo_create_platform(&demo);
     demo_create_instance(&demo);
     demo_create_window(&demo);
-    demo_pick_physical_device(&demo);
+    demo_select_physical_device(&demo);
     demo_create_device(&demo);
     demo_create_sync_objects(&demo);
     demo_create_command_buffers(&demo);
     demo_select_surface_format(&demo);
     demo_select_present_mode(&demo, true, false);
     demo_create_swapchain(&demo, VK_NULL_HANDLE);
-    demo_create_image_views(&demo);
+    demo_create_color_images(&demo);
     demo_create_renderpass(&demo);
     demo_create_frame_buffers(&demo);
     demo_create_pipeline_layout(&demo);
@@ -1469,7 +1488,7 @@ main(int argc, char **argv)
     demo_destroy_pipeline_layout(&demo);
     demo_destroy_frame_buffers(&demo);
     demo_destroy_renderpass(&demo);
-    demo_destroy_image_views(&demo);
+    demo_destroy_color_images(&demo);
     demo_destroy_swapchain(&demo, NULL);
     demo_destroy_command_buffers(&demo);
     demo_destroy_sync_objects(&demo);
