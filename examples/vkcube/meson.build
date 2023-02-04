@@ -19,6 +19,7 @@ dep_glm = dependency('cglm')
 
 executable('vkcube',
   'vkcube.c',
+  'linux.c',
   dependencies: [
     dep_vulkan,
     dep_wsi,

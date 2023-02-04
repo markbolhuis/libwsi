@@ -1,10 +1,7 @@
-#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
-#include <time.h>
-#include <unistd.h>
 
 #include <wsi/platform.h>
 #include <wsi/window.h>
@@ -74,6 +71,16 @@ struct demo {
 struct push_constants {
     mat4 mvp;
 };
+
+// region Extern
+
+extern VkResult
+demo_create_shader_module(VkDevice device, const char *path, VkShaderModule *module);
+
+extern int64_t
+demo_get_time_ns(void);
+
+// endregion
 
 // region Mesh
 
@@ -179,40 +186,6 @@ lookat(vec3 eye, vec3 at, vec3 up, mat4 out)
 }
 
 // endregion
-
-
-static char  *
-open_file(const char *filename, size_t *size)
-{
-    FILE *handle = fopen(filename, "rb");
-    if (!handle) {
-        fprintf(stderr, "Failed to open shader file %s\n", filename);
-        return NULL;
-    }
-
-    fseek(handle, 0, SEEK_END);
-    size_t _size = ftell(handle);
-    fseek(handle, 0, SEEK_SET);
-
-    char *data = malloc(_size);
-    if (!data) {
-        fprintf(stderr, "Failed to allocate memory for shader file %s\n", filename);
-        fclose(handle);
-        return NULL;
-    }
-
-    size_t read = fread(data, 1, _size, handle);
-    if (read != _size) {
-        fprintf(stderr, "Failed to read shader file %s\n", filename);
-        free(data);
-        fclose(handle);
-        return NULL;
-    }
-
-    fclose(handle);
-    *size = _size;
-    return data;
-}
 
 
 static void
@@ -506,27 +479,6 @@ demo_destroy_vertex_buffer(struct demo *demo)
 
     vkFreeMemory(demo->device, demo->vertex_memory, NULL);
     demo->vertex_memory = VK_NULL_HANDLE;
-}
-
-static VkResult
-demo_create_shader_module(VkDevice device, const char *path, VkShaderModule *module)
-{
-    size_t size;
-    uint32_t *data = (uint32_t *) open_file(path, &size);
-
-    VkShaderModuleCreateInfo createInfo = {0};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = size;
-    createInfo.pCode = data;
-
-    VkShaderModule shaderModule;
-    VkResult res = vkCreateShaderModule(device, &createInfo, NULL, &shaderModule);
-    if (res == VK_SUCCESS) {
-        *module = shaderModule;
-    }
-
-    free(data);
-    return res;
 }
 
 static void
@@ -1413,14 +1365,6 @@ demo_resize(struct demo *demo)
     vkDestroySwapchainKHR(demo->device, oldSwapchain, NULL);
 }
 
-static int64_t
-get_time_ns(void)
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec * 1000000000 + ts.tv_nsec;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -1446,7 +1390,7 @@ main(int argc, char **argv)
     demo_create_vertex_buffer(&demo);
     demo_create_index_buffer(&demo);
 
-    int64_t last_time = get_time_ns();
+    int64_t last_time = demo_get_time_ns();
 
     float timef = 0.0f;
     while (true) {
@@ -1463,7 +1407,7 @@ main(int argc, char **argv)
         demo_record_frame(&demo, timef);
         demo_end_frame(&demo);
 
-        int64_t now = get_time_ns();
+        int64_t now = demo_get_time_ns();
 
         int64_t dt = now - last_time;
         last_time = now;
