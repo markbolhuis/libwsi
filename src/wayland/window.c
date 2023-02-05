@@ -89,13 +89,16 @@ wsi_window_configure(struct wsi_window *window)
         current->decoration = pending->decoration;
     }
 
-    window->event_mask = WSI_XDG_EVENT_NONE;
-
-    bool rescaled = pending->scale != current->scale;
-    if (rescaled) {
-        current->scale = pending->scale;
-        resized = true;
+    bool rescaled = false;
+    if (mask & WSI_XDG_EVENT_SCALE) {
+        rescaled = pending->scale != current->scale;
+        if (rescaled) {
+            current->scale = pending->scale;
+            resized = true;
+        }
     }
+
+    window->event_mask = WSI_XDG_EVENT_NONE;
 
     if (resized) {
         WsiExtent be = wsi_window_get_buffer_extent(window);
@@ -138,6 +141,7 @@ wsi_window_configure(struct wsi_window *window)
 static void
 wsi_window_set_initial_state(struct wsi_window *window)
 {
+    window->event_mask |= WSI_XDG_EVENT_SCALE;
     window->pending.scale = 1;
 
     if (xdg_toplevel_get_version(window->xdg_toplevel) <
