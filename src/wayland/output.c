@@ -115,6 +115,12 @@ xdg_output_v1_name(
 {
     struct wsi_output *output = data;
 
+    if (wl_output_get_version(output->wl_output) >=
+        WL_OUTPUT_NAME_SINCE_VERSION)
+    {
+        return;
+    }
+
     free(output->name);
     output->name = strdup(name);
 }
@@ -126,6 +132,12 @@ xdg_output_v1_description(
     const char *description)
 {
     struct wsi_output *output = data;
+
+    if (wl_output_get_version(output->wl_output) >=
+        WL_OUTPUT_DESCRIPTION_SINCE_VERSION)
+    {
+        return;
+    }
 
     free(output->description);
     output->description = strdup(description);
@@ -229,13 +241,6 @@ wl_output_name(
 {
     struct wsi_output *output = data;
 
-    if (output->xdg_output_v1 &&
-        zxdg_output_v1_get_version(output->xdg_output_v1) >=
-            ZXDG_OUTPUT_V1_NAME_SINCE_VERSION)
-    {
-        return;
-    }
-
     free(output->name);
     output->name = strdup(name);
 }
@@ -247,13 +252,6 @@ wl_output_description(
     const char *description)
 {
     struct wsi_output *output = data;
-
-    if (output->xdg_output_v1 &&
-        zxdg_output_v1_get_version(output->xdg_output_v1) >=
-            ZXDG_OUTPUT_V1_DESCRIPTION_SINCE_VERSION)
-    {
-        return;
-    }
 
     free(output->description);
     output->description = strdup(description);
