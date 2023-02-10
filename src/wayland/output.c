@@ -308,7 +308,7 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
 
     output->global.platform = platform;
     output->global.name = name;
-    output->id = wsi_new_id(platform);
+    output->global.id = wsi_new_id(platform);
 
     output->wl_output = wsi_bind(
         platform,
@@ -383,7 +383,7 @@ wsiEnumerateOutputs(WsiPlatform platform, uint32_t *pCount, WsiOutput *pOutputs)
         if (count >= *pCount) {
             return WSI_INCOMPLETE;
         }
-        pOutputs[count++] = output->id;
+        pOutputs[count++] = output->global.id;
     }
 
     *pCount = count;

@@ -67,7 +67,6 @@ struct wsi_keyboard {
 
 struct wsi_seat {
     struct wsi_global  global;
-    uint64_t           id;
     struct wl_list     link;
 
     struct wl_seat     *wl_seat;

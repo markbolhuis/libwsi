@@ -38,6 +38,7 @@ wsi_global_create(struct wsi_platform *platform, uint32_t name)
     }
 
     global->platform = platform;
+    global->id = wsi_new_id(platform);
     global->name = name;
 
     return global;

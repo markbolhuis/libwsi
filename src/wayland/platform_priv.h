@@ -10,6 +10,7 @@ struct wsi_event_queue {
 
 struct wsi_global {
     struct wsi_platform *platform;
+    uint64_t id;
     uint32_t name;
 };
 

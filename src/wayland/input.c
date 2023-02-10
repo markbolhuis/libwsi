@@ -20,7 +20,7 @@ wsi_seat_find(struct wsi_platform *platform, uint64_t id)
 {
     struct wsi_seat *seat;
     wl_list_for_each(seat, &platform->seat_list, link) {
-        if (seat->id == id) {
+        if (seat->global.id == id) {
             return seat;
         }
     }
@@ -508,8 +508,8 @@ wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     }
 
     seat->global.platform = platform;
+    seat->global.id = wsi_new_id(platform);
     seat->global.name = name;
-    seat->id = wsi_new_id(platform);
 
     seat->wl_seat = wsi_bind(
         platform,
@@ -572,7 +572,7 @@ wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
         if (count >= *pSeatCount) {
             return WSI_INCOMPLETE;
         }
-        pSeats[count++] = seat->id;
+        pSeats[count++] = seat->global.id;
     }
 
     *pSeatCount = count;
