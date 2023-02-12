@@ -8,12 +8,12 @@ extern "C" {
 #endif
 
 typedef struct WsiEventQueueCreateInfo {
-    uint32_t sType;
+    WsiStructureType sType;
     const void *pNext;
 } WsiEventQueueCreateInfo;
 
 typedef struct WsiPlatformCreateInfo {
-    uint32_t sType;
+    WsiStructureType sType;
     const void *pNext;
     const WsiEventQueueCreateInfo *pEventQueueInfo;
 } WsiPlatformCreateInfo;
