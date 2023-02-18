@@ -35,36 +35,40 @@ enum wsi_xdg_state {
 };
 
 struct wsi_window_state {
-    WsiExtent extent;                       // xdg_toplevel.configure
-    WsiExtent bounds;                       // xdg_toplevel.configure_bounds
-    enum wsi_xdg_state state;               // xdg_toplevel.configure
-    enum wsi_xdg_capabilities capabilities; // xdg_toplevel.wm_capabilities
-    int32_t scale;                          // wl_surface.{enter.leave}
-    uint32_t decoration;                    // xdg_toplevel_decoration.configure
+    WsiExtent extent;
+    WsiExtent bounds;
+    enum wsi_xdg_state state;
+    enum wsi_xdg_capabilities capabilities;
+    int32_t scale;
+    uint32_t decoration;
 };
 
 struct wsi_window {
-    struct wsi_platform   *platform;
+    struct wsi_platform *platform;
     struct wsi_event_queue *queue;
-    struct wsi_window     *parent;
+    struct wsi_window *parent;
     WsiExtent user_extent;
 
     struct wl_list link;
 
     enum wsi_api api;
 
-    struct wl_surface     *wl_surface;
-    struct wl_egl_window  *wl_egl_window; // Temporary
-    struct xdg_surface    *xdg_surface;
-    struct xdg_toplevel   *xdg_toplevel;
+    struct wl_surface *wl_surface;
+    struct wl_egl_window *wl_egl_window;
+    struct wp_viewport *wp_viewport;
+    struct wp_fractional_scale_v1 *wp_fractional_scale_v1;
+    struct xdg_surface *xdg_surface;
+    struct xdg_toplevel *xdg_toplevel;
     struct zxdg_toplevel_decoration_v1 *xdg_toplevel_decoration_v1;
 
-    enum wsi_xdg_event event_mask;
+    bool configured;
     uint32_t serial;
+
+    struct wl_list output_list;
+
+    enum wsi_xdg_event event_mask;
     struct wsi_window_state pending;
     struct wsi_window_state current;
-    struct wl_list output_list;
-    bool configured;
 
     void *user_data;
     PFN_wsiConfigureWindow pfn_configure;

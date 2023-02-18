@@ -30,6 +30,8 @@ struct wsi_platform {
 
     struct wl_compositor *wl_compositor;
     struct wl_shm *wl_shm;
+    struct wp_viewporter *wp_viewporter;
+    struct wp_fractional_scale_manager_v1 *wp_fractional_scale_manager_v1;
     struct xdg_wm_base *xdg_wm_base;
     struct zxdg_decoration_manager_v1 *xdg_decoration_manager_v1;
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;

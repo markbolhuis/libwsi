@@ -5,6 +5,8 @@
 
 #include <wayland-client-protocol.h>
 #include <wayland-egl-core.h>
+#include <viewporter-client-protocol.h>
+#include <fractional-scale-v1-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
 
@@ -24,6 +26,10 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
     WsiExtent extent = window->current.extent;
     extent.width *= window->current.scale;
     extent.height *= window->current.scale;
+    if (window->wp_fractional_scale_v1) {
+        extent.width = div_round(extent.width, 120);
+        extent.height = div_round(extent.height, 120);
+    }
     return extent;
 }
 
@@ -60,8 +66,6 @@ wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
 static void
 wsi_window_configure(struct wsi_window *window)
 {
-    // TODO: This is a bit basic, but works for now.
-
     uint32_t mask = window->event_mask;
 
     struct wsi_window_state *pending = &window->pending;
@@ -103,14 +107,24 @@ wsi_window_configure(struct wsi_window *window)
     if (resized) {
         WsiExtent be = wsi_window_get_buffer_extent(window);
 
-        // TODO: Decide how best to handle Vulkan or EGL windows.
         if (window->api == WSI_API_EGL) {
             assert(window->wl_egl_window != NULL);
-            wl_egl_window_resize(
-                window->wl_egl_window,
-                be.width,
-                be.height,
-                0, 0);
+            wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
+        }
+
+        if (window->wp_fractional_scale_v1) {
+            assert(window->wp_viewport != NULL);
+
+            wp_viewport_set_source(
+                window->wp_viewport,
+                wl_fixed_from_int(0),
+                wl_fixed_from_int(0),
+                wl_fixed_from_int(be.width),
+                wl_fixed_from_int(be.height));
+            wp_viewport_set_destination(
+                window->wp_viewport,
+                window->current.extent.width,
+                window->current.extent.height);
         }
 
         WsiConfigureWindowEvent info = {
@@ -126,7 +140,10 @@ wsi_window_configure(struct wsi_window *window)
     }
 
     uint32_t version = wl_surface_get_version(window->wl_surface);
-    if (rescaled && version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
+    if (rescaled &&
+        window->wp_fractional_scale_v1 == NULL &&
+        version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    {
         wl_surface_set_buffer_scale(window->wl_surface, current->scale);
     }
 
@@ -142,13 +159,16 @@ static void
 wsi_window_set_initial_state(struct wsi_window *window)
 {
     window->event_mask |= WSI_XDG_EVENT_SCALE;
-    window->pending.scale = 1;
+    if (window->wp_fractional_scale_v1) {
+        window->pending.scale = 120;
+    } else {
+        window->pending.scale = 1;
+    }
 
     if (xdg_toplevel_get_version(window->xdg_toplevel) <
         XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
     {
         window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
-
         window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
                                      | WSI_XDG_CAPABILITIES_MAXIMIZE
                                      | WSI_XDG_CAPABILITIES_FULLSCREEN
@@ -274,9 +294,7 @@ xdg_toplevel_configure(
 }
 
 static void
-xdg_toplevel_close(
-    void *data,
-    struct xdg_toplevel *xdg_toplevel)
+xdg_toplevel_close(void *data, struct xdg_toplevel *xdg_toplevel)
 {
     struct wsi_window *window = data;
 
@@ -349,10 +367,7 @@ static const struct xdg_toplevel_listener xdg_toplevel_listener = {
 // region XDG Surface
 
 static void
-xdg_surface_configure(
-    void *data,
-    struct xdg_surface *xdg_surface,
-    uint32_t serial)
+xdg_surface_configure(void *data, struct xdg_surface *xdg_surface, uint32_t serial)
 {
     struct wsi_window *window = data;
     window->serial = serial;
@@ -365,54 +380,75 @@ static const struct xdg_surface_listener xdg_surface_listener = {
 
 // endregion
 
+// region WP Fractional Scale
+
+static void
+wp_fractional_scale_v1_preferred_scale(
+    void *data,
+    struct wp_fractional_scale_v1 *wp_fractional_scale_v1,
+    uint32_t scale)
+{
+    struct wsi_window *window = data;
+    assert(scale > 0 && scale < INT32_MAX);
+
+    window->event_mask |= WSI_XDG_EVENT_SCALE;
+    window->pending.scale = (int32_t)scale;
+
+    if (window->configured) {
+        wsi_window_configure(window);
+    }
+}
+
+static const struct wp_fractional_scale_v1_listener wp_fractional_scale_listener = {
+    .preferred_scale = wp_fractional_scale_v1_preferred_scale,
+};
+
+// endregion
+
 // region WL Surface
 
 static void
-wl_surface_enter(
-    void *data,
-    struct wl_surface *wl_surface,
-    struct wl_output *wl_output)
+wl_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output *wl_output)
 {
     struct wsi_window *window = data;
 
-    bool added = wsi_window_add_output(window, wl_output);
-    if (!added) {
-        return;
-    }
-
     uint32_t version = wl_surface_get_version(wl_surface);
-    if (version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
+    bool added = wsi_window_add_output(window, wl_output);
+    if (!added ||
+        version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
+        window->wp_fractional_scale_v1)
+    {
         return;
     }
 
     window->event_mask |= WSI_XDG_EVENT_SCALE;
     window->pending.scale = wsi_window_calculate_output_max_scale(window);
 
-    wsi_window_configure(window);
+    if (window->configured) {
+        wsi_window_configure(window);
+    }
 }
 
 static void
-wl_surface_leave(
-    void *data,
-    struct wl_surface *wl_surface,
-    struct wl_output *wl_output)
+wl_surface_leave(void *data, struct wl_surface *wl_surface, struct wl_output *wl_output)
 {
     struct wsi_window *window = data;
 
-    bool removed = wsi_window_remove_output(window, wl_output);
-    if (!removed) {
-        return;
-    }
-
     uint32_t version = wl_surface_get_version(wl_surface);
-    if (version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION) {
+    bool removed = wsi_window_remove_output(window, wl_output);
+    if (!removed ||
+        version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
+        window->wp_fractional_scale_v1)
+    {
         return;
     }
 
     window->event_mask |= WSI_XDG_EVENT_SCALE;
     window->pending.scale = wsi_window_calculate_output_max_scale(window);
 
-    wsi_window_configure(window);
+    if (window->configured) {
+        wsi_window_configure(window);
+    }
 }
 
 static const struct wl_surface_listener wl_surface_listener = {
@@ -440,6 +476,22 @@ wsi_window_init(
 
     window->wl_surface = wl_compositor_create_surface(platform->wl_compositor);
     wl_surface_add_listener(window->wl_surface, &wl_surface_listener, window);
+
+    if (platform->wp_viewporter) {
+        window->wp_viewport = wp_viewporter_get_viewport(
+            platform->wp_viewporter,
+            window->wl_surface);
+
+        if (platform->wp_fractional_scale_manager_v1) {
+            window->wp_fractional_scale_v1 = wp_fractional_scale_manager_v1_get_fractional_scale(
+                platform->wp_fractional_scale_manager_v1,
+                window->wl_surface);
+            wp_fractional_scale_v1_add_listener(
+                window->wp_fractional_scale_v1,
+                &wp_fractional_scale_listener,
+                window);
+        }
+    }
 
     window->xdg_surface = xdg_wm_base_get_xdg_surface(platform->xdg_wm_base, window->wl_surface);
     xdg_surface_add_listener(window->xdg_surface, &xdg_surface_listener, window);
@@ -494,6 +546,15 @@ wsi_window_uninit(struct wsi_window *window)
 
     xdg_toplevel_destroy(window->xdg_toplevel);
     xdg_surface_destroy(window->xdg_surface);
+
+    if (window->wp_fractional_scale_v1) {
+        wp_fractional_scale_v1_destroy(window->wp_fractional_scale_v1);
+    }
+
+    if (window->wp_viewport) {
+        wp_viewport_destroy(window->wp_viewport);
+    }
+
     wl_surface_destroy(window->wl_surface);
 }
 

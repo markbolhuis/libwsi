@@ -52,8 +52,8 @@ wsiCreateWindowEGLSurface(
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    if (wl_surface_get_version(window->wl_surface) >=
-        WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
+    if (wl_surface_get_version(window->wl_surface) >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION &&
+        window->wp_fractional_scale_v1 == NULL)
     {
         wl_surface_set_buffer_scale(window->wl_surface, window->current.scale);
     }

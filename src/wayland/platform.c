@@ -5,6 +5,8 @@
 #include <errno.h>
 
 #include <wayland-client-protocol.h>
+#include <viewporter-client-protocol.h>
+#include <fractional-scale-v1-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
@@ -17,6 +19,8 @@
 
 #define WSI_WL_COMPOSITOR_VERSION 5
 #define WSI_WL_SHM_VERSION 1
+#define WSI_WP_VIEWPORTER_VERSION 1
+#define WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION 1
 #define WSI_XDG_WM_BASE_VERSION 5
 #define WSI_XDG_OUTPUT_MANAGER_V1_VERSION 3
 #define WSI_XDG_DECORATION_MANAGER_V1_VERSION 1
@@ -93,6 +97,16 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
         global = wl_shm_get_user_data(platform->wl_shm);
         wsi_global_destroy(global);
         wl_shm_destroy(platform->wl_shm);
+    }
+    if (platform->wp_viewporter) {
+        global = wp_viewporter_get_user_data(platform->wp_viewporter);
+        wsi_global_destroy(global);
+        wp_viewporter_destroy(platform->wp_viewporter);
+    }
+    if (platform->wp_fractional_scale_manager_v1) {
+        global = wp_fractional_scale_manager_v1_get_user_data(platform->wp_fractional_scale_manager_v1);
+        wsi_global_destroy(global);
+        wp_fractional_scale_manager_v1_destroy(platform->wp_fractional_scale_manager_v1);
     }
     if (platform->xdg_wm_base) {
         global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
@@ -279,6 +293,24 @@ wl_registry_global(
     }
     else if (strcmp(interface, wl_output_interface.name) == 0) {
         wsi_output_bind(platform, name, version);
+    }
+    else if (strcmp(interface, wp_viewporter_interface.name) == 0) {
+        platform->wp_viewporter = wsi_global_bind(
+            platform,
+            name,
+            &wp_viewporter_interface,
+            NULL,
+            version,
+            WSI_WP_VIEWPORTER_VERSION);
+    }
+    else if (strcmp(interface, wp_fractional_scale_manager_v1_interface.name) == 0) {
+        platform->wp_fractional_scale_manager_v1 = wsi_global_bind(
+            platform,
+            name,
+            &wp_fractional_scale_manager_v1_interface,
+            NULL,
+            version,
+            WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION);
     }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
         platform->xdg_wm_base = wsi_global_bind(
