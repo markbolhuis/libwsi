@@ -210,10 +210,7 @@ wsi_event_queue_roundtrip(struct wsi_event_queue *eq)
 // region XDG WmBase
 
 static void
-xdg_wm_base_ping(
-    void *data,
-    struct xdg_wm_base *xdg_wm_base,
-    uint32_t serial)
+xdg_wm_base_ping(void *data, struct xdg_wm_base *xdg_wm_base, uint32_t serial)
 {
     xdg_wm_base_pong(xdg_wm_base, serial);
 }
@@ -227,10 +224,7 @@ static const struct xdg_wm_base_listener xdg_wm_base_listener = {
 // region WL Shm
 
 static void
-wl_shm_format(
-    void *data,
-    struct wl_shm *wl_shm,
-    uint32_t format)
+wl_shm_format(void *data, struct wl_shm *wl_shm, uint32_t format)
 {
     struct wsi_global *global = data;
     struct wsi_platform *platform = global->platform;
