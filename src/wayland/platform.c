@@ -371,6 +371,22 @@ wl_registry_global_remove(
 
     struct wsi_global *global;
 
+    global = wp_viewporter_get_user_data(platform->wp_viewporter);
+    if (global->name == name) {
+        wp_viewporter_destroy(platform->wp_viewporter);
+        platform->wp_viewporter = NULL;
+        wsi_global_destroy(global);
+        return;
+    }
+
+    global = wp_fractional_scale_manager_v1_get_user_data(platform->wp_fractional_scale_manager_v1);
+    if (global->name == name) {
+        wp_fractional_scale_manager_v1_destroy(platform->wp_fractional_scale_manager_v1);
+        platform->wp_fractional_scale_manager_v1 = NULL;
+        wsi_global_destroy(global);
+        return;
+    }
+
     global = zxdg_decoration_manager_v1_get_user_data(
         platform->xdg_decoration_manager_v1);
     if (global->name == name) {
