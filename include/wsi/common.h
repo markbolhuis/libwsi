@@ -9,7 +9,6 @@ extern "C" {
 #endif
 
 typedef struct wsi_platform *WsiPlatform;
-typedef struct wsi_event_queue *WsiEventQueue;
 typedef uint64_t WsiSeat;
 typedef struct wsi_window *WsiWindow;
 typedef uint64_t WsiOutput;
@@ -41,8 +40,7 @@ typedef enum WsiResult {
 
 typedef enum WsiStructureType {
     WSI_STRUCTURE_TYPE_PLATFORM_CREATE_INFO = 0,
-    WSI_STRUCTURE_TYPE_EVENT_QUEUE_CREATE_INFO = 1,
-    WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO = 2,
+    WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO = 1,
     WSI_STRUCTURE_TYPE_ENUM_MAX = 0x7fffffff,
 } WsiStructureType;
 

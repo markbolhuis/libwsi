@@ -465,7 +465,6 @@ wsi_window_init(
     struct wsi_window *window)
 {
     window->platform = platform;
-    window->queue = info->eventQueue;
     window->api = WSI_API_NONE;
     window->user_extent = info->extent;
     window->user_data = info->pUserData;
@@ -522,7 +521,7 @@ wsi_window_init(
 
     int ret = 0;
     while(!window->configured && ret >= 0) {
-        ret = wsi_event_queue_dispatch(window->queue);
+        ret = wl_display_dispatch(platform->wl_display);
     }
 
     wl_list_insert(&platform->window_list, &window->link);

@@ -45,7 +45,6 @@
 #endif
 
 static WsiPlatform   g_platform;
-static WsiEventQueue g_event_queue;
 static WsiWindow     g_window;
 static WsiExtent     g_extent;
 
@@ -326,15 +325,9 @@ main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
 
-    WsiEventQueueCreateInfo event_queue_info = {
-        .sType = WSI_STRUCTURE_TYPE_EVENT_QUEUE_CREATE_INFO,
-        .pNext = NULL,
-    };
-
     WsiPlatformCreateInfo platform_info = {
         .sType = WSI_STRUCTURE_TYPE_PLATFORM_CREATE_INFO,
         .pNext = NULL,
-        .pEventQueueInfo = &event_queue_info,
     };
 
     WsiResult res = wsiCreatePlatform(&platform_info, &g_platform);
@@ -342,8 +335,6 @@ main(int argc, char *argv[])
         fprintf(stderr, "wsiCreatePlatform failed: %d\n", res);
         goto err_wsi_platform;
     }
-
-    g_event_queue = wsiGetDefaultEventQueue(g_platform);
 
     res = wsiGetEGLDisplay(g_platform, &g_display);
     if (res != WSI_SUCCESS) {
@@ -398,7 +389,6 @@ main(int argc, char *argv[])
     WsiWindowCreateInfo info = {
         .sType = WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO,
         .pNext = NULL,
-        .eventQueue = g_event_queue,
         .extent.width = 300,
         .extent.height = 300,
         .pTitle = "Gears",
@@ -450,7 +440,7 @@ main(int argc, char *argv[])
 
         g_angle = fmodf(70.0f * (now_d - epoch_d), 360.0f);
 
-        res = wsiDispatchEvents(g_event_queue, 0);
+        res = wsiDispatchEvents(g_platform, 0);
         if (res != WSI_SUCCESS || !g_running) {
             break;
         }

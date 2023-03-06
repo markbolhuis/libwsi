@@ -104,8 +104,6 @@ wsi_platform_init(const WsiPlatformCreateInfo *pCreateInfo, struct wsi_platform 
         goto err_connect;
     }
 
-    platform->queue.platform = platform;
-
     const xcb_setup_t *setup = xcb_get_setup(platform->xcb_connection);
 
     platform->xcb_screen = wsi_xcb_get_screen(setup, platform->xcb_screen_id);
@@ -166,30 +164,9 @@ wsiDestroyPlatform(WsiPlatform platform)
     free(platform);
 }
 
-WsiEventQueue
-wsiGetDefaultEventQueue(WsiPlatform platform)
-{
-    return &platform->queue;
-}
-
 WsiResult
-wsiCreateEventQueue(WsiPlatform platform, const WsiEventQueueCreateInfo *pCreateInfo, WsiEventQueue *pEventQueue)
+wsiDispatchEvents(WsiPlatform platform, int64_t timeout)
 {
-    // TODO: Unimplemented
-    abort();
-}
-
-void
-wsiDestroyEventQueue(WsiEventQueue eventQueue)
-{
-    // TODO: Unimplemented
-    abort();
-}
-
-WsiResult
-wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
-{
-    struct wsi_platform *platform = eventQueue->platform;
     while(true) {
         xcb_generic_event_t *event = xcb_poll_for_event(platform->xcb_connection);
         if (!event) {

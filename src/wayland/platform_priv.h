@@ -3,11 +3,6 @@
 
 #include "wsi/platform.h"
 
-struct wsi_event_queue {
-    struct wl_display *wl_display;
-    struct wl_event_queue *wl_event_queue; // Must be NULL if the default
-};
-
 struct wsi_global {
     struct wsi_platform *platform;
     uint64_t id;
@@ -17,8 +12,6 @@ struct wsi_global {
 struct wsi_platform {
     struct wl_display *wl_display;
     struct wl_registry *wl_registry;
-
-    struct wsi_event_queue queue;
 
     struct wl_list seat_list;
     struct wl_list output_list;
@@ -58,17 +51,5 @@ wsi_global_destroy(struct wsi_global *global);
 
 int
 wsi_flush(struct wl_display *display);
-
-int
-wsi_event_queue_prepare_read(struct wsi_event_queue *eq);
-
-int
-wsi_event_queue_dispatch(struct wsi_event_queue *eq);
-
-int
-wsi_event_queue_dispatch_pending(struct wsi_event_queue *eq);
-
-int
-wsi_event_queue_roundtrip(struct wsi_event_queue *eq);
 
 #endif

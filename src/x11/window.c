@@ -68,7 +68,6 @@ wsiCreateWindow(
     }
 
     window->platform = platform;
-    window->queue = pCreateInfo->eventQueue;
     window->api = WSI_API_NONE;
     window->xcb_window = xcb_generate_id(platform->xcb_connection);
     window->user_width = wsi_xcb_clamp(pCreateInfo->extent.width);

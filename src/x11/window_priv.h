@@ -5,7 +5,6 @@
 
 struct wsi_window {
     struct wsi_platform *platform;
-    struct wsi_event_queue *queue;
 
     struct wsi_list link;
 

@@ -59,34 +59,10 @@ wsiDestroyPlatform(WsiPlatform platform)
     sym(platform);
 }
 
-WsiEventQueue
-wsiGetDefaultEventQueue(WsiPlatform platform)
-{
-    PFN_wsiGetDefaultEventQueue sym
-        = (PFN_wsiGetDefaultEventQueue)dlsym(g_handle, "wsiGetDefaultEventQueue");
-    return sym(platform);
-}
-
 WsiResult
-wsiCreateEventQueue(WsiPlatform platform, const WsiEventQueueCreateInfo *pCreateInfo, WsiEventQueue *pEventQueue)
-{
-    PFN_wsiCreateEventQueue sym
-        = (PFN_wsiCreateEventQueue)dlsym(g_handle, "wsiCreateEventQueue");
-    return sym(platform, pCreateInfo, pEventQueue);
-}
-
-void
-wsiDestroyEventQueue(WsiEventQueue eventQueue)
-{
-    PFN_wsiDestroyEventQueue sym
-        = (PFN_wsiDestroyEventQueue)dlsym(g_handle, "wsiDestroyEventQueue");
-    sym(eventQueue);
-}
-
-WsiResult
-wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
+wsiDispatchEvents(WsiPlatform platform, int64_t timeout)
 {
     PFN_wsiDispatchEvents sym
         = (PFN_wsiDispatchEvents)dlsym(g_handle, "wsiDispatchEvents");
-    return sym(eventQueue, timeout);
+    return sym(platform, timeout);
 }

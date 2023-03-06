@@ -253,7 +253,7 @@ static const struct wl_pointer_listener wl_pointer_listener = {
 // endregion
 
 static WsiResult
-wsi_pointer_init(struct wsi_seat *seat, struct wsi_event_queue *queue)
+wsi_pointer_init(struct wsi_seat *seat)
 {
     assert(seat->pointer == NULL);
 
@@ -434,7 +434,7 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 // endregion
 
 static WsiResult
-wsi_keyboard_init(struct wsi_seat *seat, struct wsi_event_queue *eq)
+wsi_keyboard_init(struct wsi_seat *seat)
 {
     assert(seat->keyboard == NULL);
 
@@ -599,7 +599,7 @@ wsiCreatePointer(
         return WSI_ERROR_UNSUPPORTED;
     }
 
-    WsiResult res = wsi_pointer_init(seat, pCreateInfo->eventQueue);
+    WsiResult res = wsi_pointer_init(seat);
     if (res == WSI_SUCCESS) {
         *pPointer = seat->pointer;
     }
@@ -638,7 +638,7 @@ wsiCreateKeyboard(
         return WSI_ERROR_UNSUPPORTED;
     }
 
-    WsiResult res = wsi_keyboard_init(seat, pCreateInfo->eventQueue);
+    WsiResult res = wsi_keyboard_init(seat);
     if (res == WSI_SUCCESS) {
         *pKeyboard = seat->keyboard;
     }

@@ -29,7 +29,6 @@ struct mesh {
 
 struct demo {
     WsiPlatform           platform;
-    WsiEventQueue         event_queue;
     WsiWindow             window;
     WsiExtent             window_extent;
     bool                  resized;
@@ -1245,7 +1244,6 @@ demo_create_window(struct demo *demo)
     WsiWindowCreateInfo window_info = {
         .sType = WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO,
         .pNext = NULL,
-        .eventQueue = demo->event_queue,
         .extent.width = 600,
         .extent.height = 600,
         .pTitle = "VkCube",
@@ -1322,21 +1320,13 @@ demo_destroy_instance(struct demo *demo)
 static void
 demo_create_platform(struct demo *demo)
 {
-    WsiEventQueueCreateInfo eq_info = {
-        .sType = WSI_STRUCTURE_TYPE_EVENT_QUEUE_CREATE_INFO,
-        .pNext = NULL,
-    };
-
     WsiPlatformCreateInfo info = {
         .sType = WSI_STRUCTURE_TYPE_PLATFORM_CREATE_INFO,
         .pNext = NULL,
-        .pEventQueueInfo = &eq_info,
     };
 
     WsiResult res = wsiCreatePlatform(&info, &demo->platform);
     assert(res == WSI_SUCCESS);
-
-    demo->event_queue = wsiGetDefaultEventQueue(demo->platform);
 }
 
 static void
@@ -1344,7 +1334,6 @@ demo_destroy_platform(struct demo *demo)
 {
     wsiDestroyPlatform(demo->platform);
     demo->platform = NULL;
-    demo->event_queue = NULL;
 }
 
 static void
@@ -1415,7 +1404,7 @@ main(int argc, char **argv)
         timef += (float)dt / 1000000000.0f;
         timef = fmodf(timef, 6.28318530718f);
 
-        WsiResult res = wsiDispatchEvents(demo.event_queue, 0);
+        WsiResult res = wsiDispatchEvents(demo.platform, 0);
         if (res != WSI_SUCCESS) {
             break;
         }

@@ -185,42 +185,6 @@ wsi_global_bind(
     return proxy;
 }
 
-int
-wsi_event_queue_prepare_read(struct wsi_event_queue *eq)
-{
-    if (eq->wl_event_queue) {
-        return wl_display_prepare_read_queue(eq->wl_display, eq->wl_event_queue);
-    }
-    return wl_display_prepare_read(eq->wl_display);
-}
-
-int
-wsi_event_queue_dispatch(struct wsi_event_queue *eq)
-{
-    if (eq->wl_event_queue) {
-        return wl_display_dispatch_queue(eq->wl_display, eq->wl_event_queue);
-    }
-    return wl_display_dispatch(eq->wl_display);
-}
-
-int
-wsi_event_queue_dispatch_pending(struct wsi_event_queue *eq)
-{
-    if (eq->wl_event_queue) {
-        return wl_display_dispatch_queue_pending(eq->wl_display, eq->wl_event_queue);
-    }
-    return wl_display_dispatch_pending(eq->wl_display);
-}
-
-int
-wsi_event_queue_roundtrip(struct wsi_event_queue *eq)
-{
-    if (eq->wl_event_queue) {
-        return wl_display_roundtrip_queue(eq->wl_display, eq->wl_event_queue);
-    }
-    return wl_display_roundtrip(eq->wl_display);
-}
-
 // region XDG WmBase
 
 static void
@@ -437,13 +401,6 @@ static const struct wl_registry_listener wl_registry_listener = {
 
 // endregion
 
-static void
-wsi_platform_init_queue(struct wsi_platform *platform, const WsiEventQueueCreateInfo *info)
-{
-    platform->queue.wl_display = platform->wl_display;
-    platform->queue.wl_event_queue = NULL;
-}
-
 static WsiResult
 wsi_platform_init(const WsiPlatformCreateInfo *info, struct wsi_platform *platform)
 {
@@ -459,8 +416,6 @@ wsi_platform_init(const WsiPlatformCreateInfo *info, struct wsi_platform *platfo
     wl_list_init(&platform->output_list);
     wl_list_init(&platform->window_list);
     wl_array_init(&platform->format_array);
-
-    wsi_platform_init_queue(platform, info->pEventQueueInfo);
 
     platform->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (platform->xkb_context == NULL) {
@@ -543,48 +498,13 @@ wsiDestroyPlatform(WsiPlatform platform)
     free(platform);
 }
 
-WsiEventQueue
-wsiGetDefaultEventQueue(WsiPlatform platform)
-{
-    return &platform->queue;
-}
-
 WsiResult
-wsiCreateEventQueue(WsiPlatform platform, const WsiEventQueueCreateInfo *pCreateInfo, WsiEventQueue *pEventQueue)
+wsiDispatchEvents(WsiPlatform platform, int64_t timeout)
 {
-    struct wsi_event_queue *eq = calloc(1, sizeof(struct wsi_event_queue));
-    if (!eq) {
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
+    struct wl_display *wl_display = platform->wl_display;
 
-    eq->wl_display = platform->wl_display;
-    eq->wl_event_queue = wl_display_create_queue(platform->wl_display);
-    if (!eq->wl_event_queue) {
-        free(eq);
-        return WSI_ERROR_OUT_OF_MEMORY;
-    }
-
-    *pEventQueue = eq;
-    return WSI_SUCCESS;
-}
-
-void
-wsiDestroyEventQueue(WsiEventQueue eventQueue)
-{
-    // Only non-default event queues are created by wsiCreateEventQueue
-    // and are destroyed here.
-    assert(eventQueue->wl_event_queue);
-    wl_event_queue_destroy(eventQueue->wl_event_queue);
-    free(eventQueue);
-}
-
-WsiResult
-wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
-{
-    struct wl_display *wl_display = eventQueue->wl_display;
-
-    if (wsi_event_queue_prepare_read(eventQueue) < 0) {
-        int n = wsi_event_queue_dispatch_pending(eventQueue);
+    if (wl_display_prepare_read(wl_display) < 0) {
+        int n = wl_display_dispatch_pending(wl_display);
         return n < 0 ? WSI_ERROR_PLATFORM : WSI_SUCCESS;
     }
 
@@ -622,7 +542,7 @@ wsiDispatchEvents(WsiEventQueue eventQueue, int64_t timeout)
         wl_display_cancel_read(wl_display);
     }
 
-    n = wsi_event_queue_dispatch_pending(eventQueue);
+    n = wl_display_dispatch_pending(wl_display);
     if (n < 0) {
         return WSI_ERROR_PLATFORM;
     }

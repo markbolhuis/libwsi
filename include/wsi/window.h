@@ -24,7 +24,6 @@ typedef void (*PFN_wsiCloseWindow)(void *pUserData, const WsiCloseWindowEvent *p
 typedef struct WsiWindowCreateInfo {
     WsiStructureType sType;
     const void *pNext;
-    WsiEventQueue eventQueue;
     WsiWindow parent;
     WsiExtent extent;
     const char *pTitle;
