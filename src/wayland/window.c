@@ -389,7 +389,6 @@ wp_fractional_scale_v1_preferred_scale(
     uint32_t scale)
 {
     struct wsi_window *window = data;
-    assert(scale > 0 && scale < INT32_MAX);
 
     window->event_mask |= WSI_XDG_EVENT_SCALE;
     window->pending.scale = (int32_t)scale;
