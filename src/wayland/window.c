@@ -15,7 +15,7 @@
 #include "output_priv.h"
 #include "window_priv.h"
 
-struct wsi_window_output {
+struct wsi_output_ref {
     struct wl_list link;
     struct wl_output *wl_output;
 };
@@ -38,7 +38,7 @@ wsi_window_calculate_output_max_scale(struct wsi_window *window)
 {
     int32_t max_scale = 1;
 
-    struct wsi_window_output *wo;
+    struct wsi_output_ref *wo;
     wl_list_for_each(wo, &window->output_list, link) {
         struct wsi_output *output = wl_output_get_user_data(wo->wl_output);
         int32_t scale = wsi_output_get_scale(output);
@@ -50,10 +50,10 @@ wsi_window_calculate_output_max_scale(struct wsi_window *window)
     return max_scale;
 }
 
-static struct wsi_window_output *
+static struct wsi_output_ref *
 wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
 {
-    struct wsi_window_output *wo;
+    struct wsi_output_ref *wo;
     wl_list_for_each(wo, &window->output_list, link) {
         if (wo->wl_output == wl_output) {
             return wo;
@@ -179,7 +179,7 @@ wsi_window_set_initial_state(struct wsi_window *window)
 static bool
 wsi_window_add_output(struct wsi_window *window, struct wl_output *wl_output)
 {
-    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
+    struct wsi_output_ref *wo = wsi_window_find_output(window, wl_output);
     if (wo) {
         return false;
     }
@@ -197,7 +197,7 @@ wsi_window_add_output(struct wsi_window *window, struct wl_output *wl_output)
 static bool
 wsi_window_remove_output(struct wsi_window *window, struct wl_output *wl_output)
 {
-    struct wsi_window_output *wo = wsi_window_find_output(window, wl_output);
+    struct wsi_output_ref *wo = wsi_window_find_output(window, wl_output);
     if (!wo) {
         return false;
     }
@@ -532,7 +532,7 @@ wsi_window_uninit(struct wsi_window *window)
 {
     wl_list_remove(&window->link);
 
-    struct wsi_window_output *wo, *wm_tmp;
+    struct wsi_output_ref *wo, *wm_tmp;
     wl_list_for_each_safe(wo, wm_tmp, &window->output_list, link) {
         wl_list_remove(&wo->link);
         free(wo);
