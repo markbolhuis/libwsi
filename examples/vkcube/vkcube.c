@@ -998,10 +998,18 @@ demo_create_swapchain(struct demo *demo, VkSwapchainKHR oldSwapchain)
 
     info.preTransform = surface_caps.currentTransform;
 
-    if (surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) {
-        info.compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
-    } else {
-        info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    VkCompositeAlphaFlagBitsKHR alpha_priority[] = {
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+    };
+
+    for (size_t i = 0; i < array_size(alpha_priority); ++i) {
+        if ((surface_caps.supportedCompositeAlpha & alpha_priority[i]) > 0) {
+            info.compositeAlpha = alpha_priority[i];
+            break;
+        }
     }
 
     info.presentMode = demo->present_mode;
