@@ -15,11 +15,6 @@
 #include "output_priv.h"
 #include "window_priv.h"
 
-struct wsi_output_ref {
-    struct wl_list link;
-    struct wl_output *wl_output;
-};
-
 WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {

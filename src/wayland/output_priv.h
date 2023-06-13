@@ -31,6 +31,11 @@ struct wsi_output {
     char *model;
 };
 
+struct wsi_output_ref {
+    struct wl_list link;
+    struct wl_output *wl_output;
+};
+
 int32_t
 wsi_output_get_scale(struct wsi_output *output);
 
