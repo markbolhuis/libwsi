@@ -118,8 +118,8 @@ wsi_window_configure(struct wsi_window *window)
                 wl_fixed_from_int(be.height));
             wp_viewport_set_destination(
                 window->wp_viewport,
-                window->current.extent.width,
-                window->current.extent.height);
+                current->extent.width,
+                current->extent.height);
         }
 
         WsiConfigureWindowEvent info = {
