@@ -15,6 +15,24 @@
 #include "output_priv.h"
 #include "window_priv.h"
 
+static inline bool
+wsi_is_transform_flipped(int32_t transform)
+{
+    return transform == WL_OUTPUT_TRANSFORM_90 ||
+           transform == WL_OUTPUT_TRANSFORM_270 ||
+           transform == WL_OUTPUT_TRANSFORM_FLIPPED_90 ||
+           transform == WL_OUTPUT_TRANSFORM_FLIPPED_270;
+}
+
+static inline bool
+wsi_is_transform_a_resize(int32_t before, int32_t after)
+{
+    bool before_flip = wsi_is_transform_flipped(before);
+    bool after_flip = wsi_is_transform_flipped(after);
+
+    return before_flip |= after_flip;
+}
+
 WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
@@ -97,6 +115,15 @@ wsi_window_configure(struct wsi_window *window)
         }
     }
 
+    bool transformed = false;
+    if (mask & WSI_XDG_EVENT_TRANSFORM) {
+        transformed = pending->transform != current->transform;
+        if (transformed) {
+            resized |= wsi_is_transform_a_resize(current->transform, pending->transform);
+            current->transform = pending->transform;
+        }
+    }
+
     window->event_mask = WSI_XDG_EVENT_NONE;
 
     if (resized) {
@@ -104,7 +131,11 @@ wsi_window_configure(struct wsi_window *window)
 
         if (window->api == WSI_API_EGL) {
             assert(window->wl_egl_window != NULL);
-            wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
+            if (wsi_is_transform_flipped(current->transform)) {
+                wl_egl_window_resize(window->wl_egl_window, be.height, be.width, 0, 0);
+            } else {
+                wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
+            }
         }
 
         if (window->wp_fractional_scale_v1) {
@@ -131,6 +162,11 @@ wsi_window_configure(struct wsi_window *window)
             .extent = be,
         };
 
+        if (wsi_is_transform_flipped(current->transform)) {
+            info.extent.width = be.height;
+            info.extent.height = be.width;
+        }
+
         window->pfn_configure(window->user_data, &info);
     }
 
@@ -140,6 +176,10 @@ wsi_window_configure(struct wsi_window *window)
         version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
         wl_surface_set_buffer_scale(window->wl_surface, current->scale);
+    }
+
+    if (transformed && version >= WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION) {
+        wl_surface_set_buffer_transform(window->wl_surface, current->transform);
     }
 
     if (window->serial != 0) {
@@ -159,6 +199,9 @@ wsi_window_set_initial_state(struct wsi_window *window)
     } else {
         window->pending.scale = 1;
     }
+
+    window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
+    window->pending.transform = WL_OUTPUT_TRANSFORM_NORMAL;
 
     if (xdg_toplevel_get_version(window->xdg_toplevel) <
         XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
@@ -410,6 +453,9 @@ wl_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output *wl
     bool added = wsi_window_add_output(window, wl_output);
     if (!added ||
         version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
+#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+        version >= WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION ||
+#endif
         window->wp_fractional_scale_v1)
     {
         return;
@@ -432,6 +478,9 @@ wl_surface_leave(void *data, struct wl_surface *wl_surface, struct wl_output *wl
     bool removed = wsi_window_remove_output(window, wl_output);
     if (!removed ||
         version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
+#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+        version >= WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION ||
+#endif
         window->wp_fractional_scale_v1)
     {
         return;
@@ -445,9 +494,49 @@ wl_surface_leave(void *data, struct wl_surface *wl_surface, struct wl_output *wl
     }
 }
 
+#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+static void
+wl_surface_preferred_buffer_scale(void *data, struct wl_surface *wl_surface, int32_t factor)
+{
+    struct wsi_window *window = data;
+
+    if (window->wp_fractional_scale_v1 != NULL) {
+        return;
+    }
+
+    window->event_mask |= WSI_XDG_EVENT_SCALE;
+    window->pending.scale = factor;
+
+    if (window->configured) {
+        wsi_window_configure(window);
+    }
+}
+#endif
+
+#ifdef WL_SURFACE_PREFERRED_BUFFER_TRANSFORM_SINCE_VERSION
+static void
+wl_surface_preferred_buffer_transform(void *data, struct wl_surface *wl_surface, uint32_t transform)
+{
+    struct wsi_window *window = data;
+
+    window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
+    window->pending.transform = (int32_t)transform;
+
+    if (window->configured) {
+        wsi_window_configure(window);
+    }
+}
+#endif
+
 static const struct wl_surface_listener wl_surface_listener = {
-    .enter = wl_surface_enter,
-    .leave = wl_surface_leave,
+    .enter                      = wl_surface_enter,
+    .leave                      = wl_surface_leave,
+#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+    .preferred_buffer_scale     = wl_surface_preferred_buffer_scale,
+#endif
+#ifdef WL_SURFACE_PREFERRED_BUFFER_TRANSFORM_SINCE_VERSION
+    .preferred_buffer_transform = wl_surface_preferred_buffer_transform,
+#endif
 };
 
 // endregion

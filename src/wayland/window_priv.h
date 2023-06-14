@@ -8,10 +8,11 @@ struct wsi_output;
 enum wsi_xdg_event {
     WSI_XDG_EVENT_NONE = 0,
     WSI_XDG_EVENT_SCALE = 1,
-    WSI_XDG_EVENT_CONFIGURE = 2,
-    WSI_XDG_EVENT_BOUNDS = 4,
-    WSI_XDG_EVENT_WM_CAPABILITIES = 8,
-    WSI_XDG_EVENT_DECORATION = 16,
+    WSI_XDG_EVENT_TRANSFORM = 2,
+    WSI_XDG_EVENT_CONFIGURE = 4,
+    WSI_XDG_EVENT_BOUNDS = 8,
+    WSI_XDG_EVENT_WM_CAPABILITIES = 16,
+    WSI_XDG_EVENT_DECORATION = 32,
 };
 
 enum wsi_xdg_capabilities {
@@ -40,6 +41,7 @@ struct wsi_window_state {
     enum wsi_xdg_state state;
     enum wsi_xdg_capabilities capabilities;
     int32_t scale;
+    int32_t transform;
     uint32_t decoration;
 };
 
