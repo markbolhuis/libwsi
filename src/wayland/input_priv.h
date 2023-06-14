@@ -13,7 +13,8 @@ enum wsi_wl_pointer_event {
     WSI_WL_POINTER_EVENT_AXIS_SOURCE = 32,
     WSI_WL_POINTER_EVENT_AXIS_STOP = 64,
     WSI_WL_POINTER_EVENT_AXIS_DISCRETE = 128,
-    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 256,
+    WSI_WL_POINTER_EVENT_AXIS_RELATIVE_DIRECTION = 256,
+    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 1024,
 };
 
 struct wsi_pointer_frame {
@@ -37,6 +38,7 @@ struct wsi_pointer_frame {
         int32_t discrete;
         uint32_t start_time;
         uint32_t stop_time;
+        uint32_t direction;
     } axes[2];
 };
 

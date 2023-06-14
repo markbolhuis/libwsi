@@ -237,6 +237,21 @@ wl_pointer_axis_value120(
     pointer->frame.axes[axis].discrete = value;
 }
 
+#ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
+static void
+wl_pointer_axis_relative_direction(
+    void *data,
+    struct wl_pointer *wl_pointer,
+    uint32_t axis,
+    uint32_t direction)
+{
+    struct wsi_pointer *pointer = data;
+
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_RELATIVE_DIRECTION;
+    pointer->frame.axes[axis].direction = direction;
+}
+#endif
+
 static const struct wl_pointer_listener wl_pointer_listener = {
     .enter = wl_pointer_enter,
     .leave = wl_pointer_leave,
@@ -248,6 +263,9 @@ static const struct wl_pointer_listener wl_pointer_listener = {
     .axis_stop = wl_pointer_axis_stop,
     .axis_discrete = wl_pointer_axis_discrete,
     .axis_value120 = wl_pointer_axis_value120,
+#ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
+    .axis_relative_direction = wl_pointer_axis_relative_direction,
+#endif
 };
 
 // endregion
