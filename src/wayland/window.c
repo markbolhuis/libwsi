@@ -46,36 +46,6 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
     return extent;
 }
 
-static int32_t
-wsi_window_calculate_output_max_scale(struct wsi_window *window)
-{
-    int32_t max_scale = 1;
-
-    struct wsi_output_ref *wo;
-    wl_list_for_each(wo, &window->output_list, link) {
-        struct wsi_output *output = wl_output_get_user_data(wo->wl_output);
-        int32_t scale = wsi_output_get_scale(output);
-        if (scale > max_scale) {
-            max_scale = scale;
-        }
-    }
-
-    return max_scale;
-}
-
-static struct wsi_output_ref *
-wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
-{
-    struct wsi_output_ref *wo;
-    wl_list_for_each(wo, &window->output_list, link) {
-        if (wo->wl_output == wl_output) {
-            return wo;
-        }
-    }
-
-    return NULL;
-}
-
 static void
 wsi_window_configure(struct wsi_window *window)
 {
@@ -190,28 +160,36 @@ wsi_window_configure(struct wsi_window *window)
     window->configured = true;
 }
 
-static void
-wsi_window_set_initial_state(struct wsi_window *window)
+// region Output
+
+static int32_t
+wsi_window_calculate_output_max_scale(struct wsi_window *window)
 {
-    window->event_mask |= WSI_XDG_EVENT_SCALE;
-    if (window->wp_fractional_scale_v1) {
-        window->pending.scale = 120;
-    } else {
-        window->pending.scale = 1;
+    int32_t max_scale = 1;
+
+    struct wsi_output_ref *wo;
+    wl_list_for_each(wo, &window->output_list, link) {
+        struct wsi_output *output = wl_output_get_user_data(wo->wl_output);
+        int32_t scale = wsi_output_get_scale(output);
+        if (scale > max_scale) {
+            max_scale = scale;
+        }
     }
 
-    window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
-    window->pending.transform = WL_OUTPUT_TRANSFORM_NORMAL;
+    return max_scale;
+}
 
-    if (xdg_toplevel_get_version(window->xdg_toplevel) <
-        XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
-    {
-        window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
-        window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
-                                     | WSI_XDG_CAPABILITIES_MAXIMIZE
-                                     | WSI_XDG_CAPABILITIES_FULLSCREEN
-                                     | WSI_XDG_CAPABILITIES_MINIMIZE;
+static struct wsi_output_ref *
+wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
+{
+    struct wsi_output_ref *wo;
+    wl_list_for_each(wo, &window->output_list, link) {
+        if (wo->wl_output == wl_output) {
+            return wo;
+        }
     }
+
+    return NULL;
 }
 
 static bool
@@ -252,6 +230,8 @@ wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
     //  the wl_output object. Others like Sway do not, so the window scale needs to be
     //  updated when the wl_output object is destroyed.
 }
+
+// endregion
 
 // region XDG Toplevel Decoration
 
@@ -541,6 +521,30 @@ static const struct wl_surface_listener wl_surface_listener = {
 
 // endregion
 
+static void
+wsi_window_set_initial_state(struct wsi_window *window)
+{
+    window->event_mask |= WSI_XDG_EVENT_SCALE;
+    if (window->wp_fractional_scale_v1) {
+        window->pending.scale = 120;
+    } else {
+        window->pending.scale = 1;
+    }
+
+    window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
+    window->pending.transform = WL_OUTPUT_TRANSFORM_NORMAL;
+
+    if (xdg_toplevel_get_version(window->xdg_toplevel) <
+        XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
+    {
+        window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
+        window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
+                                       | WSI_XDG_CAPABILITIES_MAXIMIZE
+                                       | WSI_XDG_CAPABILITIES_FULLSCREEN
+                                       | WSI_XDG_CAPABILITIES_MINIMIZE;
+    }
+}
+
 static WsiResult
 wsi_window_init(
     struct wsi_platform *platform,
@@ -640,6 +644,8 @@ wsi_window_uninit(struct wsi_window *window)
     wl_surface_destroy(window->wl_surface);
 }
 
+// region Public API
+
 WsiResult
 wsiCreateWindow(
     WsiPlatform platform,
@@ -695,3 +701,5 @@ wsiSetWindowTitle(WsiWindow window, const char *pTitle)
     xdg_toplevel_set_title(window->xdg_toplevel, pTitle);
     return WSI_SUCCESS;
 }
+
+// endregion
