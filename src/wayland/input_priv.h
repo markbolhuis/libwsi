@@ -43,8 +43,6 @@ struct wsi_pointer_frame {
 };
 
 struct wsi_pointer {
-    struct wsi_seat        *seat;
-
     struct wl_pointer      *wl_pointer;
 
     struct wl_cursor_theme *wl_cursor_theme;
@@ -55,8 +53,6 @@ struct wsi_pointer {
 };
 
 struct wsi_keyboard {
-    struct wsi_seat    *seat;
-
     struct wl_keyboard *wl_keyboard;
 
     struct xkb_context *xkb_context;
@@ -75,15 +71,15 @@ struct wsi_seat {
     uint32_t           capabilities;
     char               *name;
 
-    struct wsi_pointer  *pointer;
-    struct wsi_keyboard *keyboard;
+    struct wsi_pointer  pointer;
+    struct wsi_keyboard keyboard;
 };
 
 struct wsi_seat *
-wsi_seat_bind(struct wsi_platform *platform, uint32_t name, uint32_t version);
+wsi_seat_add(struct wsi_platform *platform, uint32_t name, uint32_t version);
 
 void
-wsi_seat_destroy(struct wsi_seat *seat);
+wsi_seat_remove(struct wsi_seat *seat);
 
 void
 wsi_seat_destroy_all(struct wsi_platform *platform);

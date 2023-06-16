@@ -5,41 +5,17 @@
 extern void *g_handle;
 
 WsiResult
-wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pIdCount, uint64_t *pIds)
 {
     PFN_wsiEnumerateSeats sym
         = (PFN_wsiEnumerateSeats)dlsym(g_handle, "wsiEnumerateSeats");
-    return sym(platform, pSeatCount, pSeats);
+    return sym(platform, pIdCount, pIds);
 }
 
 WsiResult
-wsiCreatePointer(WsiPlatform platform, const WsiPointerCreateInfo *pCreateInfo, WsiPointer *pPointer)
+wsiAcquireSeat(WsiPlatform platform, const WsiAcquireSeatInfo *pAcquireInfo, WsiSeat *pSeat)
 {
-    PFN_wsiCreatePointer sym
-        = (PFN_wsiCreatePointer)dlsym(g_handle, "wsiCreatePointer");
-    return sym(platform, pCreateInfo, pPointer);
-}
-
-void
-wsiDestroyPointer(WsiPointer pointer)
-{
-    PFN_wsiDestroyPointer sym
-        = (PFN_wsiDestroyPointer)dlsym(g_handle, "wsiDestroyPointer");
-    sym(pointer);
-}
-
-WsiResult
-wsiCreateKeyboard(WsiPlatform platform, const WsiKeyboardCreateInfo *pCreateInfo, WsiKeyboard *pKeyboard)
-{
-    PFN_wsiCreateKeyboard sym
-        = (PFN_wsiCreateKeyboard)dlsym(g_handle, "wsiCreateKeyboard");
-    return sym(platform, pCreateInfo, pKeyboard);
-}
-
-void
-wsiDestroyKeyboard(WsiKeyboard keyboard)
-{
-    PFN_wsiDestroyKeyboard sym
-        = (PFN_wsiDestroyKeyboard)dlsym(g_handle, "wsiDestroyKeyboard");
-    sym(keyboard);
+    PFN_wsiAcquireSeat sym
+        = (PFN_wsiAcquireSeat)dlsym(g_handle, "wsiEnumerateSeats");
+    return sym(platform, pAcquireInfo, pSeat);
 }

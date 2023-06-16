@@ -7,38 +7,24 @@
 extern "C" {
 #endif
 
-typedef struct WsiPointerCreateInfo {
+typedef struct WsiAcquireSeatInfo {
     WsiStructureType sType;
     const void *pNext;
-    WsiSeat seat;
-} WsiPointerCreateInfo;
+    uint64_t id;
+} WsiAcquireSeatInfo;
 
-typedef struct WsiKeyboardCreateInfo {
-    WsiStructureType sType;
-    const void *pNext;
-    WsiSeat seat;
-} WsiKeyboardCreateInfo;
-
-typedef WsiResult (*PFN_wsiEnumerateSeats)(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats);
-typedef WsiResult (*PFN_wsiCreatePointer)(WsiPlatform platform, const WsiPointerCreateInfo *pCreateInfo, WsiPointer *pPointer);
-typedef void (*PFN_wsiDestroyPointer)(WsiPointer pointer);
-typedef WsiResult (*PFN_wsiCreateKeyboard)(WsiPlatform platform, const WsiKeyboardCreateInfo *pCreateInfo, WsiKeyboard *pKeyboard);
-typedef void (*PFN_wsiDestroyKeyboard)(WsiKeyboard keyboard);
+typedef WsiResult (*PFN_wsiEnumerateSeats)(WsiPlatform platform, uint32_t *pIdCount, uint64_t *pIds);
+typedef WsiResult (*PFN_wsiAcquireSeat)(WsiPlatform platform, const WsiAcquireSeatInfo *pCreateInfo, WsiSeat *pSeat);
+typedef void (*PFN_wsiReleaseSeat)(WsiSeat seat);
 
 WsiResult
-wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats);
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pIdCount, uint64_t *pIds);;
 
 WsiResult
-wsiCreatePointer(WsiPlatform platform, const WsiPointerCreateInfo *pCreateInfo, WsiPointer *pPointer);
+wsiAcquireSeat(WsiPlatform platform, const WsiAcquireSeatInfo *pAcquireInfo, WsiSeat *pSeat);;
 
 void
-wsiDestroyPointer(WsiPointer pointer);
-
-WsiResult
-wsiCreateKeyboard(WsiPlatform platform, const WsiKeyboardCreateInfo *pCreateInfo, WsiKeyboard *pKeyboard);
-
-void
-wsiDestroyKeyboard(WsiKeyboard keyboard);
+wsiReleaseSeat(WsiSeat seat);;
 
 #ifdef __cplusplus
 }

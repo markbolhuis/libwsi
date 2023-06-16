@@ -33,8 +33,8 @@ wsi_new_id(struct wsi_platform *platform)
     return id;
 }
 
-struct wsi_global *
-wsi_global_create(struct wsi_platform *platform, uint32_t name)
+static struct wsi_global *
+wsi_global_create(struct wsi_platform *platform, uint32_t name, uint32_t version)
 {
     struct wsi_global *global = calloc(1, sizeof(struct wsi_global));
     if (!global) {
@@ -44,11 +44,12 @@ wsi_global_create(struct wsi_platform *platform, uint32_t name)
     global->platform = platform;
     global->id = wsi_new_id(platform);
     global->name = name;
+    global->version = version;
 
     return global;
 }
 
-void
+static void
 wsi_global_destroy(struct wsi_global *global)
 {
     assert(global);
@@ -127,29 +128,6 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
     }
 }
 
-void *
-wsi_bind(
-    struct wsi_platform *platform,
-    uint32_t name,
-    const struct wl_interface *wl_interface,
-    uint32_t version,
-    uint32_t max_version)
-{
-    if (max_version > (uint32_t)wl_interface->version) {
-        max_version = wl_interface->version;
-    }
-
-    if (version > max_version) {
-        version = max_version;
-    }
-
-    return wl_registry_bind(
-        platform->wl_registry,
-        name,
-        wl_interface,
-        version);
-}
-
 static void *
 wsi_global_bind(
     struct wsi_platform *platform,
@@ -159,17 +137,16 @@ wsi_global_bind(
     uint32_t version,
     uint32_t max_version)
 {
-    struct wsi_global *global = wsi_global_create(platform, name);
+    struct wsi_global *global = wsi_global_create(platform, name, version);
     if (!global) {
         return NULL;
     }
 
-    struct wl_proxy *proxy = wsi_bind(
-        platform,
-        name,
-        wl_interface,
-        version,
-        max_version);
+    if (version > max_version) {
+        version = max_version;
+    }
+
+    struct wl_proxy *proxy = wl_registry_bind(platform->wl_registry, name, wl_interface, version);
     if (!proxy) {
         wsi_global_destroy(global);
         return NULL;
@@ -253,7 +230,7 @@ wl_registry_global(
             WSI_WL_SHM_VERSION);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0) {
-        wsi_seat_bind(platform, name, version);
+        wsi_seat_add(platform, name, version);
     }
     else if (strcmp(interface, wl_output_interface.name) == 0) {
         wsi_output_bind(platform, name, version);
@@ -320,7 +297,7 @@ wl_registry_global_remove(
     struct wsi_seat *seat, *seat_tmp;
     wl_list_for_each_safe(seat, seat_tmp, &platform->seat_list, link) {
         if (seat->global.name== name) {
-            wsi_seat_destroy(seat);
+            wsi_seat_remove(seat);
             return;
         }
     }

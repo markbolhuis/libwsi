@@ -10,41 +10,8 @@
 #include "input_priv.h"
 
 WsiResult
-wsiEnumerateSeats(WsiPlatform platform, uint32_t *pSeatCount, WsiSeat *pSeats)
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pIdCount, uint64_t *pIds)
 {
     // TODO: Implement
     abort();
-}
-
-WsiResult
-wsiCreatePointer(
-    WsiPlatform platform,
-    const WsiPointerCreateInfo *pCreateInfo,
-    WsiPointer *pPointer)
-{
-    // TODO: Implement
-    abort();
-}
-
-void
-wsiDestroyPointer(WsiPointer pointer)
-{
-    // TODO: Implement
-    abort();
-}
-
-WsiResult
-wsiCreateKeyboard(
-    WsiPlatform platform,
-    const WsiKeyboardCreateInfo *pCreateInfo,
-    WsiKeyboard *pKeyboard)
-{
-    // TODO: Implement
-    abort();
-}
-
-void
-wsiDestroyKeyboard(WsiKeyboard keyboard)
-{
-    // TODO: Implement
 }

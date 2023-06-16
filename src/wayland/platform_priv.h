@@ -7,6 +7,7 @@ struct wsi_global {
     struct wsi_platform *platform;
     uint64_t id;
     uint32_t name;
+    uint32_t version;
 };
 
 struct wsi_platform {
@@ -34,20 +35,6 @@ struct wsi_platform {
 
 uint64_t
 wsi_new_id(struct wsi_platform *platform);
-
-void *
-wsi_bind(
-    struct wsi_platform *platform,
-    uint32_t name,
-    const struct wl_interface *wl_interface,
-    uint32_t version,
-    uint32_t max_version);
-
-struct wsi_global *
-wsi_global_create(struct wsi_platform *platform, uint32_t name);
-
-void
-wsi_global_destroy(struct wsi_global *global);
 
 int
 wsi_flush(struct wl_display *display);
