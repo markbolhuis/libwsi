@@ -12,8 +12,8 @@
 #include "output_priv.h"
 #include "window_priv.h"
 
-#define WSI_WL_OUTPUT_VERSION 4
-#define WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION 3
+const uint32_t WSI_WL_OUTPUT_VERSION = 4;
+const uint32_t WSI_XDG_OUTPUT_V1_DONE_DEPRECATED_SINCE_VERSION = 3;
 
 int32_t
 wsi_output_get_scale(struct wsi_output *output)

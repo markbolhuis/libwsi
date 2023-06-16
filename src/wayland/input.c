@@ -13,7 +13,7 @@
 #include "platform_priv.h"
 #include "input_priv.h"
 
-#define WSI_WL_SEAT_VERSION 7
+const uint32_t WSI_WL_SEAT_VERSION = 7;
 
 static struct wsi_seat *
 wsi_seat_find(struct wsi_platform *platform, uint64_t id)
