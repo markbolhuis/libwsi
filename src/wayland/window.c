@@ -16,7 +16,7 @@
 #include "window_priv.h"
 
 static inline bool
-wsi_is_transform_flipped(int32_t transform)
+wsi_is_transform_vertical(int32_t transform)
 {
     return transform == WL_OUTPUT_TRANSFORM_90 ||
            transform == WL_OUTPUT_TRANSFORM_270 ||
@@ -27,10 +27,10 @@ wsi_is_transform_flipped(int32_t transform)
 static inline bool
 wsi_is_transform_a_resize(int32_t before, int32_t after)
 {
-    bool before_flip = wsi_is_transform_flipped(before);
-    bool after_flip = wsi_is_transform_flipped(after);
+    bool vert_before = wsi_is_transform_vertical(before);
+    bool vert_after = wsi_is_transform_vertical(after);
 
-    return before_flip |= after_flip;
+    return vert_before |= vert_after;
 }
 
 WsiExtent
@@ -101,7 +101,7 @@ wsi_window_configure(struct wsi_window *window)
 
         if (window->api == WSI_API_EGL) {
             assert(window->wl_egl_window != NULL);
-            if (wsi_is_transform_flipped(current->transform)) {
+            if (wsi_is_transform_vertical(current->transform)) {
                 wl_egl_window_resize(window->wl_egl_window, be.height, be.width, 0, 0);
             } else {
                 wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
@@ -132,7 +132,7 @@ wsi_window_configure(struct wsi_window *window)
             .extent = be,
         };
 
-        if (wsi_is_transform_flipped(current->transform)) {
+        if (wsi_is_transform_vertical(current->transform)) {
             info.extent.width = be.height;
             info.extent.height = be.width;
         }
