@@ -16,6 +16,14 @@ WsiResult
 wsiAcquireSeat(WsiPlatform platform, const WsiAcquireSeatInfo *pAcquireInfo, WsiSeat *pSeat)
 {
     PFN_wsiAcquireSeat sym
-        = (PFN_wsiAcquireSeat)dlsym(g_handle, "wsiEnumerateSeats");
+        = (PFN_wsiAcquireSeat)dlsym(g_handle, "wsiAcquireSeat");
     return sym(platform, pAcquireInfo, pSeat);
+}
+
+void
+wsiReleaseSeat(WsiSeat seat)
+{
+    PFN_wsiReleaseSeat sym
+        = (PFN_wsiReleaseSeat)dlsym(g_handle, "wsiReleaseSeat");
+    return sym(seat);
 }
