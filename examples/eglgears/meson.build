@@ -1,7 +1,9 @@
 
 dep_opengl = dependency('opengl')
 
-executable('eglgears', 'eglgears.c',
+executable('eglgears',
+  'eglgears.c',
+  'linux.c',
   dependencies : [
     dep_egl,
     dep_opengl,
