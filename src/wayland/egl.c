@@ -41,6 +41,7 @@ wsiCreateWindowEGLSurface(
     if (window->api != WSI_API_NONE) {
         return WSI_ERROR_WINDOW_IN_USE;
     }
+    assert(window->wl_egl_window == NULL);
 
     WsiExtent extent = wsi_window_get_buffer_extent(window);
 
@@ -56,16 +57,6 @@ wsiCreateWindowEGLSurface(
         window->wp_fractional_scale_v1 == NULL)
     {
         wl_surface_set_buffer_scale(window->wl_surface, window->current.scale);
-    }
-
-    EGLint alpha;
-    eglGetConfigAttrib(dpy, config, EGL_ALPHA_SIZE, &alpha);
-    if (alpha == 0) {
-        struct wl_region *wl_region = wl_compositor_create_region(
-            window->platform->wl_compositor);
-        wl_region_add(wl_region, 0, 0, INT32_MAX, INT32_MAX);
-        wl_surface_set_opaque_region(window->wl_surface, wl_region);
-        wl_region_destroy(wl_region);
     }
 
     EGLAttrib attrs[] = {
@@ -89,9 +80,10 @@ void
 wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
 {
     assert(window->api == WSI_API_EGL);
+    assert(window->wl_egl_window != NULL);
 
     eglDestroySurface(dpy, surface);
     wl_egl_window_destroy(window->wl_egl_window);
-    wl_surface_set_opaque_region(window->wl_surface, NULL);
+    window->wl_egl_window = NULL;
     window->api = WSI_API_NONE;
 }
