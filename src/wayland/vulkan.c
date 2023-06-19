@@ -89,16 +89,6 @@ wsiCreateWindowSurface(
         .surface = window->wl_surface,
     };
 
-    VkSurfaceKHR surface;
-    VkResult vres = vkCreateWaylandSurfaceKHR(instance, &info, pAllocator, &surface);
-    WsiResult res;
-    if (vres == VK_SUCCESS) {
-        res = WSI_SUCCESS;
-        window->api = WSI_API_VULKAN;
-        *pSurface = surface;
-    } else {
-        res = WSI_ERROR_VULKAN;
-    }
-
-    return res;
+    VkResult res = vkCreateWaylandSurfaceKHR(instance, &info, pAllocator, pSurface);
+    return res == VK_SUCCESS ? WSI_SUCCESS : WSI_ERROR_VULKAN;
 }

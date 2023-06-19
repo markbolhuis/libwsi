@@ -92,16 +92,6 @@ wsiCreateWindowSurface(
         .window = window->xcb_window,
     };
 
-    VkSurfaceKHR surface;
-    VkResult vres = vkCreateXcbSurfaceKHR(instance, &info, pAllocator, &surface);
-    WsiResult res;
-    if (vres == VK_SUCCESS) {
-        res = WSI_SUCCESS;
-        window->api = WSI_API_VULKAN;
-        *pSurface = surface;
-    } else {
-        res = WSI_ERROR_VULKAN;
-    }
-
-    return res;
+    VkResult res = vkCreateXcbSurfaceKHR(instance, &info, pAllocator, pSurface);
+    return res == VK_SUCCESS ? WSI_SUCCESS : WSI_ERROR_VULKAN;
 }
