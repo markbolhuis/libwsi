@@ -50,5 +50,5 @@ demo_get_time_ns(void)
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec * 1000000000 + ts.tv_nsec;
+    return (int64_t)ts.tv_sec * 1000000000 + (int64_t)ts.tv_nsec;
 }
