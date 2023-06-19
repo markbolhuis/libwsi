@@ -12,16 +12,35 @@
 #include "wsi/vulkan.h"
 #include <vulkan/vulkan_xcb.h>
 
-const uint32_t INSTANCE_EXTENSION_COUNT = 2;
-const char *INSTANCE_EXTENSION_NAMES[2] ={
+#define array_size(arr) (sizeof((arr)) / sizeof(arr[0]))
+
+const char *INSTANCE_EXTS[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
     VK_KHR_XCB_SURFACE_EXTENSION_NAME,
 };
 
-const uint32_t DEVICE_EXTENSION_COUNT = 1;
-const char *DEVICE_EXTENSION_NAMES[1] ={
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+const char *DEVICE_EXTS[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
+
+static WsiResult
+wsi_fill_array(uint32_t src_c, const char *const *src, uint32_t *dst_c, const char **dst)
+{
+    if (dst == NULL) {
+        *dst_c = src_c;
+        return WSI_SUCCESS;
+    }
+
+    WsiResult res = WSI_SUCCESS;
+    if (src_c > *dst_c) {
+        src_c = *dst_c;
+        res = WSI_INCOMPLETE;
+    }
+
+    memcpy(dst, src, src_c * sizeof(char *));
+    *dst_c = src_c;
+    return res;
+}
 
 WsiResult
 wsiEnumerateRequiredInstanceExtensions(
@@ -29,21 +48,7 @@ wsiEnumerateRequiredInstanceExtensions(
     uint32_t *pExtensionCount,
     const char **ppExtensions)
 {
-    if (ppExtensions == NULL) {
-        *pExtensionCount = INSTANCE_EXTENSION_COUNT;
-        return WSI_SUCCESS;
-    }
-
-    WsiResult res = WSI_SUCCESS;
-    uint32_t cpy = INSTANCE_EXTENSION_COUNT;
-    if (cpy > *pExtensionCount) {
-        cpy = *pExtensionCount;
-        res = WSI_INCOMPLETE;
-    }
-
-    memcpy(ppExtensions, INSTANCE_EXTENSION_NAMES, sizeof(char *) * cpy);
-    *pExtensionCount = cpy;
-    return res;
+    return wsi_fill_array(array_size(INSTANCE_EXTS), INSTANCE_EXTS, pExtensionCount, ppExtensions);
 }
 
 WsiResult
@@ -52,21 +57,7 @@ wsiEnumerateRequiredDeviceExtensions(
     uint32_t *pExtensionCount,
     const char **ppExtensions)
 {
-    if (ppExtensions == NULL) {
-        *pExtensionCount = DEVICE_EXTENSION_COUNT;
-        return WSI_SUCCESS;
-    }
-
-    WsiResult res = WSI_SUCCESS;
-    uint32_t cpy = DEVICE_EXTENSION_COUNT;
-    if (cpy > *pExtensionCount) {
-        cpy = *pExtensionCount;
-        res = WSI_INCOMPLETE;
-    }
-
-    memcpy(ppExtensions, DEVICE_EXTENSION_NAMES, sizeof(char *) * cpy);
-    *pExtensionCount = cpy;
-    return res;
+    return wsi_fill_array(array_size(DEVICE_EXTS), DEVICE_EXTS, pExtensionCount, ppExtensions);
 }
 
 VkBool32
@@ -89,26 +80,20 @@ wsiCreateWindowSurface(
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    struct wsi_platform *platform = window->platform;
-
     if (window->api != WSI_API_NONE) {
         return WSI_ERROR_WINDOW_IN_USE;
     }
 
-    VkXcbSurfaceCreateInfoKHR xcbInfo = {0};
-    xcbInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-    xcbInfo.pNext = NULL;
-    xcbInfo.flags = 0;
-    xcbInfo.connection = platform->xcb_connection;
-    xcbInfo.window = window->xcb_window;
+    VkXcbSurfaceCreateInfoKHR info = {
+        .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
+        .pNext = NULL,
+        .flags = 0,
+        .connection = window->platform->xcb_connection,
+        .window = window->xcb_window,
+    };
 
     VkSurfaceKHR surface;
-    VkResult vres = vkCreateXcbSurfaceKHR(
-        instance,
-        &xcbInfo,
-        pAllocator,
-        &surface);
-
+    VkResult vres = vkCreateXcbSurfaceKHR(instance, &info, pAllocator, &surface);
     WsiResult res;
     if (vres == VK_SUCCESS) {
         res = WSI_SUCCESS;
