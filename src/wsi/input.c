@@ -25,5 +25,5 @@ wsiReleaseSeat(WsiSeat seat)
 {
     PFN_wsiReleaseSeat sym
         = (PFN_wsiReleaseSeat)dlsym(g_handle, "wsiReleaseSeat");
-    return sym(seat);
+    sym(seat);
 }

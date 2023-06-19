@@ -18,13 +18,13 @@ typedef WsiResult (*PFN_wsiAcquireSeat)(WsiPlatform platform, const WsiAcquireSe
 typedef void (*PFN_wsiReleaseSeat)(WsiSeat seat);
 
 WsiResult
-wsiEnumerateSeats(WsiPlatform platform, uint32_t *pIdCount, uint64_t *pIds);;
+wsiEnumerateSeats(WsiPlatform platform, uint32_t *pIdCount, uint64_t *pIds);
 
 WsiResult
-wsiAcquireSeat(WsiPlatform platform, const WsiAcquireSeatInfo *pAcquireInfo, WsiSeat *pSeat);;
+wsiAcquireSeat(WsiPlatform platform, const WsiAcquireSeatInfo *pAcquireInfo, WsiSeat *pSeat);
 
 void
-wsiReleaseSeat(WsiSeat seat);;
+wsiReleaseSeat(WsiSeat seat);
 
 #ifdef __cplusplus
 }
