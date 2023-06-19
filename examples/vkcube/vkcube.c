@@ -13,6 +13,8 @@
 
 #define NUM_FRAMES 3
 
+const float TAU_F = 6.28318530717958647692f;
+
 struct vertex {
     vec3 pos;
     vec3 color;
@@ -223,7 +225,7 @@ demo_begin_frame(struct demo *demo)
 }
 
 static void
-demo_record_frame(struct demo *demo, float time)
+demo_record_frame(struct demo *demo, float angle)
 {
     VkCommandBuffer cmd_buf = demo->cmd_buffers[demo->frame_index];
 
@@ -271,8 +273,8 @@ demo_record_frame(struct demo *demo, float time)
     vkCmdSetScissor(cmd_buf, 0, 1, &scissor);
 
     mat4 model = GLM_MAT4_IDENTITY_INIT;
-    glm_rotate_x(model, time, model);
-    glm_rotate_z(model, time, model);
+    glm_rotate_x(model, angle, model);
+    glm_rotate_z(model, angle, model);
     glm_translate(model, (vec3){ -0.5f, -0.5f, -0.5f });
 
     vec3 eye = { 0.0f, -3.0f, 0.0f };
@@ -1389,7 +1391,7 @@ main(int argc, char **argv)
 
     int64_t last_time = demo_get_time_ns();
 
-    float timef = 0.0f;
+    float angle = 0.0f;
     while (true) {
         if (demo.closed) {
             break;
@@ -1401,16 +1403,15 @@ main(int argc, char **argv)
         }
 
         demo_begin_frame(&demo);
-        demo_record_frame(&demo, timef);
+        demo_record_frame(&demo, angle);
         demo_end_frame(&demo);
 
         int64_t now = demo_get_time_ns();
-
         int64_t dt = now - last_time;
         last_time = now;
 
-        timef += (float)dt / 1000000000.0f;
-        timef = fmodf(timef, 6.28318530718f);
+        float time = (float)dt / 1000000000.0f;
+        angle = fmodf(angle + (time * glm_rad(70.0f)), TAU_F);
 
         WsiResult res = wsiDispatchEvents(demo.platform, 0);
         if (res != WSI_SUCCESS) {
