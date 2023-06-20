@@ -56,11 +56,16 @@ wsi_window_configure(struct wsi_window *window)
 
     bool resized = false;
     if (mask & WSI_XDG_EVENT_CONFIGURE) {
-        resized = !wsi_extent_equal(current->extent, pending->extent);
-        if (resized) {
-            current->extent = pending->extent;
+        if (pending->extent.width == 0) {
+            pending->extent.width = current->extent.width;
+        }
+        if (pending->extent.height == 0) {
+            pending->extent.height = current->extent.height;
         }
 
+        resized = !wsi_extent_equal(current->extent, pending->extent);
+
+        current->extent = pending->extent;
         current->state = pending->state;
     }
 
@@ -264,13 +269,6 @@ xdg_toplevel_configure(
     struct wl_array *states)
 {
     struct wsi_window *window = data;
-
-    if (width == 0) {
-        width = window->user_extent.width;
-    }
-    if (height == 0) {
-        height = window->user_extent.height;
-    }
 
     window->event_mask |= WSI_XDG_EVENT_CONFIGURE;
     window->pending.extent.width = width;
@@ -522,8 +520,10 @@ static const struct wl_surface_listener wl_surface_listener = {
 // endregion
 
 static void
-wsi_window_set_initial_state(struct wsi_window *window)
+wsi_window_set_initial_state(struct wsi_window *window, WsiExtent extent)
 {
+    window->current.extent = extent;
+
     window->event_mask |= WSI_XDG_EVENT_SCALE;
     if (window->wp_fractional_scale_v1) {
         window->pending.scale = 120;
@@ -539,9 +539,9 @@ wsi_window_set_initial_state(struct wsi_window *window)
     {
         window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
         window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
-                                       | WSI_XDG_CAPABILITIES_MAXIMIZE
-                                       | WSI_XDG_CAPABILITIES_FULLSCREEN
-                                       | WSI_XDG_CAPABILITIES_MINIMIZE;
+                                     | WSI_XDG_CAPABILITIES_MAXIMIZE
+                                     | WSI_XDG_CAPABILITIES_FULLSCREEN
+                                     | WSI_XDG_CAPABILITIES_MINIMIZE;
     }
 }
 
@@ -553,7 +553,6 @@ wsi_window_init(
 {
     window->platform = platform;
     window->api = WSI_API_NONE;
-    window->user_extent = info->extent;
     window->user_data = info->pUserData;
     window->pfn_close = info->pfnCloseWindow;
     window->pfn_configure = info->pfnConfigureWindow;
@@ -602,7 +601,7 @@ wsi_window_init(
         xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
     }
 
-    wsi_window_set_initial_state(window);
+    wsi_window_set_initial_state(window, info->extent);
 
     wl_surface_commit(window->wl_surface);
 
