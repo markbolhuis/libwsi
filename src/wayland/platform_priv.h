@@ -36,6 +36,9 @@ struct wsi_platform {
 uint64_t
 wsi_new_id(struct wsi_platform *platform);
 
+uint32_t
+wsi_get_version(const struct wl_interface *interface, uint32_t version, uint32_t max);
+
 int
 wsi_flush(struct wl_display *display);
 

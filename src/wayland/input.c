@@ -528,10 +528,10 @@ wsi_seat_init(struct wsi_seat *seat)
 
     struct wsi_platform *plat = seat->global.platform;
 
-    uint32_t version = seat->global.version;
-    if (version > WSI_WL_SEAT_VERSION) {
-        version = WSI_WL_SEAT_VERSION;
-    }
+    uint32_t version = wsi_get_version(
+        &wl_seat_interface,
+        seat->global.version,
+        WSI_WL_SEAT_VERSION);
 
     seat->wl_seat = wl_registry_bind(
         plat->wl_registry,

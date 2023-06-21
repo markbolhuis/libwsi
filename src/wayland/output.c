@@ -311,9 +311,7 @@ wsi_output_bind(struct wsi_platform *platform, uint32_t name, uint32_t version)
     output->global.name = name;
     output->global.version = version;
 
-    if (version > WSI_WL_OUTPUT_VERSION) {
-        version = WSI_WL_OUTPUT_VERSION;
-    }
+    version = wsi_get_version(&wl_output_interface, version, WSI_WL_OUTPUT_VERSION);
 
     output->wl_output = wl_registry_bind(
         platform->wl_registry,

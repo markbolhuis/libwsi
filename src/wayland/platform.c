@@ -33,6 +33,18 @@ wsi_new_id(struct wsi_platform *platform)
     return id;
 }
 
+uint32_t
+wsi_get_version(const struct wl_interface *interface, uint32_t version, uint32_t max)
+{
+    if (version > max) {
+        version = max;
+    }
+    if (version > (uint32_t)interface->version) {
+        version = (uint32_t)interface->version;
+    }
+    return version;
+}
+
 static struct wsi_global *
 wsi_global_create(struct wsi_platform *platform, uint32_t name, uint32_t version)
 {
@@ -142,9 +154,7 @@ wsi_global_bind(
         return NULL;
     }
 
-    if (version > max_version) {
-        version = max_version;
-    }
+    version = wsi_get_version(wl_interface, version, max_version);
 
     struct wl_proxy *proxy = wl_registry_bind(platform->wl_registry, name, wl_interface, version);
     if (!proxy) {
