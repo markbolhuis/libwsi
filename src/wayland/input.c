@@ -8,6 +8,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-cursor.h>
 #include <input-timestamps-unstable-v1-client-protocol.h>
+#include <relative-pointer-unstable-v1-client-protocol.h>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -111,6 +112,45 @@ wp_pointer_timestamp(
 
 static const struct zwp_input_timestamps_v1_listener wp_pointer_timestamps_v1_listener = {
     .timestamp = wp_pointer_timestamp,
+};
+
+// endregion
+
+// region Wp Relative Pointer
+
+static void
+wp_pointer_relative_motion(
+    void *data,
+    struct zwp_relative_pointer_v1 *wp_relative_pointer_v1,
+    uint32_t utime_hi,
+    uint32_t utime_lo,
+    wl_fixed_t dx,
+    wl_fixed_t dy,
+    wl_fixed_t dx_unaccel,
+    wl_fixed_t dy_unaccel)
+{
+    struct wsi_pointer *pointer = data;
+
+    // TODO: The spec doesn't clarify if wp_input_timestamps apply to this event.
+    //  Weston doesn't send a timestamp event, so for now just use this value.
+    //  There is also a small bug here where if another event follows this one
+    //  in the same frame e.g. wl_pointer.motion then the lower resolution timestamp
+    //  replaces this one.
+
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_RELATIVE_MOTION;
+    pointer->frame.time = wsi_us_to_ns(utime_hi, utime_lo);
+    pointer->frame.dx = wl_fixed_to_double(dx);
+    pointer->frame.dy = wl_fixed_to_double(dy);
+    pointer->frame.udx = wl_fixed_to_double(dx_unaccel);
+    pointer->frame.udy = wl_fixed_to_double(dy_unaccel);
+
+    if (wl_pointer_get_version(pointer->wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
+        wsi_pointer_frame(pointer);
+    }
+}
+
+static const struct zwp_relative_pointer_v1_listener wp_relative_pointer_v1_listener = {
+    .relative_motion = wp_pointer_relative_motion,
 };
 
 // endregion
@@ -343,6 +383,16 @@ wsi_pointer_init(struct wsi_seat *seat)
             &seat->pointer);
     }
 
+    if (plat->wp_relative_pointer_manager_v1) {
+        seat->pointer.wp_relative_v1 = zwp_relative_pointer_manager_v1_get_relative_pointer(
+            plat->wp_relative_pointer_manager_v1,
+            seat->pointer.wl_pointer);
+        zwp_relative_pointer_v1_add_listener(
+            seat->pointer.wp_relative_v1,
+            &wp_relative_pointer_v1_listener,
+            &seat->pointer);
+    }
+
     return true;
 }
 
@@ -353,6 +403,10 @@ wsi_pointer_uninit(struct wsi_pointer *pointer)
 
     if (pointer->wp_timestamps_v1) {
         zwp_input_timestamps_v1_destroy(pointer->wp_timestamps_v1);
+    }
+
+    if (pointer->wp_relative_v1) {
+        zwp_relative_pointer_v1_destroy(pointer->wp_relative_v1);
     }
 
     if (wl_pointer_get_version(pointer->wl_pointer) >= WL_POINTER_RELEASE_SINCE_VERSION) {

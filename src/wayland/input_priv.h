@@ -52,6 +52,7 @@ struct wsi_pointer_frame {
 struct wsi_pointer {
     struct wl_pointer              *wl_pointer;
     struct zwp_input_timestamps_v1 *wp_timestamps_v1;
+    struct zwp_relative_pointer_v1 *wp_relative_v1;
 
     struct wl_cursor_theme *wl_cursor_theme;
     struct wl_cursor       *wl_cursor;
