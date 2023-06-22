@@ -7,6 +7,7 @@
 
 #include <wayland-client-protocol.h>
 #include <wayland-cursor.h>
+#include <input-timestamps-unstable-v1-client-protocol.h>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -14,6 +15,25 @@
 #include "input_priv.h"
 
 const uint32_t WSI_WL_SEAT_VERSION = 7;
+
+static inline int64_t
+wsi_tv_to_ns(uint32_t tv_sec_hi, uint32_t tv_sec_lo, uint32_t tv_nsec)
+{
+    int64_t tv_sec = ((int64_t)tv_sec_hi << 32) | (int64_t)tv_sec_lo;
+    return (tv_sec * 1000000000) + (int64_t)tv_nsec;
+}
+
+static inline int64_t
+wsi_us_to_ns(uint32_t utime_hi, uint32_t utime_lo)
+{
+    return (((int64_t)utime_hi) << 32 | (int64_t)utime_lo) * 1000;
+}
+
+static inline int64_t
+wsi_ms_to_ns(uint32_t mtime)
+{
+    return ((int64_t)mtime) * 1000000;
+}
 
 static struct wsi_seat *
 wsi_seat_find(struct wsi_platform *platform, uint64_t id)
@@ -71,7 +91,29 @@ wsi_pointer_frame(struct wsi_pointer *pointer)
     }
 
     pointer->frame.mask = WSI_WL_POINTER_EVENT_NONE;
+    pointer->frame.axes[0].mask = WSI_WL_AXIS_EVENT_NONE;
+    pointer->frame.axes[1].mask = WSI_WL_AXIS_EVENT_NONE;
 }
+
+// region Wp Pointer Timestamp
+
+static void
+wp_pointer_timestamp(
+    void *data,
+    struct zwp_input_timestamps_v1 *wp_input_timestamps_v1,
+    uint32_t tv_sec_hi,
+    uint32_t tv_sec_lo,
+    uint32_t tv_nsec)
+{
+    struct wsi_pointer *pointer = data;
+    pointer->frame.time = wsi_tv_to_ns(tv_sec_hi, tv_sec_lo, tv_nsec);
+}
+
+static const struct zwp_input_timestamps_v1_listener wp_pointer_timestamps_v1_listener = {
+    .timestamp = wp_pointer_timestamp,
+};
+
+// endregion
 
 // region Wl Pointer
 
@@ -126,7 +168,9 @@ wl_pointer_motion(
     struct wsi_pointer *pointer = data;
 
     pointer->frame.mask |= WSI_WL_POINTER_EVENT_MOTION;
-    pointer->frame.time = time;
+    if (pointer->wp_timestamps_v1 == NULL) {
+        pointer->frame.time = wsi_ms_to_ns(time);
+    }
     pointer->frame.x = wl_fixed_to_double(sx);
     pointer->frame.y = wl_fixed_to_double(sy);
 
@@ -148,7 +192,9 @@ wl_pointer_button(
 
     pointer->frame.mask |= WSI_WL_POINTER_EVENT_BUTTON;
     pointer->frame.serial = serial;
-    pointer->frame.time = time;
+    if (pointer->wp_timestamps_v1 == NULL) {
+        pointer->frame.time = wsi_ms_to_ns(time);
+    }
     pointer->frame.button = button;
     pointer->frame.state = state;
 
@@ -167,8 +213,10 @@ wl_pointer_axis(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS;
-    pointer->frame.axes[axis].start_time = time;
+    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_START;
+    if (pointer->wp_timestamps_v1 == NULL) {
+        pointer->frame.time = wsi_ms_to_ns(time);
+    }
     pointer->frame.axes[axis].value = wl_fixed_to_double(value);
 
     if (wl_pointer_get_version(wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
@@ -207,8 +255,10 @@ wl_pointer_axis_stop(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_STOP;
-    pointer->frame.axes[axis].stop_time = time;
+    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_STOP;
+    if (pointer->wp_timestamps_v1 == NULL) {
+        pointer->frame.time = wsi_ms_to_ns(time);
+    }
 }
 
 static void
@@ -220,7 +270,7 @@ wl_pointer_axis_discrete(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_DISCRETE;
+    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_DISCRETE;
     pointer->frame.axes[axis].discrete = discrete * 120;
 }
 
@@ -233,7 +283,7 @@ wl_pointer_axis_value120(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_DISCRETE;
+    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_DISCRETE;
     pointer->frame.axes[axis].discrete = value;
 }
 
@@ -247,7 +297,7 @@ wl_pointer_axis_relative_direction(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_RELATIVE_DIRECTION;
+    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_DIRECTION;
     pointer->frame.axes[axis].direction = direction;
 }
 #endif
@@ -283,6 +333,16 @@ wsi_pointer_init(struct wsi_seat *seat)
     seat->pointer.wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
     seat->pointer.wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
 
+    if (plat->wp_input_timestamps_manager_v1) {
+        seat->pointer.wp_timestamps_v1 = zwp_input_timestamps_manager_v1_get_pointer_timestamps(
+            plat->wp_input_timestamps_manager_v1,
+            seat->pointer.wl_pointer);
+        zwp_input_timestamps_v1_add_listener(
+            seat->pointer.wp_timestamps_v1,
+            &wp_pointer_timestamps_v1_listener,
+            &seat->pointer);
+    }
+
     return true;
 }
 
@@ -290,6 +350,10 @@ static void
 wsi_pointer_uninit(struct wsi_pointer *pointer)
 {
     assert(pointer->wl_pointer != NULL);
+
+    if (pointer->wp_timestamps_v1) {
+        zwp_input_timestamps_v1_destroy(pointer->wp_timestamps_v1);
+    }
 
     if (wl_pointer_get_version(pointer->wl_pointer) >= WL_POINTER_RELEASE_SINCE_VERSION) {
         wl_pointer_release(pointer->wl_pointer);
@@ -345,6 +409,26 @@ wsi_keyboard_init_xkb(struct wsi_keyboard *keyboard, int fd, uint32_t size)
     keyboard->xkb_state = state;
     return true;
 }
+
+// region Wp Keyboard Timestamp
+
+static void
+wp_keyboard_timestamp(
+    void *data,
+    struct zwp_input_timestamps_v1 *wp_input_timestamps_v1,
+    uint32_t tv_sec_hi,
+    uint32_t tv_sec_lo,
+    uint32_t tv_nsec)
+{
+    struct wsi_keyboard *keyboard = data;
+    keyboard->event_time = wsi_tv_to_ns(tv_sec_hi, tv_sec_lo, tv_nsec);
+}
+
+static const struct zwp_input_timestamps_v1_listener wp_keyboard_timestamps_v1_listener = {
+    .timestamp = wp_keyboard_timestamp,
+};
+
+// endregion
 
 // region Wl Keyboard
 
@@ -458,6 +542,17 @@ wsi_keyboard_init(struct wsi_seat *seat)
     seat->keyboard.wl_keyboard = wl_seat_get_keyboard(seat->wl_seat);
     wl_keyboard_add_listener(seat->keyboard.wl_keyboard, &wl_keyboard_listener, &seat->keyboard);
 
+    if (plat->wp_input_timestamps_manager_v1) {
+        seat->keyboard.wp_timestamps_v1 = zwp_input_timestamps_manager_v1_get_keyboard_timestamps(
+            plat->wp_input_timestamps_manager_v1,
+            seat->keyboard.wl_keyboard);
+        zwp_input_timestamps_v1_add_listener(
+            seat->keyboard.wp_timestamps_v1,
+            &wp_keyboard_timestamps_v1_listener,
+            &seat->keyboard);
+    }
+
+    seat->keyboard.event_time = -1;
     return true;
 }
 
@@ -465,6 +560,10 @@ static void
 wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
 {
     assert(keyboard->wl_keyboard != NULL);
+
+    if (keyboard->wp_timestamps_v1) {
+        zwp_input_timestamps_v1_destroy(keyboard->wp_timestamps_v1);
+    }
 
     if (wl_keyboard_get_version(keyboard->wl_keyboard) >= WL_KEYBOARD_RELEASE_SINCE_VERSION) {
         wl_keyboard_release(keyboard->wl_keyboard);

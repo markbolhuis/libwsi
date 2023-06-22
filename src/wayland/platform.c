@@ -7,6 +7,7 @@
 #include <wayland-client-protocol.h>
 #include <viewporter-client-protocol.h>
 #include <fractional-scale-v1-client-protocol.h>
+#include <input-timestamps-unstable-v1-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
@@ -21,6 +22,7 @@ const uint32_t WSI_WL_COMPOSITOR_VERSION = 5;
 const uint32_t WSI_WL_SHM_VERSION = 1;
 const uint32_t WSI_WP_VIEWPORTER_VERSION = 1;
 const uint32_t WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION = 1;
+const uint32_t WSI_WP_INPUT_TIMESTAMPS_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_XDG_WM_BASE_VERSION = 5;
 const uint32_t WSI_XDG_OUTPUT_MANAGER_V1_VERSION = 3;
 const uint32_t WSI_XDG_DECORATION_MANAGER_V1_VERSION = 1;
@@ -120,6 +122,11 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
         global = wp_fractional_scale_manager_v1_get_user_data(platform->wp_fractional_scale_manager_v1);
         wsi_global_destroy(global);
         wp_fractional_scale_manager_v1_destroy(platform->wp_fractional_scale_manager_v1);
+    }
+    if (platform->wp_input_timestamps_manager_v1) {
+        global = zwp_input_timestamps_manager_v1_get_user_data(platform->wp_input_timestamps_manager_v1);
+        wsi_global_destroy(global);
+        zwp_input_timestamps_manager_v1_destroy(platform->wp_input_timestamps_manager_v1);
     }
     if (platform->xdg_wm_base) {
         global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
@@ -263,6 +270,15 @@ wl_registry_global(
             version,
             WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION);
     }
+    else if (strcmp(interface, zwp_input_timestamps_manager_v1_interface.name) == 0) {
+        platform->wp_input_timestamps_manager_v1 = wsi_global_bind(
+            platform,
+            name,
+            &zwp_input_timestamps_manager_v1_interface,
+            NULL,
+            version,
+            WSI_WP_INPUT_TIMESTAMPS_MANAGER_V1_VERSION);
+    }
     else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
         platform->xdg_wm_base = wsi_global_bind(
             platform,
@@ -334,6 +350,14 @@ wl_registry_global_remove(
     if (global->name == name) {
         wp_fractional_scale_manager_v1_destroy(platform->wp_fractional_scale_manager_v1);
         platform->wp_fractional_scale_manager_v1 = NULL;
+        wsi_global_destroy(global);
+        return;
+    }
+
+    global = zwp_input_timestamps_manager_v1_get_user_data(platform->wp_input_timestamps_manager_v1);
+    if (global->name == name) {
+        zwp_input_timestamps_manager_v1_destroy(platform->wp_input_timestamps_manager_v1);
+        platform->wp_input_timestamps_manager_v1 = NULL;
         wsi_global_destroy(global);
         return;
     }

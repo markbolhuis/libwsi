@@ -9,19 +9,23 @@ enum wsi_wl_pointer_event {
     WSI_WL_POINTER_EVENT_LEAVE = 2,
     WSI_WL_POINTER_EVENT_MOTION = 4,
     WSI_WL_POINTER_EVENT_BUTTON = 8,
-    WSI_WL_POINTER_EVENT_AXIS = 16,
-    WSI_WL_POINTER_EVENT_AXIS_SOURCE = 32,
-    WSI_WL_POINTER_EVENT_AXIS_STOP = 64,
-    WSI_WL_POINTER_EVENT_AXIS_DISCRETE = 128,
-    WSI_WL_POINTER_EVENT_AXIS_RELATIVE_DIRECTION = 256,
-    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 1024,
+    WSI_WL_POINTER_EVENT_AXIS_SOURCE = 16,
+    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 32
+};
+
+enum wsi_wl_axis_event {
+    WSI_WL_AXIS_EVENT_NONE = 0,
+    WSI_WL_AXIS_EVENT_START = 1,
+    WSI_WL_AXIS_EVENT_STOP = 2,
+    WSI_WL_AXIS_EVENT_DISCRETE = 4,
+    WSI_WL_AXIS_EVENT_DIRECTION = 8,
 };
 
 struct wsi_pointer_frame {
     enum wsi_wl_pointer_event mask;
 
     uint32_t serial;
-    uint32_t time;
+    int64_t time;
 
     struct wl_surface *enter;
     struct wl_surface *leave;
@@ -31,19 +35,23 @@ struct wsi_pointer_frame {
 
     double x;
     double y;
+    double dx;
+    double dy;
+    double udx;
+    double udy;
 
     uint32_t axis_source;
     struct {
+        enum wsi_wl_axis_event mask;
         double value;
         int32_t discrete;
-        uint32_t start_time;
-        uint32_t stop_time;
         uint32_t direction;
     } axes[2];
 };
 
 struct wsi_pointer {
-    struct wl_pointer      *wl_pointer;
+    struct wl_pointer              *wl_pointer;
+    struct zwp_input_timestamps_v1 *wp_timestamps_v1;
 
     struct wl_cursor_theme *wl_cursor_theme;
     struct wl_cursor       *wl_cursor;
@@ -53,7 +61,8 @@ struct wsi_pointer {
 };
 
 struct wsi_keyboard {
-    struct wl_keyboard *wl_keyboard;
+    struct wl_keyboard             *wl_keyboard;
+    struct zwp_input_timestamps_v1 *wp_timestamps_v1;
 
     struct xkb_context *xkb_context;
     struct xkb_keymap  *xkb_keymap;
@@ -61,6 +70,7 @@ struct wsi_keyboard {
 
     int32_t repeat_rate;
     int32_t repeat_delay;
+    int64_t event_time;
 };
 
 struct wsi_seat {

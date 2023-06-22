@@ -17,6 +17,7 @@ src_wsi_wl = files(
 wl_xmls = [
   wl_mod.find_protocol('viewporter'),
   wl_mod.find_protocol('fractional-scale', state : 'staging', version : 1),
+  wl_mod.find_protocol('input-timestamps', state : 'unstable', version : 1),
   wl_mod.find_protocol('xdg-shell'),
   wl_mod.find_protocol('xdg-output', state : 'unstable', version : 1),
   wl_mod.find_protocol('xdg-decoration', state : 'unstable', version : 1),
