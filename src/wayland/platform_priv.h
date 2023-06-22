@@ -28,6 +28,7 @@ struct wsi_platform {
     struct wp_fractional_scale_manager_v1 *wp_fractional_scale_manager_v1;
     struct zwp_input_timestamps_manager_v1 *wp_input_timestamps_manager_v1;
     struct zwp_relative_pointer_manager_v1 *wp_relative_pointer_manager_v1;
+    struct zwp_pointer_constraints_v1 *wp_pointer_constraints_v1;
     struct xdg_wm_base *xdg_wm_base;
     struct zxdg_decoration_manager_v1 *xdg_decoration_manager_v1;
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;

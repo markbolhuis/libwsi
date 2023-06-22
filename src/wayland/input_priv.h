@@ -10,7 +10,11 @@ enum wsi_wl_pointer_event {
     WSI_WL_POINTER_EVENT_MOTION = 4,
     WSI_WL_POINTER_EVENT_BUTTON = 8,
     WSI_WL_POINTER_EVENT_AXIS_SOURCE = 16,
-    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 32
+    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 32,
+    WSI_WL_POINTER_EVENT_LOCKED = 64,
+    WSI_WL_POINTER_EVENT_UNLOCKED = 128,
+    WSI_WL_POINTER_EVENT_CONFINED = 256,
+    WSI_WL_POINTER_EVENT_UNCONFINED = 512,
 };
 
 enum wsi_wl_axis_event {
@@ -53,12 +57,15 @@ struct wsi_pointer {
     struct wl_pointer              *wl_pointer;
     struct zwp_input_timestamps_v1 *wp_timestamps_v1;
     struct zwp_relative_pointer_v1 *wp_relative_v1;
+    struct zwp_confined_pointer_v1 *wp_confined_v1;
+    struct zwp_locked_pointer_v1   *wp_locked_v1;
 
     struct wl_cursor_theme *wl_cursor_theme;
     struct wl_cursor       *wl_cursor;
     struct wl_surface      *wl_cursor_surface;
 
     struct wsi_pointer_frame frame;
+    uint32_t constraint_lifetime;
 };
 
 struct wsi_keyboard {
