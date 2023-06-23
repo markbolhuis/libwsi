@@ -501,7 +501,6 @@ wsi_platform_init(const WsiPlatformCreateInfo *info, struct wsi_platform *platfo
         goto err_globals;
     }
 
-    wl_display_roundtrip(platform->wl_display);
     return WSI_SUCCESS;
 
 err_globals:
