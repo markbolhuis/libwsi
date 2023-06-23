@@ -507,6 +507,20 @@ wsi_pointer_lock(
     }
 }
 
+static void
+wsi_pointer_constraint_destroy(struct wsi_pointer *pointer)
+{
+    if (pointer->wp_locked_v1) {
+        zwp_locked_pointer_v1_destroy(pointer->wp_locked_v1);
+        pointer->wp_locked_v1 = NULL;
+    }
+    if (pointer->wp_confined_v1) {
+        zwp_confined_pointer_v1_destroy(pointer->wp_confined_v1);
+        pointer->wp_confined_v1 = NULL;
+    }
+    pointer->constraint_lifetime = 0;
+}
+
 static bool
 wsi_pointer_init(struct wsi_seat *seat)
 {
