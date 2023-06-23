@@ -33,7 +33,7 @@ struct wsi_output {
 
 struct wsi_output_ref {
     struct wl_list link;
-    struct wl_output *wl_output;
+    struct wsi_output *output;
 };
 
 int32_t

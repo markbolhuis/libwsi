@@ -172,10 +172,9 @@ wsi_window_calculate_output_max_scale(struct wsi_window *window)
 {
     int32_t max_scale = 1;
 
-    struct wsi_output_ref *wo;
-    wl_list_for_each(wo, &window->output_list, link) {
-        struct wsi_output *output = wl_output_get_user_data(wo->wl_output);
-        int32_t scale = wsi_output_get_scale(output);
+    struct wsi_output_ref *ref;
+    wl_list_for_each(ref, &window->output_list, link) {
+        int32_t scale = wsi_output_get_scale(ref->output);
         if (scale > max_scale) {
             max_scale = scale;
         }
@@ -185,12 +184,12 @@ wsi_window_calculate_output_max_scale(struct wsi_window *window)
 }
 
 static struct wsi_output_ref *
-wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
+wsi_window_find_output(struct wsi_window *window, struct wsi_output *output)
 {
-    struct wsi_output_ref *wo;
-    wl_list_for_each(wo, &window->output_list, link) {
-        if (wo->wl_output == wl_output) {
-            return wo;
+    struct wsi_output_ref *ref;
+    wl_list_for_each(ref, &window->output_list, link) {
+        if (ref->output == output) {
+            return ref;
         }
     }
 
@@ -198,33 +197,33 @@ wsi_window_find_output(struct wsi_window *window, struct wl_output *wl_output)
 }
 
 static bool
-wsi_window_add_output(struct wsi_window *window, struct wl_output *wl_output)
+wsi_window_add_output(struct wsi_window *window, struct wsi_output *output)
 {
-    struct wsi_output_ref *wo = wsi_window_find_output(window, wl_output);
-    if (wo) {
+    struct wsi_output_ref *ref = wsi_window_find_output(window, output);
+    if (ref) {
         return false;
     }
 
-    wo = calloc(1, sizeof(*wo));
-    if (!wo) {
+    ref = calloc(1, sizeof(*ref));
+    if (!ref) {
         return false;
     }
 
-    wo->wl_output = wl_output;
-    wl_list_insert(&window->output_list, &wo->link);
+    ref->output = output;
+    wl_list_insert(&window->output_list, &ref->link);
     return true;
 }
 
 static bool
-wsi_window_remove_output(struct wsi_window *window, struct wl_output *wl_output)
+wsi_window_remove_output(struct wsi_window *window, struct wsi_output *output)
 {
-    struct wsi_output_ref *wo = wsi_window_find_output(window, wl_output);
-    if (!wo) {
+    struct wsi_output_ref *ref = wsi_window_find_output(window, output);
+    if (!ref) {
         return false;
     }
 
-    wl_list_remove(&wo->link);
-    free(wo);
+    wl_list_remove(&ref->link);
+    free(ref);
     return true;
 }
 
@@ -427,8 +426,10 @@ wl_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output *wl
 {
     struct wsi_window *window = data;
 
+    struct wsi_output *output = wl_output_get_user_data(wl_output);
     uint32_t version = wl_surface_get_version(wl_surface);
-    bool added = wsi_window_add_output(window, wl_output);
+
+    bool added = wsi_window_add_output(window, output);
     if (!added ||
         version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
 #ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
@@ -452,8 +453,10 @@ wl_surface_leave(void *data, struct wl_surface *wl_surface, struct wl_output *wl
 {
     struct wsi_window *window = data;
 
+    struct wsi_output *output = wl_output_get_user_data(wl_output);
     uint32_t version = wl_surface_get_version(wl_surface);
-    bool removed = wsi_window_remove_output(window, wl_output);
+
+    bool removed = wsi_window_remove_output(window, output);
     if (!removed ||
         version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
 #ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
