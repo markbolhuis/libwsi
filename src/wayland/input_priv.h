@@ -71,6 +71,7 @@ struct wsi_pointer {
 struct wsi_keyboard {
     struct wl_keyboard             *wl_keyboard;
     struct zwp_input_timestamps_v1 *wp_timestamps_v1;
+    struct zwp_keyboard_shortcuts_inhibitor_v1 *wp_shortcuts_inhibitor_v1;
 
     struct xkb_context *xkb_context;
     struct xkb_keymap  *xkb_keymap;

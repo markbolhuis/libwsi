@@ -10,6 +10,7 @@
 #include <input-timestamps-unstable-v1-client-protocol.h>
 #include <relative-pointer-unstable-v1-client-protocol.h>
 #include <pointer-constraints-unstable-v1-client-protocol.h>
+#include <keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -645,6 +646,29 @@ static const struct zwp_input_timestamps_v1_listener wp_keyboard_timestamps_v1_l
 
 // endregion
 
+// region Wp Keyboard Shortcuts Inhibitor
+
+static void
+wp_keyboard_shortcuts_inhibitor_v1_active(
+    void *data,
+    struct zwp_keyboard_shortcuts_inhibitor_v1 *inhibitor)
+{
+}
+
+static void
+wp_keyboard_shortcuts_inhibitor_v1_inactive(
+    void *data,
+    struct zwp_keyboard_shortcuts_inhibitor_v1 *inhibitor)
+{
+}
+
+static const struct zwp_keyboard_shortcuts_inhibitor_v1_listener wp_keyboard_shortcuts_inhibitor_v1_listener = {
+    .active = wp_keyboard_shortcuts_inhibitor_v1_active,
+    .inactive = wp_keyboard_shortcuts_inhibitor_v1_inactive,
+};
+
+// endregion
+
 // region Wl Keyboard
 
 static void
@@ -745,6 +769,34 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 
 // endregion
 
+static void
+wsi_keyboard_inhibit_shortcuts(struct wsi_keyboard *keyboard, struct wl_surface *wl_surface)
+{
+    struct wsi_seat *seat = wl_container_of(keyboard, seat, keyboard);
+    struct wsi_platform *platform = seat->global.platform;
+
+    assert(platform->wp_keyboard_shortcuts_inhibit_manager_v1 != NULL);
+    assert(keyboard->wp_shortcuts_inhibitor_v1 == NULL);
+
+    keyboard->wp_shortcuts_inhibitor_v1 = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(
+        platform->wp_keyboard_shortcuts_inhibit_manager_v1,
+        wl_surface,
+        seat->wl_seat);
+    zwp_keyboard_shortcuts_inhibitor_v1_add_listener(
+        keyboard->wp_shortcuts_inhibitor_v1,
+        &wp_keyboard_shortcuts_inhibitor_v1_listener,
+        keyboard);
+}
+
+static void
+wsi_keyboard_restore_shortcuts(struct wsi_keyboard *keyboard)
+{
+    assert(keyboard->wp_shortcuts_inhibitor_v1 != NULL);
+
+    zwp_keyboard_shortcuts_inhibitor_v1_destroy(keyboard->wp_shortcuts_inhibitor_v1);
+    keyboard->wp_shortcuts_inhibitor_v1 = NULL;
+}
+
 static bool
 wsi_keyboard_init(struct wsi_seat *seat)
 {
@@ -775,6 +827,10 @@ static void
 wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
 {
     assert(keyboard->wl_keyboard != NULL);
+
+    if (keyboard->wp_shortcuts_inhibitor_v1) {
+        zwp_keyboard_shortcuts_inhibitor_v1_destroy(keyboard->wp_shortcuts_inhibitor_v1);
+    }
 
     if (keyboard->wp_timestamps_v1) {
         zwp_input_timestamps_v1_destroy(keyboard->wp_timestamps_v1);
