@@ -126,9 +126,7 @@ wp_pointer_locked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1
 
     pointer->frame.mask |= WSI_WL_POINTER_EVENT_LOCKED;
 
-    if (wl_pointer_get_version(pointer->wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
-        wsi_pointer_frame(pointer);
-    }
+    wsi_pointer_frame(pointer);
 }
 
 static void
@@ -144,9 +142,7 @@ wp_pointer_unlocked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_
         pointer->constraint_lifetime = 0;
     }
 
-    if (wl_pointer_get_version(pointer->wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
-        wsi_pointer_frame(pointer);
-    }
+    wsi_pointer_frame(pointer);
 }
 
 static const struct zwp_locked_pointer_v1_listener wp_locked_pointer_v1_listener = {
@@ -165,9 +161,7 @@ wp_pointer_confined(void *data, struct zwp_confined_pointer_v1 *wp_confined_poin
 
     pointer->frame.mask |= WSI_WL_POINTER_EVENT_CONFINED;
 
-    if (wl_pointer_get_version(pointer->wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
-        wsi_pointer_frame(pointer);
-    }
+    wsi_pointer_frame(pointer);
 }
 
 static void
@@ -183,9 +177,7 @@ wp_pointer_unconfined(void *data, struct zwp_confined_pointer_v1 *wp_confined_po
         pointer->constraint_lifetime = 0;
     }
 
-    if (wl_pointer_get_version(pointer->wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
-        wsi_pointer_frame(pointer);
-    }
+    wsi_pointer_frame(pointer);
 }
 
 static const struct zwp_confined_pointer_v1_listener wp_confined_pointer_v1_listener = {
