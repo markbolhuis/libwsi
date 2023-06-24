@@ -11,6 +11,7 @@
 #include <relative-pointer-unstable-v1-client-protocol.h>
 #include <pointer-constraints-unstable-v1-client-protocol.h>
 #include <keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h>
+#include <ext-idle-notify-v1-client-protocol.h>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -849,6 +850,25 @@ wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
     memset(keyboard, 0, sizeof(struct wsi_keyboard));
 }
 
+// region Ext Idle Notification
+
+static void
+ext_idle_notification_v1_idled(void *data, struct ext_idle_notification_v1 *notification)
+{
+}
+
+static void
+ext_idle_notification_v1_resumed(void *data, struct ext_idle_notification_v1 *notification)
+{
+}
+
+static const struct ext_idle_notification_v1_listener ext_idle_notification_v1_listener = {
+    .idled = ext_idle_notification_v1_idled,
+    .resumed = ext_idle_notification_v1_resumed,
+};
+
+// endregion
+
 // region WL Seat
 
 static void
@@ -889,6 +909,33 @@ static const struct wl_seat_listener wl_seat_listener = {
 };
 
 // endregion
+
+static void
+wsi_seat_enable_idle_timer(struct wsi_seat *seat, uint32_t time)
+{
+    struct wsi_platform *platform = seat->global.platform;
+
+    assert(platform->ext_idle_notifier_v1 != NULL);
+    assert(seat->ext_idle_notification_v1 == NULL);
+
+    seat->ext_idle_notification_v1 = ext_idle_notifier_v1_get_idle_notification(
+        platform->ext_idle_notifier_v1,
+        time,
+        seat->wl_seat);
+    ext_idle_notification_v1_add_listener(
+        seat->ext_idle_notification_v1,
+        &ext_idle_notification_v1_listener,
+        seat);
+}
+
+static void
+wsi_seat_disable_idle_timer(struct wsi_seat *seat)
+{
+    assert(seat->ext_idle_notification_v1 != NULL);
+
+    ext_idle_notification_v1_destroy(seat->ext_idle_notification_v1);
+    seat->ext_idle_notification_v1 = NULL;
+}
 
 static bool
 wsi_seat_init(struct wsi_seat *seat)

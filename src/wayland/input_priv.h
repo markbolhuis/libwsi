@@ -83,12 +83,14 @@ struct wsi_keyboard {
 };
 
 struct wsi_seat {
-    struct wsi_global  global;
-    struct wl_list     link;
+    struct wsi_global global;
+    struct wl_list    link;
 
-    struct wl_seat     *wl_seat;
-    uint32_t           capabilities;
-    char               *name;
+    struct wl_seat                  *wl_seat;
+    struct ext_idle_notification_v1 *ext_idle_notification_v1;
+
+    uint32_t capabilities;
+    char     *name;
 
     struct wsi_pointer  pointer;
     struct wsi_keyboard keyboard;

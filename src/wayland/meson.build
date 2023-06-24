@@ -24,6 +24,7 @@ wl_xmls = [
   wl_mod.find_protocol('xdg-shell'),
   wl_mod.find_protocol('xdg-output', state : 'unstable', version : 1),
   wl_mod.find_protocol('xdg-decoration', state : 'unstable', version : 1),
+  wl_mod.find_protocol('ext-idle-notify', state : 'staging', version : 1),
 ]
 
 lib_wsi_wl = library('wsi-wl',

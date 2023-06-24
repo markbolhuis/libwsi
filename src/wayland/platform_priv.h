@@ -33,6 +33,7 @@ struct wsi_platform {
     struct xdg_wm_base *xdg_wm_base;
     struct zxdg_decoration_manager_v1 *xdg_decoration_manager_v1;
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
+    struct ext_idle_notifier_v1 *ext_idle_notifier_v1;
 
     struct xkb_context *xkb_context;
 };

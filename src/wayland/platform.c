@@ -14,6 +14,7 @@
 #include <xdg-shell-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
+#include <ext-idle-notify-v1-client-protocol.h>
 
 #include <xkbcommon/xkbcommon.h>
 
@@ -32,6 +33,7 @@ const uint32_t WSI_WP_KEYBOARD_SHORTCUTS_INHIBIT_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_XDG_WM_BASE_VERSION = 5;
 const uint32_t WSI_XDG_OUTPUT_MANAGER_V1_VERSION = 3;
 const uint32_t WSI_XDG_DECORATION_MANAGER_V1_VERSION = 1;
+const uint32_t WSI_EXT_IDLE_NOTIFICATION_V1_VERSION = 1;
 
 uint64_t
 wsi_new_id(struct wsi_platform *platform)
@@ -167,6 +169,11 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
             platform->xdg_output_manager_v1);
         wsi_global_destroy(global);
         zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
+    }
+    if (platform->ext_idle_notifier_v1) {
+        global = ext_idle_notifier_v1_get_user_data(platform->ext_idle_notifier_v1);
+        wsi_global_destroy(global);
+        ext_idle_notifier_v1_destroy(platform->ext_idle_notifier_v1);
     }
 }
 
@@ -359,6 +366,15 @@ wl_registry_global(
             wsi_output_init_xdg_all(platform);
         }
     }
+    else if (strcmp(interface, ext_idle_notifier_v1_interface.name) == 0) {
+        platform->ext_idle_notifier_v1 = wsi_global_bind(
+            platform,
+            name,
+            &ext_idle_notifier_v1_interface,
+            NULL,
+            version,
+            WSI_EXT_IDLE_NOTIFICATION_V1_VERSION);
+    }
 }
 
 static void
@@ -450,6 +466,14 @@ wl_registry_global_remove(
     if (global->name == name) {
         zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
         platform->xdg_output_manager_v1 = NULL;
+        wsi_global_destroy(global);
+        return;
+    }
+
+    global = ext_idle_notifier_v1_get_user_data(platform->ext_idle_notifier_v1);
+    if (global->name == name) {
+        ext_idle_notifier_v1_destroy(platform->ext_idle_notifier_v1);
+        platform->ext_idle_notifier_v1 = NULL;
         wsi_global_destroy(global);
         return;
     }
