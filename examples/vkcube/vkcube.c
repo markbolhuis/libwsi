@@ -946,6 +946,7 @@ demo_select_surface_format(struct demo *demo)
     for (uint32_t i = 0; i < format_count; ++i) {
         if (formats[i].format == VK_FORMAT_R8G8B8A8_UNORM) {
             demo->surface_format = formats[i];
+            return;
         }
     }
 
