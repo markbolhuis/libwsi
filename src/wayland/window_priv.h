@@ -58,6 +58,7 @@ struct wsi_window {
     struct wl_egl_window *wl_egl_window;
     struct wp_viewport *wp_viewport;
     struct wp_fractional_scale_v1 *wp_fractional_scale_v1;
+    struct zwp_idle_inhibitor_v1 *wp_idle_inhibitor_v1;
     struct xdg_surface *xdg_surface;
     struct xdg_toplevel *xdg_toplevel;
     struct zxdg_toplevel_decoration_v1 *xdg_toplevel_decoration_v1;

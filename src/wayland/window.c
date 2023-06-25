@@ -7,6 +7,7 @@
 #include <wayland-egl-core.h>
 #include <viewporter-client-protocol.h>
 #include <fractional-scale-v1-client-protocol.h>
+#include <idle-inhibit-unstable-v1-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
 
@@ -527,6 +528,23 @@ static const struct wl_surface_listener wl_surface_listener = {
 // endregion
 
 static void
+wsi_window_inhibit_idling(struct wsi_window *window, bool enable)
+{
+    if (enable) {
+        assert(window->wp_idle_inhibitor_v1 == NULL);
+
+        window->wp_idle_inhibitor_v1 = zwp_idle_inhibit_manager_v1_create_inhibitor(
+            window->platform->wp_idle_inhibit_manager_v1,
+            window->wl_surface);
+    } else {
+        assert(window->wp_idle_inhibitor_v1 != NULL);
+
+        zwp_idle_inhibitor_v1_destroy(window->wp_idle_inhibitor_v1);
+        window->wp_idle_inhibitor_v1 = NULL;
+    }
+}
+
+static void
 wsi_window_set_initial_state(struct wsi_window *window, WsiExtent extent)
 {
     window->current.extent = extent;
@@ -630,6 +648,10 @@ wsi_window_uninit(struct wsi_window *window)
     wl_list_for_each_safe(wo, wm_tmp, &window->output_list, link) {
         wl_list_remove(&wo->link);
         free(wo);
+    }
+
+    if (window->wp_idle_inhibitor_v1) {
+        zwp_idle_inhibitor_v1_destroy(window->wp_idle_inhibitor_v1);
     }
 
     if (window->xdg_toplevel_decoration_v1) {
