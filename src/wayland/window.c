@@ -226,6 +226,37 @@ wsi_window_remove_output(struct wsi_window *window, struct wsi_output *output)
     return true;
 }
 
+static void
+wsi_window_update_output(struct wsi_window *window, struct wl_output *wl_output, bool added)
+{
+    struct wsi_output *output = wl_output_get_user_data(wl_output);
+    uint32_t version = wl_surface_get_version(window->wl_surface);
+
+    bool updated = added
+                 ? wsi_window_add_output(window, output)
+                 : wsi_window_remove_output(window, output);
+
+    if (!updated||
+        version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
+#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+        version >= WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION ||
+#endif
+        window->wp_fractional_scale_v1)
+    {
+        return;
+    }
+
+    int32_t scale = wsi_window_calculate_output_max_scale(window);
+    if (window->current.scale != scale) {
+        window->event_mask |= WSI_XDG_EVENT_SCALE;
+        window->pending.scale = scale;
+
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
+    }
+}
+
 void
 wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o)
 {
@@ -443,60 +474,14 @@ static void
 wl_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output *wl_output)
 {
     struct wsi_window *window = data;
-
-    struct wsi_output *output = wl_output_get_user_data(wl_output);
-    uint32_t version = wl_surface_get_version(wl_surface);
-
-    bool added = wsi_window_add_output(window, output);
-    if (!added ||
-        version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
-#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
-        version >= WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION ||
-#endif
-        window->wp_fractional_scale_v1)
-    {
-        return;
-    }
-
-    int32_t scale = wsi_window_calculate_output_max_scale(window);
-    if (window->current.scale != scale) {
-        window->event_mask |= WSI_XDG_EVENT_SCALE;
-        window->pending.scale = wsi_window_calculate_output_max_scale(window);
-
-        if (window->configured) {
-            wsi_window_configure(window, 0);
-        }
-    }
+    wsi_window_update_output(window, wl_output, true);
 }
 
 static void
 wl_surface_leave(void *data, struct wl_surface *wl_surface, struct wl_output *wl_output)
 {
     struct wsi_window *window = data;
-
-    struct wsi_output *output = wl_output_get_user_data(wl_output);
-    uint32_t version = wl_surface_get_version(wl_surface);
-
-    bool removed = wsi_window_remove_output(window, output);
-    if (!removed ||
-        version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
-#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
-        version >= WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION ||
-#endif
-        window->wp_fractional_scale_v1)
-    {
-        return;
-    }
-
-    int32_t scale = wsi_window_calculate_output_max_scale(window);
-    if (window->current.scale != scale) {
-        window->event_mask |= WSI_XDG_EVENT_SCALE;
-        window->pending.scale = wsi_window_calculate_output_max_scale(window);
-
-        if (window->configured) {
-            wsi_window_configure(window, 0);
-        }
-    }
+    wsi_window_update_output(window, wl_output, false);
 }
 
 #ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
