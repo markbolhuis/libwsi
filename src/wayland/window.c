@@ -55,7 +55,7 @@ wsi_window_configure(struct wsi_window *window)
     struct wsi_window_state *current = &window->current;
 
     bool resized = false;
-    if (mask & WSI_XDG_EVENT_CONFIGURE) {
+    if (mask & WSI_XDG_EVENT_EXTENT) {
         if (pending->extent.width == 0) {
             pending->extent.width = current->extent.width;
         }
@@ -66,6 +66,9 @@ wsi_window_configure(struct wsi_window *window)
         resized = !wsi_extent_equal(current->extent, pending->extent);
 
         current->extent = pending->extent;
+    }
+
+    if (mask & WSI_XDG_EVENT_STATE) {
         current->state = pending->state;
     }
 
@@ -73,7 +76,7 @@ wsi_window_configure(struct wsi_window *window)
         current->bounds = pending->bounds;
     }
 
-    if (mask & WSI_XDG_EVENT_WM_CAPABILITIES) {
+    if (mask & WSI_XDG_EVENT_CAPABILITIES) {
         current->capabilities = pending->capabilities;
     }
 
@@ -269,7 +272,7 @@ xdg_toplevel_configure(
 {
     struct wsi_window *window = data;
 
-    window->event_mask |= WSI_XDG_EVENT_CONFIGURE;
+    window->event_mask |= WSI_XDG_EVENT_EXTENT;
     window->pending.extent.width = width;
     window->pending.extent.height = height;
 
@@ -305,6 +308,7 @@ xdg_toplevel_configure(
         }
     }
 
+    window->event_mask |= WSI_XDG_EVENT_STATE;
     window->pending.state = pending;
 }
 
@@ -366,7 +370,7 @@ xdg_toplevel_wm_capabilities(
         }
     }
 
-    window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
+    window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
     window->pending.capabilities = pending;
 }
 
@@ -540,7 +544,7 @@ wsi_window_set_initial_state(struct wsi_window *window, WsiExtent extent)
     if (xdg_toplevel_get_version(window->xdg_toplevel) <
         XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
     {
-        window->event_mask |= WSI_XDG_EVENT_WM_CAPABILITIES;
+        window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
         window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
                                      | WSI_XDG_CAPABILITIES_MAXIMIZE
                                      | WSI_XDG_CAPABILITIES_FULLSCREEN
