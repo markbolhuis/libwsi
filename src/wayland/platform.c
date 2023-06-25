@@ -112,76 +112,39 @@ wsi_flush(struct wl_display *display)
 static void
 wsi_platform_destroy_globals(struct wsi_platform *platform)
 {
-    struct wsi_global *global;
-    if (platform->wl_compositor) {
-        global = wl_compositor_get_user_data(platform->wl_compositor);
-        wsi_global_destroy(global);
-        wl_compositor_destroy(platform->wl_compositor);
+#define WSI_GLOBAL_DESTROY(name) \
+    if (platform->name != NULL) { \
+        struct wsi_global *global = name##_get_user_data(platform->name); \
+        wsi_global_destroy(global); \
+        name##_destroy(platform->name); \
+        platform->name = NULL; \
     }
-    if (platform->wl_shm) {
-        global = wl_shm_get_user_data(platform->wl_shm);
-        wsi_global_destroy(global);
-        wl_shm_destroy(platform->wl_shm);
+
+#define ZWSI_GLOBAL_DESTROY(name) \
+    if (platform->name != NULL) { \
+        struct wsi_global *global = z##name##_get_user_data(platform->name); \
+        wsi_global_destroy(global); \
+        z##name##_destroy(platform->name); \
+        platform->name = NULL; \
     }
-    if (platform->wp_viewporter) {
-        global = wp_viewporter_get_user_data(platform->wp_viewporter);
-        wsi_global_destroy(global);
-        wp_viewporter_destroy(platform->wp_viewporter);
-    }
-    if (platform->wp_fractional_scale_manager_v1) {
-        global = wp_fractional_scale_manager_v1_get_user_data(platform->wp_fractional_scale_manager_v1);
-        wsi_global_destroy(global);
-        wp_fractional_scale_manager_v1_destroy(platform->wp_fractional_scale_manager_v1);
-    }
-    if (platform->wp_input_timestamps_manager_v1) {
-        global = zwp_input_timestamps_manager_v1_get_user_data(platform->wp_input_timestamps_manager_v1);
-        wsi_global_destroy(global);
-        zwp_input_timestamps_manager_v1_destroy(platform->wp_input_timestamps_manager_v1);
-    }
-    if (platform->wp_relative_pointer_manager_v1) {
-        global = zwp_relative_pointer_manager_v1_get_user_data(platform->wp_relative_pointer_manager_v1);
-        wsi_global_destroy(global);
-        zwp_relative_pointer_manager_v1_destroy(platform->wp_relative_pointer_manager_v1);
-    }
-    if (platform->wp_pointer_constraints_v1) {
-        global = zwp_pointer_constraints_v1_get_user_data(platform->wp_pointer_constraints_v1);
-        wsi_global_destroy(global);
-        zwp_pointer_constraints_v1_destroy(platform->wp_pointer_constraints_v1);
-    }
-    if (platform->wp_keyboard_shortcuts_inhibit_manager_v1) {
-        global = zwp_keyboard_shortcuts_inhibit_manager_v1_get_user_data(
-            platform->wp_keyboard_shortcuts_inhibit_manager_v1);
-        wsi_global_destroy(global);
-        zwp_keyboard_shortcuts_inhibit_manager_v1_destroy(
-            platform->wp_keyboard_shortcuts_inhibit_manager_v1);
-    }
-    if (platform->wp_idle_inhibit_manager_v1) {
-        global = zwp_idle_inhibit_manager_v1_get_user_data(platform->wp_idle_inhibit_manager_v1);
-        wsi_global_destroy(global);
-        zwp_idle_inhibit_manager_v1_destroy(platform->wp_idle_inhibit_manager_v1);
-    }
-    if (platform->xdg_wm_base) {
-        global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
-        wsi_global_destroy(global);
-        xdg_wm_base_destroy(platform->xdg_wm_base);
-    }
-    if (platform->xdg_decoration_manager_v1) {
-        global = zxdg_decoration_manager_v1_get_user_data(
-            platform->xdg_decoration_manager_v1);
-        wsi_global_destroy(global);
-        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
-    }
-    if (platform->xdg_output_manager_v1) {
-        global = zxdg_output_manager_v1_get_user_data(
-            platform->xdg_output_manager_v1);
-        wsi_global_destroy(global);
-        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
-    }
-    if (platform->ext_idle_notifier_v1) {
-        global = ext_idle_notifier_v1_get_user_data(platform->ext_idle_notifier_v1);
-        wsi_global_destroy(global);
-        ext_idle_notifier_v1_destroy(platform->ext_idle_notifier_v1);
-    }
+
+    WSI_GLOBAL_DESTROY(wl_compositor);
+    WSI_GLOBAL_DESTROY(wl_shm);
+    WSI_GLOBAL_DESTROY(wp_viewporter);
+    WSI_GLOBAL_DESTROY(wp_fractional_scale_manager_v1);
+    WSI_GLOBAL_DESTROY(xdg_wm_base);
+    WSI_GLOBAL_DESTROY(ext_idle_notifier_v1);
+
+    ZWSI_GLOBAL_DESTROY(wp_input_timestamps_manager_v1);
+    ZWSI_GLOBAL_DESTROY(wp_relative_pointer_manager_v1);
+    ZWSI_GLOBAL_DESTROY(wp_pointer_constraints_v1);
+    ZWSI_GLOBAL_DESTROY(wp_keyboard_shortcuts_inhibit_manager_v1);
+    ZWSI_GLOBAL_DESTROY(wp_idle_inhibit_manager_v1);
+    ZWSI_GLOBAL_DESTROY(xdg_decoration_manager_v1);
+    ZWSI_GLOBAL_DESTROY(xdg_output_manager_v1);
+
+#undef WSI_GLOBAL_DESTROY
+#undef ZWSI_GLOBAL_DESTROY
 }
 
 static void *
