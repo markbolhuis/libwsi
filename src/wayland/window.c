@@ -48,7 +48,7 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
 }
 
 static void
-wsi_window_configure(struct wsi_window *window)
+wsi_window_configure(struct wsi_window *window, uint32_t serial)
 {
     uint32_t mask = window->event_mask;
 
@@ -64,7 +64,11 @@ wsi_window_configure(struct wsi_window *window)
             pending->extent.height = current->extent.height;
         }
 
-        resized = !wsi_extent_equal(current->extent, pending->extent);
+        if (window->configured) {
+            resized = !wsi_extent_equal(pending->extent, current->extent);
+        } else {
+            resized = true;
+        }
 
         current->extent = pending->extent;
     }
@@ -88,19 +92,15 @@ wsi_window_configure(struct wsi_window *window)
     bool rescaled = false;
     if (mask & WSI_XDG_EVENT_SCALE) {
         rescaled = pending->scale != current->scale;
-        if (rescaled) {
-            current->scale = pending->scale;
-            resized = true;
-        }
+        current->scale = pending->scale;
+        resized = true;
     }
 
     bool transformed = false;
     if (mask & WSI_XDG_EVENT_TRANSFORM) {
-        transformed = pending->transform != current->transform;
-        if (transformed) {
-            resized |= wsi_is_transform_a_resize(current->transform, pending->transform);
-            current->transform = pending->transform;
-        }
+        resized |= wsi_is_transform_a_resize(current->transform, pending->transform);
+        current->transform = pending->transform;
+        transformed = true;
     }
 
     window->event_mask = WSI_XDG_EVENT_NONE;
@@ -135,7 +135,7 @@ wsi_window_configure(struct wsi_window *window)
         WsiConfigureWindowEvent info = {
             .base.type = WSI_EVENT_TYPE_CONFIGURE_WINDOW,
             .base.flags = 0,
-            .base.serial = window->serial,
+            .base.serial = serial,
             .base.time = 0,
             .window = window,
             .extent = be,
@@ -159,11 +159,6 @@ wsi_window_configure(struct wsi_window *window)
 
     if (transformed && version >= WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION) {
         wl_surface_set_buffer_transform(window->wl_surface, current->transform);
-    }
-
-    if (window->serial != 0) {
-        xdg_surface_ack_configure(window->xdg_surface, window->serial);
-        window->serial = 0;
     }
 
     window->configured = true;
@@ -251,8 +246,10 @@ xdg_toplevel_decoration_v1_configure(
 {
     struct wsi_window *window = data;
 
-    window->event_mask |= WSI_XDG_EVENT_DECORATION;
-    window->pending.decoration = mode;
+    if (window->current.decoration != mode) {
+        window->event_mask |= WSI_XDG_EVENT_DECORATION;
+        window->pending.decoration = mode;
+    }
 }
 
 static const struct zxdg_toplevel_decoration_v1_listener xdg_toplevel_decoration_v1_listener = {
@@ -273,12 +270,7 @@ xdg_toplevel_configure(
 {
     struct wsi_window *window = data;
 
-    window->event_mask |= WSI_XDG_EVENT_EXTENT;
-    window->pending.extent.width = width;
-    window->pending.extent.height = height;
-
     enum wsi_xdg_state pending = WSI_XDG_STATE_NONE;
-
     uint32_t *state = NULL;
     wl_array_for_each(state, states) {
         switch (*state) {
@@ -309,8 +301,18 @@ xdg_toplevel_configure(
         }
     }
 
-    window->event_mask |= WSI_XDG_EVENT_STATE;
-    window->pending.state = pending;
+    if (window->current.extent.width != width ||
+        window->current.extent.height != height)
+    {
+        window->event_mask |= WSI_XDG_EVENT_EXTENT;
+        window->pending.extent.width = width;
+        window->pending.extent.height = height;
+    }
+
+    if (window->current.state != pending) {
+        window->event_mask |= WSI_XDG_EVENT_STATE;
+        window->pending.state = pending;
+    }
 }
 
 static void
@@ -338,9 +340,13 @@ xdg_toplevel_configure_bounds(
 {
     struct wsi_window *window = data;
 
-    window->event_mask |= WSI_XDG_EVENT_BOUNDS;
-    window->pending.bounds.width = max_width;
-    window->pending.bounds.height = max_height;
+    if (window->current.bounds.width != max_width ||
+        window->current.bounds.height != max_height)
+    {
+        window->event_mask |= WSI_XDG_EVENT_BOUNDS;
+        window->pending.bounds.width = max_width;
+        window->pending.bounds.height = max_height;
+    }
 }
 
 static void
@@ -352,7 +358,6 @@ xdg_toplevel_wm_capabilities(
     struct wsi_window *window = data;
 
     enum wsi_xdg_capabilities pending = WSI_XDG_CAPABILITIES_NONE;
-
     uint32_t *cap = NULL;
     wl_array_for_each(cap, capabilities) {
         switch (*cap) {
@@ -371,8 +376,10 @@ xdg_toplevel_wm_capabilities(
         }
     }
 
-    window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
-    window->pending.capabilities = pending;
+    if (window->current.capabilities != pending) {
+        window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
+        window->pending.capabilities = pending;
+    }
 }
 
 static const struct xdg_toplevel_listener xdg_toplevel_listener = {
@@ -390,8 +397,12 @@ static void
 xdg_surface_configure(void *data, struct xdg_surface *xdg_surface, uint32_t serial)
 {
     struct wsi_window *window = data;
-    window->serial = serial;
-    wsi_window_configure(window);
+
+    if (window->event_mask != WSI_XDG_EVENT_NONE) {
+        wsi_window_configure(window, serial);
+    }
+
+    xdg_surface_ack_configure(window->xdg_surface, serial);
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
@@ -410,11 +421,13 @@ wp_fractional_scale_v1_preferred_scale(
 {
     struct wsi_window *window = data;
 
-    window->event_mask |= WSI_XDG_EVENT_SCALE;
-    window->pending.scale = (int32_t)scale;
+    if (window->current.scale != (int32_t)scale) {
+        window->event_mask |= WSI_XDG_EVENT_SCALE;
+        window->pending.scale = (int32_t)scale;
 
-    if (window->configured) {
-        wsi_window_configure(window);
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
     }
 }
 
@@ -445,11 +458,14 @@ wl_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output *wl
         return;
     }
 
-    window->event_mask |= WSI_XDG_EVENT_SCALE;
-    window->pending.scale = wsi_window_calculate_output_max_scale(window);
+    int32_t scale = wsi_window_calculate_output_max_scale(window);
+    if (window->current.scale != scale) {
+        window->event_mask |= WSI_XDG_EVENT_SCALE;
+        window->pending.scale = wsi_window_calculate_output_max_scale(window);
 
-    if (window->configured) {
-        wsi_window_configure(window);
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
     }
 }
 
@@ -472,11 +488,14 @@ wl_surface_leave(void *data, struct wl_surface *wl_surface, struct wl_output *wl
         return;
     }
 
-    window->event_mask |= WSI_XDG_EVENT_SCALE;
-    window->pending.scale = wsi_window_calculate_output_max_scale(window);
+    int32_t scale = wsi_window_calculate_output_max_scale(window);
+    if (window->current.scale != scale) {
+        window->event_mask |= WSI_XDG_EVENT_SCALE;
+        window->pending.scale = wsi_window_calculate_output_max_scale(window);
 
-    if (window->configured) {
-        wsi_window_configure(window);
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
     }
 }
 
@@ -490,11 +509,13 @@ wl_surface_preferred_buffer_scale(void *data, struct wl_surface *wl_surface, int
         return;
     }
 
-    window->event_mask |= WSI_XDG_EVENT_SCALE;
-    window->pending.scale = factor;
+    if (window->current.scale != factor) {
+        window->event_mask |= WSI_XDG_EVENT_SCALE;
+        window->pending.scale = factor;
 
-    if (window->configured) {
-        wsi_window_configure(window);
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
     }
 }
 #endif
@@ -505,11 +526,13 @@ wl_surface_preferred_buffer_transform(void *data, struct wl_surface *wl_surface,
 {
     struct wsi_window *window = data;
 
-    window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
-    window->pending.transform = (int32_t)transform;
+    if (window->current.transform != (int32_t)transform) {
+        window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
+        window->pending.transform = (int32_t)transform;
 
-    if (window->configured) {
-        wsi_window_configure(window);
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
     }
 }
 #endif
@@ -545,29 +568,29 @@ wsi_window_inhibit_idling(struct wsi_window *window, bool enable)
 }
 
 static void
-wsi_window_set_initial_state(struct wsi_window *window, WsiExtent extent)
+wsi_window_init_state(struct wsi_window *window, WsiExtent extent)
 {
-    window->current.extent = extent;
-
-    window->event_mask |= WSI_XDG_EVENT_SCALE;
     if (window->wp_fractional_scale_v1) {
-        window->pending.scale = 120;
+        window->current.scale = 120;
     } else {
-        window->pending.scale = 1;
+        window->current.scale = 1;
     }
-
-    window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
-    window->pending.transform = WL_OUTPUT_TRANSFORM_NORMAL;
-
+    window->current.transform = WL_OUTPUT_TRANSFORM_NORMAL;
+    window->current.extent = extent;
+    window->current.state = WSI_XDG_STATE_NONE;
+    window->current.bounds.width = 0;
+    window->current.bounds.height = 0;
     if (xdg_toplevel_get_version(window->xdg_toplevel) <
         XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
     {
-        window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
-        window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
+        window->current.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
                                      | WSI_XDG_CAPABILITIES_MAXIMIZE
                                      | WSI_XDG_CAPABILITIES_FULLSCREEN
                                      | WSI_XDG_CAPABILITIES_MINIMIZE;
+    } else {
+        window->current.capabilities = WSI_XDG_CAPABILITIES_NONE;
     }
+    window->current.decoration = ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
 }
 
 static WsiResult
@@ -626,7 +649,7 @@ wsi_window_init(
         xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
     }
 
-    wsi_window_set_initial_state(window, info->extent);
+    wsi_window_init_state(window, info->extent);
 
     wl_surface_commit(window->wl_surface);
 

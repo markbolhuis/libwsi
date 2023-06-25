@@ -64,7 +64,6 @@ struct wsi_window {
     struct zxdg_toplevel_decoration_v1 *xdg_toplevel_decoration_v1;
 
     bool configured;
-    uint32_t serial;
 
     struct wl_list output_list;
 

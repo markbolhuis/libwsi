@@ -1241,12 +1241,8 @@ static void
 demo_configure_window(void *pUserData, const WsiConfigureWindowEvent *pEvent)
 {
     struct demo *demo = pUserData;
-    if (demo->window_extent.width != pEvent->extent.width ||
-        demo->window_extent.height != pEvent->extent.height)
-    {
-        demo->window_extent = pEvent->extent;
-        demo->resized = true;
-    }
+    demo->window_extent = pEvent->extent;
+    demo->resized = true;
 }
 
 static void
