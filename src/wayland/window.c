@@ -333,7 +333,8 @@ xdg_toplevel_configure(
     }
 
     if (window->current.extent.width != width ||
-        window->current.extent.height != height)
+        window->current.extent.height != height ||
+        !window->configured)
     {
         window->event_mask |= WSI_XDG_EVENT_EXTENT;
         window->pending.extent.width = width;
