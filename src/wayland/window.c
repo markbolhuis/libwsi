@@ -50,7 +50,7 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
 static void
 wsi_window_configure(struct wsi_window *window, uint32_t serial)
 {
-    uint32_t mask = window->event_mask;
+    enum wsi_xdg_event mask = window->event_mask;
 
     struct wsi_window_state *pending = &window->pending;
     struct wsi_window_state *current = &window->current;
