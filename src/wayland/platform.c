@@ -367,7 +367,7 @@ wl_registry_global_remove(
 
     struct wsi_seat *seat, *seat_tmp;
     wl_list_for_each_safe(seat, seat_tmp, &platform->seat_list, link) {
-        if (seat->global.name== name) {
+        if (seat->global.name == name) {
             wsi_seat_remove(seat);
             return;
         }
@@ -375,118 +375,70 @@ wl_registry_global_remove(
 
     struct wsi_output *output, *output_tmp;
     wl_list_for_each_safe(output, output_tmp, &platform->output_list, link) {
-        if (name == output->global.name) {
+        if (output->global.name == name) {
             wsi_output_destroy(output);
             return;
         }
     }
 
-    struct wsi_global *global;
-
-    global = wp_viewporter_get_user_data(platform->wp_viewporter);
-    if (global->name == name) {
-        wp_viewporter_destroy(platform->wp_viewporter);
-        platform->wp_viewporter = NULL;
-        wsi_global_destroy(global);
-        return;
+#define WSI_GLOBAL_REMOVE(ident) \
+    if (platform->ident != NULL) { \
+        struct wsi_global *global = ident##_get_user_data(platform->ident); \
+        if (global->name == name) { \
+            ident##_destroy(platform->ident); \
+            platform->ident = NULL;  \
+            wsi_global_destroy(global); \
+            return; \
+        } \
     }
 
-    global = wp_fractional_scale_manager_v1_get_user_data(platform->wp_fractional_scale_manager_v1);
-    if (global->name == name) {
-        wp_fractional_scale_manager_v1_destroy(platform->wp_fractional_scale_manager_v1);
-        platform->wp_fractional_scale_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
+#define ZWSI_GLOBAL_REMOVE(ident) \
+    if (platform->ident != NULL) { \
+        struct wsi_global *global = z##ident##_get_user_data(platform->ident); \
+        if (global->name == name) { \
+            z##ident##_destroy(platform->ident); \
+            platform->ident = NULL;  \
+            wsi_global_destroy(global); \
+            return; \
+        } \
     }
 
-    global = zwp_input_timestamps_manager_v1_get_user_data(platform->wp_input_timestamps_manager_v1);
-    if (global->name == name) {
-        zwp_input_timestamps_manager_v1_destroy(platform->wp_input_timestamps_manager_v1);
-        platform->wp_input_timestamps_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
+    WSI_GLOBAL_REMOVE(wp_viewporter)
+    WSI_GLOBAL_REMOVE(wp_fractional_scale_manager_v1)
+    WSI_GLOBAL_REMOVE(ext_idle_notifier_v1)
+
+    ZWSI_GLOBAL_REMOVE(wp_input_timestamps_manager_v1)
+    ZWSI_GLOBAL_REMOVE(wp_relative_pointer_manager_v1)
+    ZWSI_GLOBAL_REMOVE(wp_pointer_constraints_v1)
+    ZWSI_GLOBAL_REMOVE(wp_keyboard_shortcuts_inhibit_manager_v1)
+    ZWSI_GLOBAL_REMOVE(wp_idle_inhibit_manager_v1)
+    ZWSI_GLOBAL_REMOVE(xdg_decoration_manager_v1)
+    ZWSI_GLOBAL_REMOVE(xdg_output_manager_v1)
+
+#undef WSI_GLOBAL_REMOVE
+#undef ZWSI_GLOBAL_REMOVE
+
+    // TODO: Remove temporary aborts and implement proper platform invalidation
+
+    if (platform->xdg_wm_base != NULL) {
+        struct wsi_global *global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
+        if (global->name == name) {
+            abort();
+        }
     }
 
-    global = zwp_relative_pointer_manager_v1_get_user_data(platform->wp_relative_pointer_manager_v1);
-    if (global->name == name) {
-        zwp_relative_pointer_manager_v1_destroy(platform->wp_relative_pointer_manager_v1);
-        platform->wp_relative_pointer_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
+    if (platform->wl_compositor != NULL) {
+        struct wsi_global *global = wl_compositor_get_user_data(platform->wl_compositor);
+        if (global->name == name) {
+            abort();
+        }
     }
 
-    global = zwp_pointer_constraints_v1_get_user_data(platform->wp_pointer_constraints_v1);
-    if (global->name == name) {
-        zwp_pointer_constraints_v1_destroy(platform->wp_pointer_constraints_v1);
-        platform->wp_pointer_constraints_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = zwp_keyboard_shortcuts_inhibit_manager_v1_get_user_data(platform->wp_keyboard_shortcuts_inhibit_manager_v1);
-    if (global->name == name) {
-        zwp_keyboard_shortcuts_inhibit_manager_v1_destroy(platform->wp_keyboard_shortcuts_inhibit_manager_v1);
-        platform->wp_keyboard_shortcuts_inhibit_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = zwp_idle_inhibit_manager_v1_get_user_data(platform->wp_idle_inhibit_manager_v1);
-    if (global->name == name) {
-        zwp_idle_inhibit_manager_v1_destroy(platform->wp_idle_inhibit_manager_v1);
-        platform->wp_idle_inhibit_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = zxdg_decoration_manager_v1_get_user_data(
-        platform->xdg_decoration_manager_v1);
-    if (global->name == name) {
-        zxdg_decoration_manager_v1_destroy(platform->xdg_decoration_manager_v1);
-        platform->xdg_decoration_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = zxdg_output_manager_v1_get_user_data(
-        platform->xdg_output_manager_v1);
-    if (global->name == name) {
-        zxdg_output_manager_v1_destroy(platform->xdg_output_manager_v1);
-        platform->xdg_output_manager_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = ext_idle_notifier_v1_get_user_data(platform->ext_idle_notifier_v1);
-    if (global->name == name) {
-        ext_idle_notifier_v1_destroy(platform->ext_idle_notifier_v1);
-        platform->ext_idle_notifier_v1 = NULL;
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = xdg_wm_base_get_user_data(platform->xdg_wm_base);
-    if (global->name == name) {
-        // TODO: Trigger a shutdown
-        xdg_wm_base_destroy(platform->xdg_wm_base);
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = wl_compositor_get_user_data(platform->wl_compositor);
-    if (global->name == name) {
-        // TODO: Trigger a shutdown
-        wl_compositor_destroy(platform->wl_compositor);
-        wsi_global_destroy(global);
-        return;
-    }
-
-    global = wl_shm_get_user_data(platform->wl_shm);
-    if (global->name == name) {
-        // TODO: Trigger a shutdown
-        wl_shm_destroy(platform->wl_shm);
-        wsi_global_destroy(global);
-        return;
+    if (platform->wl_shm != NULL) {
+        struct wsi_global *global = wl_shm_get_user_data(platform->wl_shm);
+        if (global->name == name) {
+            abort();
+        }
     }
 }
 
@@ -529,11 +481,10 @@ wsi_platform_init(const WsiPlatformCreateInfo *info, struct wsi_platform *platfo
 
     wl_display_roundtrip(platform->wl_display);
 
-    if (!platform->wl_compositor) {
-        result = WSI_ERROR_PLATFORM;
-        goto err_globals;
-    }
-    if (!platform->wl_shm) {
+    if (!platform->wl_compositor ||
+        !platform->wl_shm ||
+        !platform->xdg_wm_base)
+    {
         result = WSI_ERROR_PLATFORM;
         goto err_globals;
     }
