@@ -128,20 +128,20 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
         platform->name = NULL; \
     }
 
-    WSI_GLOBAL_DESTROY(wl_compositor);
-    WSI_GLOBAL_DESTROY(wl_shm);
-    WSI_GLOBAL_DESTROY(wp_viewporter);
-    WSI_GLOBAL_DESTROY(wp_fractional_scale_manager_v1);
-    WSI_GLOBAL_DESTROY(xdg_wm_base);
-    WSI_GLOBAL_DESTROY(ext_idle_notifier_v1);
+    WSI_GLOBAL_DESTROY(wl_compositor)
+    WSI_GLOBAL_DESTROY(wl_shm)
+    WSI_GLOBAL_DESTROY(wp_viewporter)
+    WSI_GLOBAL_DESTROY(wp_fractional_scale_manager_v1)
+    WSI_GLOBAL_DESTROY(xdg_wm_base)
+    WSI_GLOBAL_DESTROY(ext_idle_notifier_v1)
 
-    ZWSI_GLOBAL_DESTROY(wp_input_timestamps_manager_v1);
-    ZWSI_GLOBAL_DESTROY(wp_relative_pointer_manager_v1);
-    ZWSI_GLOBAL_DESTROY(wp_pointer_constraints_v1);
-    ZWSI_GLOBAL_DESTROY(wp_keyboard_shortcuts_inhibit_manager_v1);
-    ZWSI_GLOBAL_DESTROY(wp_idle_inhibit_manager_v1);
-    ZWSI_GLOBAL_DESTROY(xdg_decoration_manager_v1);
-    ZWSI_GLOBAL_DESTROY(xdg_output_manager_v1);
+    ZWSI_GLOBAL_DESTROY(wp_input_timestamps_manager_v1)
+    ZWSI_GLOBAL_DESTROY(wp_relative_pointer_manager_v1)
+    ZWSI_GLOBAL_DESTROY(wp_pointer_constraints_v1)
+    ZWSI_GLOBAL_DESTROY(wp_keyboard_shortcuts_inhibit_manager_v1)
+    ZWSI_GLOBAL_DESTROY(wp_idle_inhibit_manager_v1)
+    ZWSI_GLOBAL_DESTROY(xdg_decoration_manager_v1)
+    ZWSI_GLOBAL_DESTROY(xdg_output_manager_v1)
 
 #undef WSI_GLOBAL_DESTROY
 #undef ZWSI_GLOBAL_DESTROY
