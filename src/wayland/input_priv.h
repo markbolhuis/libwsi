@@ -11,10 +11,8 @@ enum wsi_wl_pointer_event {
     WSI_WL_POINTER_EVENT_BUTTON = 8,
     WSI_WL_POINTER_EVENT_AXIS_SOURCE = 16,
     WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 32,
-    WSI_WL_POINTER_EVENT_LOCKED = 64,
-    WSI_WL_POINTER_EVENT_UNLOCKED = 128,
-    WSI_WL_POINTER_EVENT_CONFINED = 256,
-    WSI_WL_POINTER_EVENT_UNCONFINED = 512,
+    WSI_WL_POINTER_EVENT_LOCK = 64,
+    WSI_WL_POINTER_EVENT_CONFINE = 128,
 };
 
 enum wsi_wl_axis_event {
@@ -43,6 +41,9 @@ struct wsi_pointer_frame {
     double dy;
     double udx;
     double udy;
+
+    bool locked;
+    bool confined;
 
     uint32_t axis_source;
     struct {

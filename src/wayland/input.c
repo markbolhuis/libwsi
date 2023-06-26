@@ -108,7 +108,8 @@ wp_pointer_locked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LOCKED;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LOCK;
+    pointer->frame.locked = true;
 
     wsi_pointer_frame(pointer);
 }
@@ -118,7 +119,8 @@ wp_pointer_unlocked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_UNLOCKED;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LOCK;
+    pointer->frame.locked = false;
 
     if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
         zwp_locked_pointer_v1_destroy(pointer->wp_locked_v1);
@@ -143,7 +145,8 @@ wp_pointer_confined(void *data, struct zwp_confined_pointer_v1 *wp_confined_poin
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_CONFINED;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_CONFINE;
+    pointer->frame.confined = true;
 
     wsi_pointer_frame(pointer);
 }
@@ -153,7 +156,8 @@ wp_pointer_unconfined(void *data, struct zwp_confined_pointer_v1 *wp_confined_po
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_UNCONFINED;
+    pointer->frame.mask |= WSI_WL_POINTER_EVENT_CONFINE;
+    pointer->frame.confined = false;
 
     if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
         zwp_confined_pointer_v1_destroy(pointer->wp_confined_v1);
