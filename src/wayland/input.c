@@ -21,18 +21,6 @@
 
 const uint32_t WSI_WL_SEAT_VERSION = 7;
 
-static struct wsi_seat *
-wsi_seat_find(struct wsi_platform *platform, uint64_t id)
-{
-    struct wsi_seat *seat;
-    wl_list_for_each(seat, &platform->seat_list, link) {
-        if (seat->global.id == id) {
-            return seat;
-        }
-    }
-    return NULL;
-}
-
 static void
 wsi_pointer_set_cursor_image(
     struct wsi_pointer *ptr,
@@ -972,6 +960,18 @@ wsi_seat_uninit(struct wsi_seat *seat)
         wl_seat_destroy(seat->wl_seat);
     }
     seat->wl_seat = NULL;
+}
+
+static struct wsi_seat *
+wsi_seat_find(struct wsi_platform *platform, uint64_t id)
+{
+    struct wsi_seat *seat;
+    wl_list_for_each(seat, &platform->seat_list, link) {
+        if (seat->global.id == id) {
+            return seat;
+        }
+    }
+    return NULL;
 }
 
 struct wsi_seat *
