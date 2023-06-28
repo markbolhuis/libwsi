@@ -16,14 +16,7 @@
 WsiResult
 wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)
 {
-    EGLAttrib attrib[] = {
-        EGL_NONE,
-    };
-
-    *pDisplay = eglGetPlatformDisplay(
-        EGL_PLATFORM_WAYLAND_KHR,
-        platform->wl_display,
-        attrib);
+    *pDisplay = eglGetPlatformDisplay(EGL_PLATFORM_WAYLAND_KHR, platform->wl_display, NULL);
     if (*pDisplay == EGL_NO_DISPLAY) {
         return WSI_ERROR_EGL;
     }
@@ -53,21 +46,7 @@ wsiCreateWindowEGLSurface(
         return WSI_ERROR_OUT_OF_MEMORY;
     }
 
-    if (wl_surface_get_version(window->wl_surface) >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION &&
-        window->wp_fractional_scale_v1 == NULL)
-    {
-        wl_surface_set_buffer_scale(window->wl_surface, window->current.scale);
-    }
-
-    EGLAttrib attrs[] = {
-        EGL_NONE,
-    };
-
-    *pSurface = eglCreatePlatformWindowSurface(
-        dpy,
-        config,
-        window->wl_egl_window,
-        attrs);
+    *pSurface = eglCreatePlatformWindowSurface(dpy, config, window->wl_egl_window, NULL);
     if (*pSurface == EGL_NO_SURFACE) {
         return WSI_ERROR_EGL;
     }
