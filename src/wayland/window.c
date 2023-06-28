@@ -19,25 +19,23 @@
 static inline bool
 wsi_is_transform_vertical(int32_t transform)
 {
-    return transform == WL_OUTPUT_TRANSFORM_90 ||
-           transform == WL_OUTPUT_TRANSFORM_270 ||
-           transform == WL_OUTPUT_TRANSFORM_FLIPPED_90 ||
-           transform == WL_OUTPUT_TRANSFORM_FLIPPED_270;
+    return (transform & WL_OUTPUT_TRANSFORM_90) == WL_OUTPUT_TRANSFORM_90;
 }
 
 static inline bool
 wsi_is_transform_a_resize(int32_t before, int32_t after)
 {
-    bool vert_before = wsi_is_transform_vertical(before);
-    bool vert_after = wsi_is_transform_vertical(after);
-
-    return vert_before |= vert_after;
+    return ((before ^ after) & WL_OUTPUT_TRANSFORM_90) == WL_OUTPUT_TRANSFORM_90;
 }
 
 WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
     WsiExtent extent = window->current.extent;
+    if (wsi_is_transform_vertical(window->current.transform)) {
+        extent.width = window->current.extent.height;
+        extent.height = window->current.extent.width;
+    }
     extent.width *= window->current.scale;
     extent.height *= window->current.scale;
     if (window->wp_fractional_scale_v1) {
@@ -45,6 +43,12 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
         extent.height = div_round(extent.height, 120);
     }
     return extent;
+}
+
+WsiExtent
+wsi_window_get_surface_extent(struct wsi_window *window)
+{
+    return window->current.extent;
 }
 
 static void
@@ -91,8 +95,8 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
 
     bool rescaled = false;
     if (mask & WSI_XDG_EVENT_SCALE) {
-        rescaled = pending->scale != current->scale;
         current->scale = pending->scale;
+        rescaled = true;
         resized = true;
     }
 
@@ -107,29 +111,16 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
 
     if (resized) {
         WsiExtent be = wsi_window_get_buffer_extent(window);
+        WsiExtent se = wsi_window_get_surface_extent(window);
 
         if (window->api == WSI_API_EGL) {
             assert(window->wl_egl_window != NULL);
-            if (wsi_is_transform_vertical(current->transform)) {
-                wl_egl_window_resize(window->wl_egl_window, be.height, be.width, 0, 0);
-            } else {
-                wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
-            }
+            wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
         }
 
         if (window->wp_fractional_scale_v1) {
             assert(window->wp_viewport != NULL);
-
-            wp_viewport_set_source(
-                window->wp_viewport,
-                wl_fixed_from_int(0),
-                wl_fixed_from_int(0),
-                wl_fixed_from_int(be.width),
-                wl_fixed_from_int(be.height));
-            wp_viewport_set_destination(
-                window->wp_viewport,
-                current->extent.width,
-                current->extent.height);
+            wp_viewport_set_destination(window->wp_viewport, se.width, se.height);
         }
 
         WsiConfigureWindowEvent info = {
@@ -140,11 +131,6 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
             .window = window,
             .extent = be,
         };
-
-        if (wsi_is_transform_vertical(current->transform)) {
-            info.extent.width = be.height;
-            info.extent.height = be.width;
-        }
 
         window->pfn_configure(window->user_data, &info);
     }

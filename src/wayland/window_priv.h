@@ -82,4 +82,7 @@ wsi_window_handle_output_destroyed(struct wsi_window *w, struct wsi_output *o);
 WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window);
 
+WsiExtent
+wsi_window_get_surface_extent(struct wsi_window *window);
+
 #endif
