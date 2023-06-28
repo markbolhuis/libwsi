@@ -552,17 +552,18 @@ wsi_window_init_state(struct wsi_window *window, WsiExtent extent)
     window->current.state = WSI_XDG_STATE_NONE;
     window->current.bounds.width = 0;
     window->current.bounds.height = 0;
+    window->current.capabilities = WSI_XDG_CAPABILITIES_NONE;
+    window->current.decoration = ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
+
     if (xdg_toplevel_get_version(window->xdg_toplevel) <
         XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
     {
-        window->current.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
+        window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
+        window->pending.capabilities = WSI_XDG_CAPABILITIES_WINDOW_MENU
                                      | WSI_XDG_CAPABILITIES_MAXIMIZE
                                      | WSI_XDG_CAPABILITIES_FULLSCREEN
                                      | WSI_XDG_CAPABILITIES_MINIMIZE;
-    } else {
-        window->current.capabilities = WSI_XDG_CAPABILITIES_NONE;
     }
-    window->current.decoration = ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
 }
 
 static WsiResult
