@@ -228,7 +228,13 @@ wl_registry_global(
     struct wsi_platform *platform = data;
     assert(platform->wl_registry = wl_registry);
 
-    if (strcmp(interface, wl_compositor_interface.name) == 0) {
+#define WSI_MATCH(ident) \
+    ((strcmp(interface, ident##_interface.name) == 0) && (platform->ident == NULL))
+
+#define ZWSI_MATCH(ident) \
+    ((strcmp(interface, z##ident##_interface.name) == 0) && (platform->ident == NULL))
+
+    if WSI_MATCH(wl_compositor) {
         platform->wl_compositor = wsi_global_bind(
             platform,
             name,
@@ -237,7 +243,7 @@ wl_registry_global(
             version,
             WSI_WL_COMPOSITOR_VERSION);
     }
-    else if (strcmp(interface, wl_shm_interface.name) == 0) {
+    else if WSI_MATCH(wl_shm) {
         platform->wl_shm = wsi_global_bind(
             platform,
             name,
@@ -252,7 +258,7 @@ wl_registry_global(
     else if (strcmp(interface, wl_output_interface.name) == 0) {
         wsi_output_bind(platform, name, version);
     }
-    else if (strcmp(interface, wp_viewporter_interface.name) == 0) {
+    else if WSI_MATCH(wp_viewporter) {
         platform->wp_viewporter = wsi_global_bind(
             platform,
             name,
@@ -261,7 +267,7 @@ wl_registry_global(
             version,
             WSI_WP_VIEWPORTER_VERSION);
     }
-    else if (strcmp(interface, wp_fractional_scale_manager_v1_interface.name) == 0) {
+    else if WSI_MATCH(wp_fractional_scale_manager_v1) {
         platform->wp_fractional_scale_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -270,7 +276,7 @@ wl_registry_global(
             version,
             WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION);
     }
-    else if (strcmp(interface, zwp_input_timestamps_manager_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(wp_input_timestamps_manager_v1) {
         platform->wp_input_timestamps_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -279,7 +285,7 @@ wl_registry_global(
             version,
             WSI_WP_INPUT_TIMESTAMPS_MANAGER_V1_VERSION);
     }
-    else if (strcmp(interface, zwp_relative_pointer_manager_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(wp_relative_pointer_manager_v1) {
         platform->wp_relative_pointer_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -288,7 +294,7 @@ wl_registry_global(
             version,
             WSI_WP_RELATIVE_POINTER_MANAGER_V1_VERSION);
     }
-    else if (strcmp(interface, zwp_pointer_constraints_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(wp_pointer_constraints_v1) {
         platform->wp_pointer_constraints_v1 = wsi_global_bind(
             platform,
             name,
@@ -297,7 +303,7 @@ wl_registry_global(
             version,
             WSI_WP_POINTER_CONSTRAINTS_V1_VERSION);
     }
-    else if (strcmp(interface, zwp_keyboard_shortcuts_inhibit_manager_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(wp_keyboard_shortcuts_inhibit_manager_v1) {
         platform->wp_keyboard_shortcuts_inhibit_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -306,7 +312,7 @@ wl_registry_global(
             version,
             WSI_WP_KEYBOARD_SHORTCUTS_INHIBIT_MANAGER_V1_VERSION);
     }
-    else if (strcmp(interface, zwp_idle_inhibit_manager_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(wp_idle_inhibit_manager_v1) {
         platform->wp_idle_inhibit_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -315,7 +321,7 @@ wl_registry_global(
             version,
             WSI_WP_IDLE_INHIBIT_MANAGER_V1_VERSION);
     }
-    else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
+    else if WSI_MATCH(xdg_wm_base) {
         platform->xdg_wm_base = wsi_global_bind(
             platform,
             name,
@@ -324,7 +330,7 @@ wl_registry_global(
             version,
             WSI_XDG_WM_BASE_VERSION);
     }
-    else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(xdg_decoration_manager_v1) {
         platform->xdg_decoration_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -333,7 +339,7 @@ wl_registry_global(
             version,
             WSI_XDG_DECORATION_MANAGER_V1_VERSION);
     }
-    else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+    else if ZWSI_MATCH(xdg_output_manager_v1) {
         platform->xdg_output_manager_v1 = wsi_global_bind(
             platform,
             name,
@@ -345,7 +351,7 @@ wl_registry_global(
             wsi_output_init_xdg_all(platform);
         }
     }
-    else if (strcmp(interface, ext_idle_notifier_v1_interface.name) == 0) {
+    else if WSI_MATCH(ext_idle_notifier_v1) {
         platform->ext_idle_notifier_v1 = wsi_global_bind(
             platform,
             name,
@@ -354,6 +360,9 @@ wl_registry_global(
             version,
             WSI_EXT_IDLE_NOTIFICATION_V1_VERSION);
     }
+
+#undef WSI_MATCH
+#undef ZWSI_MATCH
 }
 
 static void
