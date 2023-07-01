@@ -31,10 +31,11 @@ wsi_is_transform_a_resize(int32_t before, int32_t after)
 WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
-    WsiExtent extent = window->current.extent;
+    WsiExtent extent = wsi_window_get_surface_extent(window);
     if (wsi_is_transform_vertical(window->current.transform)) {
-        extent.width = window->current.extent.height;
-        extent.height = window->current.extent.width;
+        int32_t tmp = extent.width;
+        extent.width = extent.height;
+        extent.height = tmp;
     }
     extent.width *= window->current.scale;
     extent.height *= window->current.scale;
