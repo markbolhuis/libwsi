@@ -69,12 +69,7 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
             pending->extent.height = current->extent.height;
         }
 
-        if (window->configured) {
-            resized = !wsi_extent_equal(pending->extent, current->extent);
-        } else {
-            resized = true;
-        }
-
+        resized = !wsi_extent_equal(pending->extent, current->extent);
         current->extent = pending->extent;
     }
 
@@ -110,7 +105,7 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
 
     window->event_mask = WSI_XDG_EVENT_NONE;
 
-    if (resized) {
+    if (resized || !window->configured) {
         WsiExtent be = wsi_window_get_buffer_extent(window);
         WsiExtent se = wsi_window_get_surface_extent(window);
 
@@ -148,7 +143,6 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
         wl_surface_set_buffer_transform(window->wl_surface, current->transform);
     }
 
-    window->configured = true;
 }
 
 // region Output
@@ -320,8 +314,7 @@ xdg_toplevel_configure(
     }
 
     if (window->current.extent.width != width ||
-        window->current.extent.height != height ||
-        !window->configured)
+        window->current.extent.height != height)
     {
         window->event_mask |= WSI_XDG_EVENT_EXTENT;
         window->pending.extent.width = width;
@@ -417,11 +410,12 @@ xdg_surface_configure(void *data, struct xdg_surface *xdg_surface, uint32_t seri
 {
     struct wsi_window *window = data;
 
-    if (window->event_mask != WSI_XDG_EVENT_NONE) {
+    if (window->event_mask != WSI_XDG_EVENT_NONE || !window->configured) {
         wsi_window_configure(window, serial);
     }
 
     xdg_surface_ack_configure(window->xdg_surface, serial);
+    window->configured = true;
 }
 
 static const struct xdg_surface_listener xdg_surface_listener = {
