@@ -543,7 +543,7 @@ wsi_window_set_content_type(struct wsi_window *window, uint32_t type)
 }
 
 static void
-wsi_window_init_state(struct wsi_window *window, WsiExtent extent)
+wsi_window_init_state(struct wsi_window *window, const WsiWindowCreateInfo *info)
 {
     if (window->wp_fractional_scale_v1) {
         window->current.scale = 120;
@@ -551,7 +551,7 @@ wsi_window_init_state(struct wsi_window *window, WsiExtent extent)
         window->current.scale = 1;
     }
     window->current.transform = WL_OUTPUT_TRANSFORM_NORMAL;
-    window->current.extent = extent;
+    window->current.extent = info->extent;
     window->current.state = WSI_XDG_STATE_NONE;
     window->current.bounds.width = 0;
     window->current.bounds.height = 0;
@@ -566,6 +566,15 @@ wsi_window_init_state(struct wsi_window *window, WsiExtent extent)
                                      | WSI_XDG_CAPABILITIES_MAXIMIZE
                                      | WSI_XDG_CAPABILITIES_FULLSCREEN
                                      | WSI_XDG_CAPABILITIES_MINIMIZE;
+    }
+
+    if (info->pTitle != NULL) {
+        xdg_toplevel_set_title(window->xdg_toplevel, info->pTitle);
+    }
+
+    if (info->parent != NULL) {
+        window->parent = info->parent;
+        xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
     }
 }
 
@@ -624,15 +633,7 @@ wsi_window_init(
             window->wl_surface);
     }
 
-    xdg_toplevel_set_title(window->xdg_toplevel, info->pTitle);
-
-    if (info->parent != NULL) {
-        window->parent = info->parent;
-        xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
-    }
-
-    wsi_window_init_state(window, info->extent);
-
+    wsi_window_init_state(window, info);
     wl_surface_commit(window->wl_surface);
 
     int ret = 0;
