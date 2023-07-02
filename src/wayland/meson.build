@@ -22,6 +22,7 @@ wl_xmls = [
   wl_mod.find_protocol('pointer-constraints', state : 'unstable', version : 1),
   wl_mod.find_protocol('keyboard-shortcuts-inhibit', state : 'unstable', version : 1),
   wl_mod.find_protocol('idle-inhibit', state : 'unstable', version : 1),
+  wl_mod.find_protocol('content-type', state : 'staging', version : 1),
   wl_mod.find_protocol('xdg-shell'),
   wl_mod.find_protocol('xdg-output', state : 'unstable', version : 1),
   wl_mod.find_protocol('xdg-decoration', state : 'unstable', version : 1),

@@ -7,6 +7,7 @@
 #include <wayland-egl-core.h>
 #include <viewporter-client-protocol.h>
 #include <fractional-scale-v1-client-protocol.h>
+#include <content-type-v1-client-protocol.h>
 #include <idle-inhibit-unstable-v1-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
@@ -535,6 +536,13 @@ wsi_window_inhibit_idling(struct wsi_window *window, bool enable)
 }
 
 static void
+wsi_window_set_content_type(struct wsi_window *window, uint32_t type)
+{
+    assert(window->wp_content_type_v1 != NULL);
+    wp_content_type_v1_set_content_type(window->wp_content_type_v1, type);
+}
+
+static void
 wsi_window_init_state(struct wsi_window *window, WsiExtent extent)
 {
     if (window->wp_fractional_scale_v1) {
@@ -608,6 +616,12 @@ wsi_window_init(
             window->xdg_toplevel_decoration_v1,
             &xdg_toplevel_decoration_v1_listener,
             window);
+    }
+
+    if (platform->wp_content_type_manager_v1) {
+        window->wp_content_type_v1 = wp_content_type_manager_v1_get_surface_content_type(
+            platform->wp_content_type_manager_v1,
+            window->wl_surface);
     }
 
     xdg_toplevel_set_title(window->xdg_toplevel, info->pTitle);

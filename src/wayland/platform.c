@@ -12,6 +12,7 @@
 #include <pointer-constraints-unstable-v1-client-protocol.h>
 #include <keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h>
 #include <idle-inhibit-unstable-v1-client-protocol.h>
+#include <content-type-v1-client-protocol.h>
 #include <xdg-shell-client-protocol.h>
 #include <xdg-output-unstable-v1-client-protocol.h>
 #include <xdg-decoration-unstable-v1-client-protocol.h>
@@ -32,6 +33,7 @@ const uint32_t WSI_WP_RELATIVE_POINTER_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_POINTER_CONSTRAINTS_V1_VERSION = 1;
 const uint32_t WSI_WP_KEYBOARD_SHORTCUTS_INHIBIT_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_IDLE_INHIBIT_MANAGER_V1_VERSION = 1;
+const uint32_t WSI_WP_CONTENT_TYPE_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_XDG_WM_BASE_VERSION = 5;
 const uint32_t WSI_XDG_OUTPUT_MANAGER_V1_VERSION = 3;
 const uint32_t WSI_XDG_DECORATION_MANAGER_V1_VERSION = 1;
@@ -132,6 +134,7 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
     WSI_GLOBAL_DESTROY(wl_shm)
     WSI_GLOBAL_DESTROY(wp_viewporter)
     WSI_GLOBAL_DESTROY(wp_fractional_scale_manager_v1)
+    WSI_GLOBAL_DESTROY(wp_content_type_manager_v1);
     WSI_GLOBAL_DESTROY(xdg_wm_base)
     WSI_GLOBAL_DESTROY(ext_idle_notifier_v1)
 
@@ -321,6 +324,15 @@ wl_registry_global(
             version,
             WSI_WP_IDLE_INHIBIT_MANAGER_V1_VERSION);
     }
+    else if WSI_MATCH(wp_content_type_manager_v1) {
+        platform->wp_content_type_manager_v1 = wsi_global_bind(
+            platform,
+            name,
+            &wp_content_type_manager_v1_interface,
+            NULL,
+            version,
+            WSI_WP_CONTENT_TYPE_MANAGER_V1_VERSION);
+    }
     else if WSI_MATCH(xdg_wm_base) {
         platform->xdg_wm_base = wsi_global_bind(
             platform,
@@ -414,6 +426,7 @@ wl_registry_global_remove(
 
     WSI_GLOBAL_REMOVE(wp_viewporter)
     WSI_GLOBAL_REMOVE(wp_fractional_scale_manager_v1)
+    WSI_GLOBAL_REMOVE(wp_content_type_manager_v1)
     WSI_GLOBAL_REMOVE(ext_idle_notifier_v1)
 
     ZWSI_GLOBAL_REMOVE(wp_input_timestamps_manager_v1)

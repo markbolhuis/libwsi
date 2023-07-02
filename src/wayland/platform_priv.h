@@ -31,6 +31,7 @@ struct wsi_platform {
     struct zwp_pointer_constraints_v1 *wp_pointer_constraints_v1;
     struct zwp_keyboard_shortcuts_inhibit_manager_v1 *wp_keyboard_shortcuts_inhibit_manager_v1;
     struct zwp_idle_inhibit_manager_v1 *wp_idle_inhibit_manager_v1;
+    struct wp_content_type_manager_v1 *wp_content_type_manager_v1;
     struct xdg_wm_base *xdg_wm_base;
     struct zxdg_decoration_manager_v1 *xdg_decoration_manager_v1;
     struct zxdg_output_manager_v1 *xdg_output_manager_v1;
