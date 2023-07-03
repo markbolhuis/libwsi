@@ -33,20 +33,20 @@ typedef enum WsiResult {
     WSI_ERROR_SEAT_IN_USE = -11,
     WSI_ERROR_UNINITIALIZED = -12,
     WSI_ERROR_WINDOW_IN_USE = -13,
-    WSI_ERROR_ENUM_MAX = 0x7fffffff,
+    WSI_RESULT_ENUM_MAX = INT32_MAX,
 } WsiResult;
 
 typedef enum WsiStructureType {
     WSI_STRUCTURE_TYPE_PLATFORM_CREATE_INFO = 0,
     WSI_STRUCTURE_TYPE_ACQUIRE_SEAT_INFO = 1,
     WSI_STRUCTURE_TYPE_WINDOW_CREATE_INFO = 2,
-    WSI_STRUCTURE_TYPE_ENUM_MAX = 0x7fffffff,
+    WSI_STRUCTURE_TYPE_ENUM_MAX = UINT32_MAX,
 } WsiStructureType;
 
 typedef enum WsiEventType {
     WSI_EVENT_TYPE_CLOSE_WINDOW = 1,
     WSI_EVENT_TYPE_CONFIGURE_WINDOW = 2,
-    WSI_EVENT_TYPE_MAX = 0x7fffffff,
+    WSI_EVENT_TYPE_ENUM_MAX = UINT32_MAX,
 } WsiEventType;
 
 typedef struct WsiExtent {
