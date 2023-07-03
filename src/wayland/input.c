@@ -60,13 +60,13 @@ wsi_pointer_set_cursor(
 static void
 wsi_pointer_frame(struct wsi_pointer *pointer)
 {
-    if (pointer->frame.mask & WSI_WL_POINTER_EVENT_ENTER) {
+    if (pointer->frame.mask & WSI_POINTER_FRAME_EVENT_ENTER) {
         wsi_pointer_set_cursor(pointer, "left_ptr", pointer->frame.serial);
     }
 
-    pointer->frame.mask = WSI_WL_POINTER_EVENT_NONE;
-    pointer->frame.axes[0].mask = WSI_WL_AXIS_EVENT_NONE;
-    pointer->frame.axes[1].mask = WSI_WL_AXIS_EVENT_NONE;
+    pointer->frame.mask = WSI_POINTER_FRAME_EVENT_NONE;
+    pointer->frame.axes[0].mask = WSI_POINTER_FRAME_AXIS_EVENT_NONE;
+    pointer->frame.axes[1].mask = WSI_POINTER_FRAME_AXIS_EVENT_NONE;
 }
 
 // region Wp Pointer Timestamp
@@ -96,7 +96,7 @@ wp_pointer_locked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LOCK;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_LOCK;
     pointer->frame.locked = true;
 
     wsi_pointer_frame(pointer);
@@ -107,7 +107,7 @@ wp_pointer_unlocked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LOCK;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_LOCK;
     pointer->frame.locked = false;
 
     if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
@@ -133,7 +133,7 @@ wp_pointer_confined(void *data, struct zwp_confined_pointer_v1 *wp_confined_poin
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_CONFINE;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_CONFINE;
     pointer->frame.confined = true;
 
     wsi_pointer_frame(pointer);
@@ -144,7 +144,7 @@ wp_pointer_unconfined(void *data, struct zwp_confined_pointer_v1 *wp_confined_po
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_CONFINE;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_CONFINE;
     pointer->frame.confined = false;
 
     if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
@@ -184,7 +184,7 @@ wp_pointer_relative_motion(
     //  in the same frame e.g. wl_pointer.motion then the lower resolution timestamp
     //  replaces this one.
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_RELATIVE_MOTION;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_RELATIVE_MOTION;
     pointer->frame.time = wsi_us_to_ns(utime_hi, utime_lo);
     pointer->frame.dx = wl_fixed_to_double(dx);
     pointer->frame.dy = wl_fixed_to_double(dy);
@@ -215,7 +215,7 @@ wl_pointer_enter(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_ENTER;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_ENTER;
     pointer->frame.serial = serial;
     pointer->frame.enter = surface;
     pointer->frame.x = wl_fixed_to_double(sx);
@@ -235,7 +235,7 @@ wl_pointer_leave(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_LEAVE;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_LEAVE;
     pointer->frame.serial = serial;
     pointer->frame.leave = surface;
 
@@ -254,7 +254,7 @@ wl_pointer_motion(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_MOTION;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_MOTION;
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
     }
@@ -277,7 +277,7 @@ wl_pointer_button(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_BUTTON;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_BUTTON;
     pointer->frame.serial = serial;
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
@@ -300,7 +300,7 @@ wl_pointer_axis(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_START;
+    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_START;
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
     }
@@ -329,7 +329,7 @@ wl_pointer_axis_source(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_WL_POINTER_EVENT_AXIS_SOURCE;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_AXIS_SOURCE;
     pointer->frame.axis_source = axis_source;
 }
 
@@ -342,7 +342,7 @@ wl_pointer_axis_stop(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_STOP;
+    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_STOP;
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
     }
@@ -357,7 +357,7 @@ wl_pointer_axis_discrete(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_DISCRETE;
+    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
     pointer->frame.axes[axis].discrete = discrete * 120;
 }
 
@@ -370,7 +370,7 @@ wl_pointer_axis_value120(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_DISCRETE;
+    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
     pointer->frame.axes[axis].discrete = value;
 }
 
@@ -384,7 +384,7 @@ wl_pointer_axis_relative_direction(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_WL_AXIS_EVENT_DIRECTION;
+    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_DIRECTION;
     pointer->frame.axes[axis].direction = direction;
 }
 #endif

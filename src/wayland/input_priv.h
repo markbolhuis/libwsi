@@ -3,28 +3,28 @@
 
 #include "wsi/input.h"
 
-enum wsi_wl_pointer_event {
-    WSI_WL_POINTER_EVENT_NONE = 0,
-    WSI_WL_POINTER_EVENT_ENTER = 1,
-    WSI_WL_POINTER_EVENT_LEAVE = 2,
-    WSI_WL_POINTER_EVENT_MOTION = 4,
-    WSI_WL_POINTER_EVENT_BUTTON = 8,
-    WSI_WL_POINTER_EVENT_AXIS_SOURCE = 16,
-    WSI_WL_POINTER_EVENT_RELATIVE_MOTION = 32,
-    WSI_WL_POINTER_EVENT_LOCK = 64,
-    WSI_WL_POINTER_EVENT_CONFINE = 128,
+enum wsi_pointer_frame_event {
+    WSI_POINTER_FRAME_EVENT_NONE = 0,
+    WSI_POINTER_FRAME_EVENT_ENTER = 1,
+    WSI_POINTER_FRAME_EVENT_LEAVE = 2,
+    WSI_POINTER_FRAME_EVENT_MOTION = 4,
+    WSI_POINTER_FRAME_EVENT_BUTTON = 8,
+    WSI_POINTER_FRAME_EVENT_AXIS_SOURCE = 16,
+    WSI_POINTER_FRAME_EVENT_RELATIVE_MOTION = 32,
+    WSI_POINTER_FRAME_EVENT_LOCK = 64,
+    WSI_POINTER_FRAME_EVENT_CONFINE = 128,
 };
 
-enum wsi_wl_axis_event {
-    WSI_WL_AXIS_EVENT_NONE = 0,
-    WSI_WL_AXIS_EVENT_START = 1,
-    WSI_WL_AXIS_EVENT_STOP = 2,
-    WSI_WL_AXIS_EVENT_DISCRETE = 4,
-    WSI_WL_AXIS_EVENT_DIRECTION = 8,
+enum wsi_pointer_frame_axis_event {
+    WSI_POINTER_FRAME_AXIS_EVENT_NONE = 0,
+    WSI_POINTER_FRAME_AXIS_EVENT_START = 1,
+    WSI_POINTER_FRAME_AXIS_EVENT_STOP = 2,
+    WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE = 4,
+    WSI_POINTER_FRAME_AXIS_EVENT_DIRECTION = 8,
 };
 
 struct wsi_pointer_frame {
-    enum wsi_wl_pointer_event mask;
+    enum wsi_pointer_frame_event mask;
 
     uint32_t serial;
     int64_t time;
@@ -47,7 +47,7 @@ struct wsi_pointer_frame {
 
     uint32_t axis_source;
     struct {
-        enum wsi_wl_axis_event mask;
+        enum wsi_pointer_frame_axis_event mask;
         double value;
         int32_t discrete;
         uint32_t direction;
