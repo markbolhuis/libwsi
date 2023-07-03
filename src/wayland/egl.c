@@ -31,9 +31,6 @@ wsiCreateWindowEGLSurface(
     EGLConfig config,
     EGLSurface *pSurface)
 {
-    if (window->api != WSI_API_NONE) {
-        return WSI_ERROR_WINDOW_IN_USE;
-    }
     assert(window->wl_egl_window == NULL);
 
     WsiExtent extent = wsi_window_get_buffer_extent(window);
@@ -48,21 +45,20 @@ wsiCreateWindowEGLSurface(
 
     *pSurface = eglCreatePlatformWindowSurface(dpy, config, window->wl_egl_window, NULL);
     if (*pSurface == EGL_NO_SURFACE) {
+        wl_egl_window_destroy(window->wl_egl_window);
+        window->wl_egl_window = NULL;
         return WSI_ERROR_EGL;
     }
 
-    window->api = WSI_API_EGL;
     return WSI_SUCCESS;
 }
 
 void
 wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
 {
-    assert(window->api == WSI_API_EGL);
     assert(window->wl_egl_window != NULL);
 
     eglDestroySurface(dpy, surface);
     wl_egl_window_destroy(window->wl_egl_window);
     window->wl_egl_window = NULL;
-    window->api = WSI_API_NONE;
 }

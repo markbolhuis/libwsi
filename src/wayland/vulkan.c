@@ -77,10 +77,6 @@ wsiCreateWindowSurface(
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    if (window->api != WSI_API_NONE) {
-        return WSI_ERROR_WINDOW_IN_USE;
-    }
-
     VkWaylandSurfaceCreateInfoKHR info = {
         .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
         .pNext = NULL,

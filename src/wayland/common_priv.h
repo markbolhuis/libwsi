@@ -3,12 +3,6 @@
 
 #include "wsi/common.h"
 
-enum wsi_api {
-    WSI_API_NONE = 0,
-    WSI_API_EGL = 1,
-    WSI_API_VULKAN = 2,
-};
-
 static inline bool
 wsi_extent_equal(WsiExtent a, WsiExtent b)
 {

@@ -110,8 +110,7 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
         WsiExtent be = wsi_window_get_buffer_extent(window);
         WsiExtent se = wsi_window_get_surface_extent(window);
 
-        if (window->api == WSI_API_EGL) {
-            assert(window->wl_egl_window != NULL);
+        if (window->wl_egl_window != NULL) {
             wl_egl_window_resize(window->wl_egl_window, be.width, be.height, 0, 0);
         }
 
@@ -585,7 +584,6 @@ wsi_window_init(
     struct wsi_window *window)
 {
     window->platform = platform;
-    window->api = WSI_API_NONE;
     window->user_data = info->pUserData;
     window->pfn_close = info->pfnCloseWindow;
     window->pfn_configure = info->pfnConfigureWindow;
