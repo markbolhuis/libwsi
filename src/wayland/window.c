@@ -41,8 +41,8 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
     extent.width *= window->current.scale;
     extent.height *= window->current.scale;
     if (window->wp_fractional_scale_v1) {
-        extent.width = div_round(extent.width, 120);
-        extent.height = div_round(extent.height, 120);
+        extent.width = wsi_div_round(extent.width, 120);
+        extent.height = wsi_div_round(extent.height, 120);
     }
     return extent;
 }
