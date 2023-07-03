@@ -34,6 +34,7 @@ enum wsi_xdg_state {
     WSI_XDG_STATE_TILED_BOTTOM = 32,
     WSI_XDG_STATE_TILED_LEFT = 64,
     WSI_XDG_STATE_TILED_RIGHT = 128,
+    WSI_XDG_STATE_SUSPENDED = 256,
 };
 
 struct wsi_window_state {

@@ -310,6 +310,11 @@ xdg_toplevel_configure(
             case XDG_TOPLEVEL_STATE_TILED_BOTTOM:
                 pending |= WSI_XDG_STATE_TILED_BOTTOM;
                 break;
+#ifdef XDG_TOPLEVEL_STATE_SUSPENDED_SINCE_VERSION
+            case XDG_TOPLEVEL_STATE_SUSPENDED:
+                pending |= WSI_XDG_STATE_SUSPENDED;
+                break;
+#endif
         }
     }
 
