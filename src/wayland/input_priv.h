@@ -97,6 +97,17 @@ struct wsi_seat {
     struct wsi_keyboard keyboard;
 };
 
+void
+wsi_pointer_constrain(
+    struct wsi_pointer *pointer,
+    uint32_t type,
+    struct wl_surface *wl_surface,
+    bool persistent,
+    int32_t pos_hint[2]);
+
+void
+wsi_pointer_remove_constraint(struct wsi_pointer *pointer);
+
 struct wsi_seat *
 wsi_seat_add(struct wsi_platform *platform, uint32_t name, uint32_t version);
 
