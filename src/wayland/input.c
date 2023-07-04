@@ -96,8 +96,8 @@ wp_pointer_locked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_LOCK;
-    pointer->frame.locked = true;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
+    pointer->frame.state = WSI_POINTER_STATE_LOCKED;
 
     wsi_pointer_frame(pointer);
 }
@@ -107,8 +107,8 @@ wp_pointer_unlocked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_LOCK;
-    pointer->frame.locked = false;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
+    pointer->frame.state = WSI_POINTER_STATE_NONE;
 
     if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
         zwp_locked_pointer_v1_destroy(pointer->wp_locked_v1);
@@ -133,8 +133,8 @@ wp_pointer_confined(void *data, struct zwp_confined_pointer_v1 *wp_confined_poin
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_CONFINE;
-    pointer->frame.confined = true;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
+    pointer->frame.state = WSI_POINTER_STATE_CONFINED;
 
     wsi_pointer_frame(pointer);
 }
@@ -144,8 +144,8 @@ wp_pointer_unconfined(void *data, struct zwp_confined_pointer_v1 *wp_confined_po
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_CONFINE;
-    pointer->frame.confined = false;
+    pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
+    pointer->frame.state = WSI_POINTER_STATE_NONE;
 
     if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
         zwp_confined_pointer_v1_destroy(pointer->wp_confined_v1);
@@ -282,8 +282,8 @@ wl_pointer_button(
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
     }
-    pointer->frame.button = button;
-    pointer->frame.state = state;
+    pointer->frame.button.code = button;
+    pointer->frame.button.state = state;
 
     if (wl_pointer_get_version(wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
         wsi_pointer_frame(pointer);

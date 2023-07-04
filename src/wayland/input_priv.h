@@ -11,8 +11,7 @@ enum wsi_pointer_frame_event {
     WSI_POINTER_FRAME_EVENT_BUTTON = 8,
     WSI_POINTER_FRAME_EVENT_AXIS_SOURCE = 16,
     WSI_POINTER_FRAME_EVENT_RELATIVE_MOTION = 32,
-    WSI_POINTER_FRAME_EVENT_LOCK = 64,
-    WSI_POINTER_FRAME_EVENT_CONFINE = 128,
+    WSI_POINTER_FRAME_EVENT_STATE = 64,
 };
 
 enum wsi_pointer_frame_axis_event {
@@ -23,17 +22,27 @@ enum wsi_pointer_frame_axis_event {
     WSI_POINTER_FRAME_AXIS_EVENT_DIRECTION = 8,
 };
 
+enum wsi_pointer_state {
+    WSI_POINTER_STATE_NONE = 0,
+    WSI_POINTER_STATE_LOCKED = 1,
+    WSI_POINTER_STATE_CONFINED = 2,
+};
+
 struct wsi_pointer_frame {
     enum wsi_pointer_frame_event mask;
 
     uint32_t serial;
     int64_t time;
 
+    enum wsi_pointer_state state;
+
     struct wl_surface *enter;
     struct wl_surface *leave;
 
-    uint32_t button;
-    uint32_t state;
+    struct {
+        uint32_t code;
+        uint32_t state;
+    } button;
 
     double x;
     double y;
@@ -41,9 +50,6 @@ struct wsi_pointer_frame {
     double dy;
     double udx;
     double udy;
-
-    bool locked;
-    bool confined;
 
     uint32_t axis_source;
     struct {
