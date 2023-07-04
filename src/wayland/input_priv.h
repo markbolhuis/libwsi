@@ -108,6 +108,12 @@ wsi_pointer_constrain(
 void
 wsi_pointer_remove_constraint(struct wsi_pointer *pointer);
 
+void
+wsi_keyboard_inhibit_shortcuts(struct wsi_keyboard *keyboard, struct wl_surface *wl_surface);
+
+void
+wsi_keyboard_restore_shortcuts(struct wsi_keyboard *keyboard);
+
 struct wsi_seat *
 wsi_seat_add(struct wsi_platform *platform, uint32_t name, uint32_t version);
 

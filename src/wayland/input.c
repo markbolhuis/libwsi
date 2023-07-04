@@ -729,7 +729,7 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 
 // endregion
 
-static void
+void
 wsi_keyboard_inhibit_shortcuts(struct wsi_keyboard *keyboard, struct wl_surface *wl_surface)
 {
     struct wsi_seat *seat = wl_container_of(keyboard, seat, keyboard);
@@ -748,7 +748,7 @@ wsi_keyboard_inhibit_shortcuts(struct wsi_keyboard *keyboard, struct wl_surface 
         keyboard);
 }
 
-static void
+void
 wsi_keyboard_restore_shortcuts(struct wsi_keyboard *keyboard)
 {
     assert(keyboard->wp_shortcuts_inhibitor_v1 != NULL);
