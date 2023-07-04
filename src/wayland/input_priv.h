@@ -51,13 +51,15 @@ struct wsi_pointer_frame {
     double udx;
     double udy;
 
-    uint32_t axis_source;
     struct {
-        enum wsi_pointer_frame_axis_event mask;
-        double value;
-        int32_t discrete;
-        uint32_t direction;
-    } axes[2];
+        struct {
+            enum wsi_pointer_frame_axis_event mask;
+            double value;
+            double discrete;
+            uint32_t direction;
+        } h, v;
+        uint32_t source;
+    } axis;
 };
 
 struct wsi_pointer {

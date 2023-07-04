@@ -65,8 +65,8 @@ wsi_pointer_frame(struct wsi_pointer *pointer)
     }
 
     pointer->frame.mask = WSI_POINTER_FRAME_EVENT_NONE;
-    pointer->frame.axes[0].mask = WSI_POINTER_FRAME_AXIS_EVENT_NONE;
-    pointer->frame.axes[1].mask = WSI_POINTER_FRAME_AXIS_EVENT_NONE;
+    pointer->frame.axis.h.mask = WSI_POINTER_FRAME_AXIS_EVENT_NONE;
+    pointer->frame.axis.v.mask = WSI_POINTER_FRAME_AXIS_EVENT_NONE;
 }
 
 // region Wp Pointer Timestamp
@@ -300,11 +300,19 @@ wl_pointer_axis(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_START;
+    if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        pointer->frame.axis.h.mask |= WSI_POINTER_FRAME_AXIS_EVENT_START;
+        pointer->frame.axis.h.value = wl_fixed_to_double(value);
+    } else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        pointer->frame.axis.v.mask |= WSI_POINTER_FRAME_AXIS_EVENT_START;
+        pointer->frame.axis.v.value = wl_fixed_to_double(value);
+    } else {
+        return;
+    }
+
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
     }
-    pointer->frame.axes[axis].value = wl_fixed_to_double(value);
 
     if (wl_pointer_get_version(wl_pointer) < WL_POINTER_FRAME_SINCE_VERSION) {
         wsi_pointer_frame(pointer);
@@ -330,7 +338,7 @@ wl_pointer_axis_source(
     struct wsi_pointer *pointer = data;
 
     pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_AXIS_SOURCE;
-    pointer->frame.axis_source = axis_source;
+    pointer->frame.axis.source = axis_source;
 }
 
 static void
@@ -342,7 +350,14 @@ wl_pointer_axis_stop(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_STOP;
+    if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        pointer->frame.axis.h.mask |= WSI_POINTER_FRAME_AXIS_EVENT_STOP;
+    } else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        pointer->frame.axis.v.mask |= WSI_POINTER_FRAME_AXIS_EVENT_STOP;
+    } else {
+        return;
+    }
+
     if (pointer->wp_timestamps_v1 == NULL) {
         pointer->frame.time = wsi_ms_to_ns(time);
     }
@@ -357,8 +372,13 @@ wl_pointer_axis_discrete(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
-    pointer->frame.axes[axis].discrete = discrete * 120;
+    if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        pointer->frame.axis.h.mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
+        pointer->frame.axis.h.discrete = discrete;
+    } else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        pointer->frame.axis.v.mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
+        pointer->frame.axis.v.discrete = discrete;
+    }
 }
 
 static void
@@ -370,8 +390,13 @@ wl_pointer_axis_value120(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
-    pointer->frame.axes[axis].discrete = value;
+    if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        pointer->frame.axis.h.mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
+        pointer->frame.axis.h.discrete = value / 120.0;
+    } else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        pointer->frame.axis.v.mask |= WSI_POINTER_FRAME_AXIS_EVENT_DISCRETE;
+        pointer->frame.axis.v.discrete = value / 120.0;
+    }
 }
 
 #ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
@@ -384,8 +409,13 @@ wl_pointer_axis_relative_direction(
 {
     struct wsi_pointer *pointer = data;
 
-    pointer->frame.axes[axis].mask |= WSI_POINTER_FRAME_AXIS_EVENT_DIRECTION;
-    pointer->frame.axes[axis].direction = direction;
+    if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        pointer->frame.axis.h.mask |= WSI_POINTER_FRAME_AXIS_EVENT_DIRECTION;
+        pointer->frame.axis.h.direction = direction;
+    } else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        pointer->frame.axis.v.mask |= WSI_POINTER_FRAME_AXIS_EVENT_DIRECTION;
+        pointer->frame.axis.v.direction = direction;
+    }
 }
 #endif
 
