@@ -8,6 +8,10 @@ project('libwsi', 'c',
   meson_version : '>= 0.63.0',
 )
 
+if build_machine.system() == 'darwin'
+  add_languages('objc')
+endif
+
 cc = meson.get_compiler('c')
 lib_m = cc.find_library('m')
 

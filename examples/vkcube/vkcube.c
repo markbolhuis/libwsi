@@ -933,7 +933,7 @@ done:
 static void
 demo_select_surface_format(struct demo *demo)
 {
-    VkSurfaceFormatKHR formats[32];
+    VkSurfaceFormatKHR formats[64];
     uint32_t format_count = array_size(formats);
 
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(
@@ -1303,9 +1303,18 @@ demo_create_instance(struct demo *demo)
         .engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
     };
 
+    VkInstanceCreateFlags flags = 0;
+    for (uint32_t i = 0; i < inst_ext_count; i++) {
+        if (strcmp(inst_exts[i], VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0) {
+            flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+            break;
+        }
+    }
+
     VkInstanceCreateInfo instance_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pNext = NULL,
+        .flags = flags,
         .pApplicationInfo = &app_info,
         .enabledLayerCount = inst_layer_count,
         .ppEnabledLayerNames = inst_layers,
