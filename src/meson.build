@@ -1,3 +1,3 @@
-subdir('wsi')
-subdir('wayland')
-subdir('x11')
+if build_machine.system() == 'linux'
+  subdir('linux')
+endif
