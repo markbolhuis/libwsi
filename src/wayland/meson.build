@@ -4,6 +4,7 @@ dep_wl_client = dependency('wayland-client', version: '>= 1.21.0')
 dep_wl_cursor = dependency('wayland-cursor', version: '>= 1.21.0')
 dep_wl_egl    = dependency('wayland-egl', version: '>= 1.21.0')
 dep_xkbcommon = dependency('xkbcommon', version: '>= 1.4.0')
+dep_egl       = dependency('egl', version : '>=1.4.0')
 
 src_wsi_wl = files(
   'platform.c',

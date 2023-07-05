@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 201112L
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <unistd.h>
 #include <time.h>
@@ -27,6 +28,7 @@ demo_create_shader_module(VkDevice device, const char *path, VkShaderModule *mod
 
     void *data = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (data == MAP_FAILED) {
+        printf("Failed to open file '%s'", path);
         close(fd);
         return VK_ERROR_UNKNOWN;
     }

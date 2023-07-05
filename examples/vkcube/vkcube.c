@@ -933,7 +933,7 @@ done:
 static void
 demo_select_surface_format(struct demo *demo)
 {
-    VkSurfaceFormatKHR formats[32];
+    VkSurfaceFormatKHR formats[64];
     uint32_t format_count = array_size(formats);
 
     VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(
@@ -1306,6 +1306,9 @@ demo_create_instance(struct demo *demo)
     VkInstanceCreateInfo instance_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pNext = NULL,
+#ifdef __APPLE__
+        .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+#endif
         .pApplicationInfo = &app_info,
         .enabledLayerCount = inst_layer_count,
         .ppEnabledLayerNames = inst_layers,

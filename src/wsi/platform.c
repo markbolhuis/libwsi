@@ -11,17 +11,23 @@ void* g_handle = NULL;
 static void __attribute__((constructor))
 init(void)
 {
+#ifdef __APPLE__
+    const char* session = "cocoa";
+#else
     const char *session = getenv("XDG_SESSION_TYPE");
     if (session == NULL) {
         fprintf(stderr, "XDG_SESSION_TYPE not set\n");
         exit(EXIT_FAILURE);
     }
+#endif
 
     void *handle = NULL;
     if (strcmp(session, "wayland") == 0) {
         handle = dlopen("libwsi-wl.so", RTLD_NOW);
     } else if (strcmp(session, "x11") == 0) {
         handle = dlopen("libwsi-x11.so", RTLD_NOW);
+    } else if (strcmp(session, "cocoa") == 0) {
+        handle = dlopen("../../src/cocoa/libwsi-cocoa.dylib", RTLD_NOW); //TODO: remove the hardcoded path
     } else {
         fprintf(stderr, "Unsupported XDG_SESSION_TYPE: %s\n", session);
         exit(EXIT_FAILURE);

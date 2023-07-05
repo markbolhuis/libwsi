@@ -9,6 +9,8 @@ src_wsi_x11 = files(
   'utils.c',
 )
 
+dep_egl    = dependency('egl', version : '>=1.4.0')
+
 lib_wsi_x11 = library('wsi-x11',
   src_wsi_x11,
   include_directories : inc_wsi,
