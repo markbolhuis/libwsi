@@ -71,7 +71,7 @@ struct wsi_pointer {
 
     struct wl_cursor_theme *wl_cursor_theme;
     struct wl_cursor       *wl_cursor;
-    struct wl_surface      *wl_cursor_surface;
+    struct wl_surface      *wl_surface;
 
     struct wsi_pointer_frame frame;
     uint32_t constraint_lifetime;

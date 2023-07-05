@@ -29,13 +29,13 @@ wsi_pointer_set_cursor_image(
 {
     struct wl_buffer *buffer = wl_cursor_image_get_buffer(image);
 
-    wl_surface_attach(ptr->wl_cursor_surface, buffer, 0, 0);
-    wl_surface_commit(ptr->wl_cursor_surface);
+    wl_surface_attach(ptr->wl_surface, buffer, 0, 0);
+    wl_surface_commit(ptr->wl_surface);
 
     wl_pointer_set_cursor(
         ptr->wl_pointer,
         serial,
-        ptr->wl_cursor_surface,
+        ptr->wl_surface,
         (int32_t)image->hotspot_x,
         (int32_t)image->hotspot_y);
 }
@@ -52,8 +52,8 @@ wsi_pointer_set_cursor(
         return;
     }
 
-    wl_surface_attach(ptr->wl_cursor_surface, NULL, 0, 0);
-    wl_surface_commit(ptr->wl_cursor_surface);
+    wl_surface_attach(ptr->wl_surface, NULL, 0, 0);
+    wl_surface_commit(ptr->wl_surface);
     wl_pointer_set_cursor(ptr->wl_pointer, serial, NULL, 0, 0);
 }
 
@@ -515,7 +515,7 @@ wsi_pointer_init(struct wsi_seat *seat)
     wl_pointer_add_listener(seat->pointer.wl_pointer, &wl_pointer_listener, &seat->pointer);
 
     seat->pointer.wl_cursor_theme = wl_cursor_theme_load(NULL, 24, plat->wl_shm);
-    seat->pointer.wl_cursor_surface = wl_compositor_create_surface(plat->wl_compositor);
+    seat->pointer.wl_surface = wl_compositor_create_surface(plat->wl_compositor);
 
     if (plat->wp_input_timestamps_manager_v1) {
         seat->pointer.wp_timestamps_v1 = zwp_input_timestamps_manager_v1_get_pointer_timestamps(
@@ -568,7 +568,7 @@ wsi_pointer_uninit(struct wsi_pointer *pointer)
     }
 
     wl_cursor_theme_destroy(pointer->wl_cursor_theme);
-    wl_surface_destroy(pointer->wl_cursor_surface);
+    wl_surface_destroy(pointer->wl_surface);
 
     memset(pointer, 0, sizeof(struct wsi_pointer));
 }
