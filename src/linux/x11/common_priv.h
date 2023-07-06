@@ -15,10 +15,4 @@ wsi_xcb_clamp(int32_t value)
     return (uint16_t)value;
 }
 
-enum wsi_api {
-    WSI_API_NONE = 0,
-    WSI_API_EGL = 1,
-    WSI_API_VULKAN = 2,
-};
-
 #endif

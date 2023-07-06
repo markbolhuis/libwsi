@@ -22,10 +22,7 @@ wsiGetEGLDisplay(WsiPlatform platform, EGLDisplay *pDisplay)
         EGL_NONE,
     };
 
-    *pDisplay = eglGetPlatformDisplay(
-        EGL_PLATFORM_XCB_EXT,
-        platform->xcb_connection,
-        attrib);
+    *pDisplay = eglGetPlatformDisplay(EGL_PLATFORM_XCB_EXT, platform->xcb_connection, attrib);
     if (*pDisplay == EGL_NO_DISPLAY) {
         return WSI_ERROR_EGL;
     }
@@ -40,30 +37,25 @@ wsiCreateWindowEGLSurface(
     EGLConfig config,
     EGLSurface *pSurface)
 {
-    if (window->api != WSI_API_NONE) {
-        return WSI_ERROR_WINDOW_IN_USE;
-    }
-
     struct wsi_platform *platform = window->platform;
 
-    xcb_visualid_t visualid = 0;
-    EGLBoolean ok = eglGetConfigAttrib(
-        dpy,
-        config,
-        EGL_NATIVE_VISUAL_ID,
-        (EGLint *)&visualid);
-    if (!ok) {
+    EGLint visualid = 0;
+    EGLBoolean ok = eglGetConfigAttrib(dpy, config, EGL_NATIVE_VISUAL_ID, &visualid);
+    if (ok == EGL_FALSE) {
         return WSI_ERROR_EGL;
     }
 
     window->xcb_colormap = xcb_generate_id(platform->xcb_connection);
+    if (window->xcb_colormap == UINT32_MAX) {
+        return WSI_ERROR_PLATFORM;
+    }
 
     xcb_create_colormap_checked(
         platform->xcb_connection,
         XCB_COLORMAP_ALLOC_NONE,
         window->xcb_colormap,
         platform->xcb_screen->root,
-        visualid);
+        (xcb_visualid_t)visualid);
 
     xcb_change_window_attributes_checked(
         platform->xcb_connection,
@@ -71,28 +63,17 @@ wsiCreateWindowEGLSurface(
         XCB_CW_COLORMAP,
         (const uint32_t[]){ window->xcb_colormap });
 
-    EGLAttrib attrs[] = {
-        EGL_NONE,
-    };
-
-    *pSurface = eglCreatePlatformWindowSurface(
-        dpy,
-        config,
-        &window->xcb_window,
-        attrs);
+    *pSurface = eglCreatePlatformWindowSurface(dpy, config, &window->xcb_window, NULL);
     if (*pSurface == EGL_NO_SURFACE) {
         return WSI_ERROR_EGL;
     }
 
-    window->api = WSI_API_EGL;
     return WSI_SUCCESS;
 }
 
 void
 wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
 {
-    assert(window->api == WSI_API_EGL);
-
     struct wsi_platform *platform = window->platform;
 
     eglDestroySurface(dpy, surface);
@@ -109,6 +90,4 @@ wsiDestroyWindowEGLSurface(WsiWindow window, EGLDisplay dpy, EGLSurface surface)
 
     xcb_free_colormap(platform->xcb_connection, window->xcb_colormap);
     window->xcb_colormap = XCB_NONE;
-
-    window->api = WSI_API_NONE;
 }
