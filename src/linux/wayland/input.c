@@ -14,6 +14,7 @@
 #include <ext-idle-notify-v1-client-protocol.h>
 
 #include <xkbcommon/xkbcommon.h>
+#include <xkbcommon/xkbcommon-compose.h>
 
 #include "common_priv.h"
 #include "platform_priv.h"
@@ -576,11 +577,30 @@ wsi_pointer_uninit(struct wsi_pointer *pointer)
 static void
 wsi_keyboard_reset(struct wsi_keyboard *keyboard)
 {
+    xkb_compose_state_unref(keyboard->xkb_compose_state);
+    keyboard->xkb_compose_state = NULL;
+
     xkb_state_unref(keyboard->xkb_state);
     keyboard->xkb_state = NULL;
 
     xkb_keymap_unref(keyboard->xkb_keymap);
     keyboard->xkb_keymap = NULL;
+}
+
+static const char *
+wsi_keyboard_get_locale()
+{
+    const char *locale = getenv("LC_ALL");
+    if (!locale || locale[0] == '\0') {
+        locale = getenv("LC_CTYPE");
+    }
+    if (!locale || locale[0] == '\0') {
+        locale = getenv("LANG");
+    }
+    if (!locale || locale[0] == '\0') {
+        locale = "C";
+    }
+    return locale;
 }
 
 static bool
@@ -611,6 +631,19 @@ wsi_keyboard_init_xkb(struct wsi_keyboard *keyboard, int fd, uint32_t size)
         return false;
     }
 
+    const char *locale = wsi_keyboard_get_locale();
+
+    struct xkb_compose_state *compose_state = NULL;
+    struct xkb_compose_table *table = xkb_compose_table_new_from_locale(
+        keyboard->xkb_context,
+        locale,
+        XKB_COMPOSE_COMPILE_NO_FLAGS);
+    if (table) {
+        compose_state = xkb_compose_state_new(table, XKB_COMPOSE_STATE_NO_FLAGS);
+        xkb_compose_table_unref(table);
+    }
+
+    keyboard->xkb_compose_state = compose_state;
     keyboard->xkb_keymap = keymap;
     keyboard->xkb_state = state;
     return true;
