@@ -3,6 +3,8 @@
 
 #include "wsi/window.h"
 
+#include "common_priv.h"
+
 #ifdef __OBJC__
 #import <Cocoa/Cocoa.h>
 #else
@@ -11,6 +13,8 @@ typedef void* id;
 
 struct wsi_window {
     struct wsi_platform *platform;
+
+    enum wsi_api api;
 
     id window;
     id windowDelegate;

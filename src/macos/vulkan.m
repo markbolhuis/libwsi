@@ -17,6 +17,7 @@ const char *INSTANCE_EXTS[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
     VK_EXT_METAL_SURFACE_EXTENSION_NAME,
     VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+    "VK_KHR_get_physical_device_properties2",
 };
 
 const char *DEVICE_EXTS[] = {
@@ -78,9 +79,11 @@ wsiCreateWindowSurface(
     const VkAllocationCallbacks *pAllocator,
     VkSurfaceKHR *pSurface)
 {
-    //if (window->api != WSI_API_NONE) {
-    //    return WSI_ERROR_WINDOW_IN_USE;
-    //}
+    if (window->api != WSI_API_NONE) {
+        return WSI_ERROR_WINDOW_IN_USE;
+    }
+
+    window->api = WSI_API_VULKAN;
 
     CAMetalLayer* layer = [CAMetalLayer layer];
     //[layer setContentsScale:window->framebufferScaleX];
