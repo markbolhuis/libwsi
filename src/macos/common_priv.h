@@ -15,9 +15,9 @@ wsi_cocoa_clamp(int32_t value)
     return (uint16_t)value;
 }
 
-//enum wsi_api {
-//    WSI_API_NONE = 0,
-//    WSI_API_VULKAN = 1,
-//};
+enum wsi_api {
+    WSI_API_NONE = 0,
+    WSI_API_VULKAN = 1,
+};
 
 #endif

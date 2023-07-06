@@ -187,8 +187,8 @@ static const NSRange nsEmptyRange = { NSNotFound, 0 };
 }
 
 - (void)viewDidChangeBackingProperties {
-    const NSRect contentRect = [window->view frame];
-    const NSRect fbRect = [window->view convertRectToBacking:contentRect];
+    //const NSRect contentRect = [window->view frame];
+    //const NSRect fbRect = [window->view convertRectToBacking:contentRect];
     //TODO
 }
 
@@ -330,7 +330,7 @@ wsiCreateWindow(
     }
 
     window->platform = platform;
-    //window->api = WSI_API_NONE;
+    window->api = WSI_API_NONE;
     window->user_width = wsi_cocoa_clamp(pCreateInfo->extent.width);
     window->user_height = wsi_cocoa_clamp(pCreateInfo->extent.height);
     window->user_data = pCreateInfo->pUserData;
@@ -339,7 +339,7 @@ wsiCreateWindow(
 
     //=====================Window delegate=====================
     window->windowDelegate = [[CocoaWindowDelegate alloc] initWithWSIWindow:window];
-    if (!window->windowDelegate) {
+    if (window->windowDelegate == nil) {
         fprintf(stderr, "Failed to create NS window delegate\n");
         return WSI_ERROR_UNKNOWN;
     }
@@ -355,7 +355,7 @@ wsiCreateWindow(
                   styleMask:styleMask
                     backing:NSBackingStoreBuffered
                       defer:NO];
-    if (!window->window) {
+    if (window->window == nil) {
         fprintf(stderr, "Failed to create NS window\n");
         return WSI_ERROR_UNKNOWN;
     }
@@ -369,14 +369,13 @@ wsiCreateWindow(
 
     //=====================View=====================
     window->view = [[CocoaContentView alloc] initWithWSIWindow:window];
-    if (!window->view) {
+    if (window->view == nil) {
         fprintf(stderr, "Failed to create NS view\n");
         return WSI_ERROR_UNKNOWN;
     }
 
     [window->window setContentView:window->view];
     [window->window makeFirstResponder:window->view];
-    //[window->window setTitle:@(title)];
     [window->window setDelegate:window->windowDelegate];
     [window->window setAcceptsMouseMovedEvents:YES];
     [window->window setRestorable:NO];
@@ -414,15 +413,16 @@ wsiDestroyWindow(WsiWindow window)
     [window->window release];
     [window->windowDelegate release];
     [window->view release];
-    //TODO: destroy layer?
+    if (window->api == WSI_API_VULKAN)
+        [window->layer release];
 }
 
 WsiResult
 wsiSetWindowParent(WsiWindow window, WsiWindow parent)
 {
-    //TODO
+    [parent->window addChildWindow:window->window place:NSWindowAbove];
 
-    return WSI_ERROR_UNSUPPORTED;
+    return WSI_SUCCESS;
 }
 
 WsiResult
