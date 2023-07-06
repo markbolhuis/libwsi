@@ -11,7 +11,6 @@ static const NSRange nsEmptyRange = { NSNotFound, 0 };
 
 @interface CocoaWindowDelegate : NSObject {
     WsiWindow window;
-    bool initFocusFinished;
 }
 
 - (instancetype)initWithWSIWindow:(WsiWindow)initWindow;
@@ -24,7 +23,6 @@ static const NSRange nsEmptyRange = { NSNotFound, 0 };
     self = [super init];
     if (self != nil) {
         window = initWindow;
-        initFocusFinished = false;
     }
 
     return self;
@@ -45,8 +43,8 @@ static const NSRange nsEmptyRange = { NSNotFound, 0 };
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
-    const NSRect contentRect = [window->view frame];
-    const NSRect fbRect = [window->view convertRectToBacking:contentRect];
+    //const NSRect contentRect = [window->view frame];
+    //const NSRect fbRect = [window->view convertRectToBacking:contentRect];
 
     //TODO
 }
@@ -289,6 +287,7 @@ static const NSRange nsEmptyRange = { NSNotFound, 0 };
 - (NSRect)firstRectForCharacterRange:(NSRange)range
                          actualRange:(NSRangePointer)actualRange {
     const NSRect frame = [window->view frame];
+    
     return NSMakeRect(frame.origin.x, frame.origin.y, 0.0, 0.0);
 }
 
@@ -340,10 +339,12 @@ wsiCreateWindow(
 
     //=====================Window delegate=====================
     window->windowDelegate = [[CocoaWindowDelegate alloc] initWithWSIWindow:window];
-    //if (windowDelegate == NULL) {
-    //    LVND_ERROR("Failed to create NS window delegate");
-    //}
+    if (windowDelegate == NULL) {
+        fprintf(stderr, "Failed to create NS window delegate\n");
+        return WSI_ERROR_UNKNOWN;
+    }
 
+    //=====================Window=====================
     NSRect contentRect = NSMakeRect(0, 0, window->user_width, window->user_height);
 
     NSUInteger styleMask = NSWindowStyleMaskMiniaturizable;
@@ -354,9 +355,10 @@ wsiCreateWindow(
                   styleMask:styleMask
                     backing:NSBackingStoreBuffered
                       defer:NO];
-    //if (window == NULL) {
-    //    LVND_ERROR("Failed to create NS window");
-    //}
+    if (window == NULL) {
+        fprintf(stderr, "Failed to create NS window\n");
+        return WSI_ERROR_UNKNOWN;
+    }
     
     [(NSWindow*)window->window center];
 
@@ -365,10 +367,12 @@ wsiCreateWindow(
         NSWindowCollectionBehaviorManaged;
     [window->window setCollectionBehavior:behavior];
 
+    //=====================View=====================
     window->view = [[CocoaContentView alloc] initWithWSIWindow:window];
-    //if (view == NULL) {
-    //    LVND_ERROR("Failed to create NS view");
-    //}
+    if (!window->view) {
+        fprintf(stderr, "Failed to create NS view\n");
+        return WSI_ERROR_UNKNOWN;
+    }
 
     [window->window setContentView:window->view];
     [window->window makeFirstResponder:window->view];
@@ -380,7 +384,6 @@ wsiCreateWindow(
     [NSApp activateIgnoringOtherApps:YES];
     [window->window makeKeyAndOrderFront:window->view];
 
-    //Getting some properties
     /*
     const NSRect fbRect = [(id)window->handle->view convertRectToBacking:contentRect];
     window->framebufferWidth = fbRect.size.width;
@@ -396,8 +399,6 @@ wsiCreateWindow(
     window->mouseX = mousePos.x;
     window->mouseY = mousePos.y;
     */
-
-    //[app setDelegate:handle->delegate];
 
     [window->window orderFrontRegardless];
     [NSApp run];
@@ -429,5 +430,5 @@ wsiSetWindowTitle(WsiWindow window, const char *pTitle)
 {
     [window->window setTitle:@(pTitle)];
 
-    return WSI_ERROR_UNSUPPORTED;
+    return WSI_SUCCESS;
 }
