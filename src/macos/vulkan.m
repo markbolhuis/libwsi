@@ -17,11 +17,11 @@ const char *INSTANCE_EXTS[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
     VK_EXT_METAL_SURFACE_EXTENSION_NAME,
     VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-    //"VK_KHR_portability_subset"
 };
 
 const char *DEVICE_EXTS[] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    "VK_KHR_portability_subset",
 };
 
 static WsiResult
