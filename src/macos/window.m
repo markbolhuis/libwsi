@@ -339,7 +339,7 @@ wsiCreateWindow(
 
     //=====================Window delegate=====================
     window->windowDelegate = [[CocoaWindowDelegate alloc] initWithWSIWindow:window];
-    if (windowDelegate == NULL) {
+    if (!window->windowDelegate) {
         fprintf(stderr, "Failed to create NS window delegate\n");
         return WSI_ERROR_UNKNOWN;
     }
@@ -355,7 +355,7 @@ wsiCreateWindow(
                   styleMask:styleMask
                     backing:NSBackingStoreBuffered
                       defer:NO];
-    if (window == NULL) {
+    if (!window->window) {
         fprintf(stderr, "Failed to create NS window\n");
         return WSI_ERROR_UNKNOWN;
     }
