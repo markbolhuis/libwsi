@@ -90,6 +90,8 @@ wsi_platform_init(const WsiPlatformCreateInfo *pCreateInfo, struct wsi_platform 
     //if (![[NSRunningApplication currentApplication] isFinishedLaunching])
     //    [NSApp run];
 
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+
     return WSI_SUCCESS;
 }
 
