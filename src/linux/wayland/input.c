@@ -610,29 +610,6 @@ static const struct zwp_input_timestamps_v1_listener wp_keyboard_timestamps_v1_l
 
 // endregion
 
-// region Wp Keyboard Shortcuts Inhibitor
-
-static void
-wp_keyboard_shortcuts_inhibitor_v1_active(
-    void *data,
-    struct zwp_keyboard_shortcuts_inhibitor_v1 *inhibitor)
-{
-}
-
-static void
-wp_keyboard_shortcuts_inhibitor_v1_inactive(
-    void *data,
-    struct zwp_keyboard_shortcuts_inhibitor_v1 *inhibitor)
-{
-}
-
-static const struct zwp_keyboard_shortcuts_inhibitor_v1_listener wp_keyboard_shortcuts_inhibitor_v1_listener = {
-    .active = wp_keyboard_shortcuts_inhibitor_v1_active,
-    .inactive = wp_keyboard_shortcuts_inhibitor_v1_inactive,
-};
-
-// endregion
-
 // region Wl Keyboard
 
 static void
@@ -776,34 +753,6 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 
 // endregion
 
-void
-wsi_keyboard_inhibit_shortcuts(struct wsi_keyboard *keyboard, struct wl_surface *wl_surface)
-{
-    struct wsi_seat *seat = wl_container_of(keyboard, seat, keyboard);
-    struct wsi_platform *platform = seat->global.platform;
-
-    assert(platform->wp_keyboard_shortcuts_inhibit_manager_v1 != NULL);
-    assert(keyboard->wp_shortcuts_inhibitor_v1 == NULL);
-
-    keyboard->wp_shortcuts_inhibitor_v1 = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(
-        platform->wp_keyboard_shortcuts_inhibit_manager_v1,
-        wl_surface,
-        seat->wl_seat);
-    zwp_keyboard_shortcuts_inhibitor_v1_add_listener(
-        keyboard->wp_shortcuts_inhibitor_v1,
-        &wp_keyboard_shortcuts_inhibitor_v1_listener,
-        keyboard);
-}
-
-void
-wsi_keyboard_restore_shortcuts(struct wsi_keyboard *keyboard)
-{
-    assert(keyboard->wp_shortcuts_inhibitor_v1 != NULL);
-
-    zwp_keyboard_shortcuts_inhibitor_v1_destroy(keyboard->wp_shortcuts_inhibitor_v1);
-    keyboard->wp_shortcuts_inhibitor_v1 = NULL;
-}
-
 static bool
 wsi_keyboard_init(struct wsi_seat *seat)
 {
@@ -835,10 +784,6 @@ wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
 {
     assert(keyboard->wl_keyboard != NULL);
 
-    if (keyboard->wp_shortcuts_inhibitor_v1) {
-        zwp_keyboard_shortcuts_inhibitor_v1_destroy(keyboard->wp_shortcuts_inhibitor_v1);
-    }
-
     if (keyboard->wp_timestamps_v1) {
         zwp_input_timestamps_v1_destroy(keyboard->wp_timestamps_v1);
     }
@@ -856,6 +801,29 @@ wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
 
     memset(keyboard, 0, sizeof(struct wsi_keyboard));
 }
+
+// region Wp Keyboard Shortcuts Inhibitor
+
+static void
+wp_keyboard_shortcuts_inhibitor_v1_active(
+    void *data,
+    struct zwp_keyboard_shortcuts_inhibitor_v1 *inhibitor)
+{
+}
+
+static void
+wp_keyboard_shortcuts_inhibitor_v1_inactive(
+    void *data,
+    struct zwp_keyboard_shortcuts_inhibitor_v1 *inhibitor)
+{
+}
+
+static const struct zwp_keyboard_shortcuts_inhibitor_v1_listener wp_keyboard_shortcuts_inhibitor_v1_listener = {
+    .active = wp_keyboard_shortcuts_inhibitor_v1_active,
+    .inactive = wp_keyboard_shortcuts_inhibitor_v1_inactive,
+};
+
+// endregion
 
 // region Ext Idle Notification
 
@@ -917,6 +885,66 @@ static const struct wl_seat_listener wl_seat_listener = {
 
 // endregion
 
+static struct wsi_shortcuts_inhibitor *
+wsi_seat_find_shortcuts_inhibitor(struct wsi_seat *seat, struct wl_surface *wl_surface)
+{
+    struct wsi_shortcuts_inhibitor *inhibitor;
+    wl_list_for_each(inhibitor, &seat->shortcut_inhibitors, link) {
+        if (inhibitor->wl_surface == wl_surface) {
+            return inhibitor;
+        }
+    }
+    return NULL;
+}
+
+void
+wsi_seat_inhibit_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface)
+{
+    struct wsi_platform *platform = seat->global.platform;
+    assert(platform->wp_keyboard_shortcuts_inhibit_manager_v1 != NULL);
+
+    struct wsi_shortcuts_inhibitor *inhibitor = wsi_seat_find_shortcuts_inhibitor(seat, wl_surface);
+    if (inhibitor) {
+        return;
+    }
+
+    inhibitor = calloc(1, sizeof(struct wsi_shortcuts_inhibitor));
+    if (!inhibitor) {
+        return;
+    }
+
+    inhibitor->seat = seat;
+    inhibitor->wl_surface = wl_surface;
+    inhibitor->wp_shortcuts_inhibitor_v1 = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(
+        platform->wp_keyboard_shortcuts_inhibit_manager_v1,
+        wl_surface,
+        seat->wl_seat);
+    if (!inhibitor->wp_shortcuts_inhibitor_v1) {
+        free(inhibitor);
+        return;
+    }
+
+    zwp_keyboard_shortcuts_inhibitor_v1_add_listener(
+        inhibitor->wp_shortcuts_inhibitor_v1,
+        &wp_keyboard_shortcuts_inhibitor_v1_listener,
+        inhibitor);
+
+    wl_list_insert(&seat->shortcut_inhibitors, &inhibitor->link);
+}
+
+void
+wsi_seat_restore_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface)
+{
+    struct wsi_shortcuts_inhibitor *inhibitor = wsi_seat_find_shortcuts_inhibitor(seat, wl_surface);
+    if (!inhibitor) {
+        return;
+    }
+
+    wl_list_remove(&inhibitor->link);
+    zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor->wp_shortcuts_inhibitor_v1);
+    free(inhibitor);
+}
+
 static void
 wsi_seat_enable_idle_timer(struct wsi_seat *seat, uint32_t time)
 {
@@ -951,6 +979,7 @@ wsi_seat_init(struct wsi_seat *seat)
     assert(seat->global.name != 0);
 
     struct wsi_platform *plat = seat->global.platform;
+    wl_list_init(&seat->shortcut_inhibitors);
 
     uint32_t version = wsi_get_version(
         &wl_seat_interface,
@@ -974,6 +1003,13 @@ static void
 wsi_seat_uninit(struct wsi_seat *seat)
 {
     assert(seat->wl_seat != NULL);
+
+    struct wsi_shortcuts_inhibitor *inhibitor, *tmp;
+    wl_list_for_each_safe(inhibitor, tmp, &seat->shortcut_inhibitors, link) {
+        zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor->wp_shortcuts_inhibitor_v1);
+        wl_list_remove(&inhibitor->link);
+        free(inhibitor);
+    }
 
     if (seat->pointer.wl_pointer) {
         wsi_pointer_uninit(&seat->pointer);

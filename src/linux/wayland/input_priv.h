@@ -80,7 +80,6 @@ struct wsi_pointer {
 struct wsi_keyboard {
     struct wl_keyboard             *wl_keyboard;
     struct zwp_input_timestamps_v1 *wp_timestamps_v1;
-    struct zwp_keyboard_shortcuts_inhibitor_v1 *wp_shortcuts_inhibitor_v1;
 
     struct xkb_context       *xkb_context;
     struct xkb_keymap        *xkb_keymap;
@@ -90,6 +89,13 @@ struct wsi_keyboard {
     int32_t repeat_rate;
     int32_t repeat_delay;
     int64_t event_time;
+};
+
+struct wsi_shortcuts_inhibitor {
+    struct wl_list link;
+    struct wsi_seat *seat;
+    struct wl_surface *wl_surface;
+    struct zwp_keyboard_shortcuts_inhibitor_v1 *wp_shortcuts_inhibitor_v1;
 };
 
 struct wsi_seat {
@@ -104,6 +110,8 @@ struct wsi_seat {
 
     struct wsi_pointer  pointer;
     struct wsi_keyboard keyboard;
+
+    struct wl_list shortcut_inhibitors;
 };
 
 void
@@ -118,10 +126,10 @@ void
 wsi_pointer_remove_constraint(struct wsi_pointer *pointer);
 
 void
-wsi_keyboard_inhibit_shortcuts(struct wsi_keyboard *keyboard, struct wl_surface *wl_surface);
+wsi_seat_inhibit_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface);
 
 void
-wsi_keyboard_restore_shortcuts(struct wsi_keyboard *keyboard);
+wsi_seat_restore_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface);
 
 struct wsi_seat *
 wsi_seat_add(struct wsi_platform *platform, uint32_t name, uint32_t version);
