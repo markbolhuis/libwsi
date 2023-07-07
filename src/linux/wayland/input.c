@@ -574,19 +574,6 @@ wsi_pointer_uninit(struct wsi_pointer *pointer)
     memset(pointer, 0, sizeof(struct wsi_pointer));
 }
 
-static void
-wsi_keyboard_reset(struct wsi_keyboard *keyboard)
-{
-    xkb_compose_state_unref(keyboard->xkb_compose_state);
-    keyboard->xkb_compose_state = NULL;
-
-    xkb_state_unref(keyboard->xkb_state);
-    keyboard->xkb_state = NULL;
-
-    xkb_keymap_unref(keyboard->xkb_keymap);
-    keyboard->xkb_keymap = NULL;
-}
-
 static const char *
 wsi_keyboard_get_locale()
 {
@@ -601,52 +588,6 @@ wsi_keyboard_get_locale()
         locale = "C";
     }
     return locale;
-}
-
-static bool
-wsi_keyboard_init_xkb(struct wsi_keyboard *keyboard, int fd, uint32_t size)
-{
-    assert(keyboard->xkb_keymap == NULL);
-    assert(keyboard->xkb_state == NULL);
-
-    char *map_str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-    close(fd);
-    if (map_str == MAP_FAILED) {
-        return false;
-    }
-
-    struct xkb_keymap *keymap = xkb_keymap_new_from_string(
-        keyboard->xkb_context,
-        map_str,
-        XKB_KEYMAP_FORMAT_TEXT_V1,
-        XKB_KEYMAP_COMPILE_NO_FLAGS);
-    munmap(map_str, size);
-    if (!keymap) {
-        return false;
-    }
-
-    struct xkb_state *state = xkb_state_new(keymap);
-    if (!state) {
-        xkb_keymap_unref(keymap);
-        return false;
-    }
-
-    const char *locale = wsi_keyboard_get_locale();
-
-    struct xkb_compose_state *compose_state = NULL;
-    struct xkb_compose_table *table = xkb_compose_table_new_from_locale(
-        keyboard->xkb_context,
-        locale,
-        XKB_COMPOSE_COMPILE_NO_FLAGS);
-    if (table) {
-        compose_state = xkb_compose_state_new(table, XKB_COMPOSE_STATE_NO_FLAGS);
-        xkb_compose_table_unref(table);
-    }
-
-    keyboard->xkb_compose_state = compose_state;
-    keyboard->xkb_keymap = keymap;
-    keyboard->xkb_state = state;
-    return true;
 }
 
 // region Wp Keyboard Timestamp
@@ -704,14 +645,57 @@ wl_keyboard_keymap(
 {
     struct wsi_keyboard *keyboard = data;
 
-    wsi_keyboard_reset(keyboard);
+    xkb_compose_state_unref(keyboard->xkb_compose_state);
+    keyboard->xkb_compose_state = NULL;
+
+    xkb_state_unref(keyboard->xkb_state);
+    keyboard->xkb_state = NULL;
+
+    xkb_keymap_unref(keyboard->xkb_keymap);
+    keyboard->xkb_keymap = NULL;
 
     if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
         close(fd);
         return;
     }
 
-    wsi_keyboard_init_xkb(keyboard, fd, size);
+    char *map_str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+    if (map_str == MAP_FAILED) {
+        return;
+    }
+
+    struct xkb_keymap *keymap = xkb_keymap_new_from_string(
+        keyboard->xkb_context,
+        map_str,
+        XKB_KEYMAP_FORMAT_TEXT_V1,
+        XKB_KEYMAP_COMPILE_NO_FLAGS);
+    munmap(map_str, size);
+    if (!keymap) {
+        return;
+    }
+
+    struct xkb_state *state = xkb_state_new(keymap);
+    if (!state) {
+        xkb_keymap_unref(keymap);
+        return;
+    }
+
+    const char *locale = wsi_keyboard_get_locale();
+
+    struct xkb_compose_state *compose_state = NULL;
+    struct xkb_compose_table *table = xkb_compose_table_new_from_locale(
+        keyboard->xkb_context,
+        locale,
+        XKB_COMPOSE_COMPILE_NO_FLAGS);
+    if (table) {
+        compose_state = xkb_compose_state_new(table, XKB_COMPOSE_STATE_NO_FLAGS);
+        xkb_compose_table_unref(table);
+    }
+
+    keyboard->xkb_compose_state = compose_state;
+    keyboard->xkb_keymap = keymap;
+    keyboard->xkb_state = state;
 }
 
 static void
@@ -865,6 +849,7 @@ wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
         wl_keyboard_destroy(keyboard->wl_keyboard);
     }
 
+    xkb_compose_state_unref(keyboard->xkb_compose_state);
     xkb_state_unref(keyboard->xkb_state);
     xkb_keymap_unref(keyboard->xkb_keymap);
     xkb_context_unref(keyboard->xkb_context);
