@@ -347,9 +347,7 @@ wsiCreateWindow(
     //=====================Window=====================
     NSRect contentRect = NSMakeRect(0, 0, window->user_width, window->user_height);
 
-    NSUInteger styleMask = NSWindowStyleMaskMiniaturizable;
-    styleMask |= (NSWindowStyleMaskTitled | NSWindowStyleMaskClosable);
-    styleMask |= NSWindowStyleMaskResizable;
+    NSUInteger styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
     window->window = [[CocoaWindow alloc]
         initWithContentRect:contentRect
                   styleMask:styleMask
