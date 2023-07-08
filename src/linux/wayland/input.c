@@ -20,7 +20,7 @@
 #include "platform_priv.h"
 #include "input_priv.h"
 
-const uint32_t WSI_WL_SEAT_VERSION = 7;
+const uint32_t WSI_WL_SEAT_VERSION = 9;
 
 static void
 wsi_pointer_set_cursor_image(
