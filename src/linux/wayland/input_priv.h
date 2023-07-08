@@ -62,19 +62,30 @@ struct wsi_pointer_frame {
     } axis;
 };
 
+struct wsi_pointer_constraint {
+    struct wl_list link;
+    struct wsi_pointer *pointer;
+    struct wl_surface *wl_surface;
+    union {
+        struct zwp_locked_pointer_v1 *wp_locked_pointer_v1;
+        struct zwp_confined_pointer_v1 *wp_confined_pointer_v1;
+    };
+    uint32_t type;
+    uint32_t lifetime;
+};
+
 struct wsi_pointer {
     struct wl_pointer              *wl_pointer;
     struct zwp_input_timestamps_v1 *wp_timestamps_v1;
     struct zwp_relative_pointer_v1 *wp_relative_v1;
-    struct zwp_confined_pointer_v1 *wp_confined_v1;
-    struct zwp_locked_pointer_v1   *wp_locked_v1;
 
     struct wl_cursor_theme *wl_cursor_theme;
     struct wl_cursor       *wl_cursor;
     struct wl_surface      *wl_surface;
 
     struct wsi_pointer_frame frame;
-    uint32_t constraint_lifetime;
+
+    struct wl_list constraints;
 };
 
 struct wsi_keyboard {
@@ -120,10 +131,10 @@ wsi_pointer_constrain(
     uint32_t type,
     struct wl_surface *wl_surface,
     bool persistent,
-    int32_t pos_hint[2]);
+    double pos_hint[2]);
 
 void
-wsi_pointer_remove_constraint(struct wsi_pointer *pointer);
+wsi_pointer_remove_constraint(struct wsi_pointer *pointer, struct wl_surface *wl_surface);
 
 void
 wsi_seat_inhibit_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface);

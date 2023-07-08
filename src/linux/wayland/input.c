@@ -58,6 +58,22 @@ wsi_pointer_set_cursor(
     wl_pointer_set_cursor(ptr->wl_pointer, serial, NULL, 0, 0);
 }
 
+void
+wsi_pointer_constraint_destroy(struct wsi_pointer_constraint *cons)
+{
+    wl_list_remove(&cons->link);
+
+    if (cons->type == ZWP_POINTER_CONSTRAINTS_V1_LOCK_POINTER) {
+        assert(cons->wp_locked_pointer_v1 != NULL);
+        zwp_locked_pointer_v1_destroy(cons->wp_locked_pointer_v1);
+    } else if (cons->type == ZWP_POINTER_CONSTRAINTS_V1_CONFINE_POINTER) {
+        assert(cons->wp_confined_pointer_v1 != NULL);
+        zwp_confined_pointer_v1_destroy(cons->wp_confined_pointer_v1);
+    }
+
+    free(cons);
+}
+
 static void
 wsi_pointer_frame(struct wsi_pointer *pointer)
 {
@@ -95,7 +111,8 @@ static const struct zwp_input_timestamps_v1_listener wp_pointer_timestamps_v1_li
 static void
 wp_pointer_locked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1)
 {
-    struct wsi_pointer *pointer = data;
+    struct wsi_pointer_constraint *cons = data;
+    struct wsi_pointer *pointer = cons->pointer;
 
     pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
     pointer->frame.state = WSI_POINTER_STATE_LOCKED;
@@ -106,15 +123,14 @@ wp_pointer_locked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1
 static void
 wp_pointer_unlocked(void *data, struct zwp_locked_pointer_v1 *wp_locked_pointer_v1)
 {
-    struct wsi_pointer *pointer = data;
+    struct wsi_pointer_constraint *cons = data;
+    struct wsi_pointer *pointer = cons->pointer;
 
     pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
     pointer->frame.state = WSI_POINTER_STATE_NONE;
 
-    if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
-        zwp_locked_pointer_v1_destroy(pointer->wp_locked_v1);
-        pointer->wp_locked_v1 = NULL;
-        pointer->constraint_lifetime = 0;
+    if (cons->lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
+        wsi_pointer_constraint_destroy(cons);
     }
 
     wsi_pointer_frame(pointer);
@@ -132,7 +148,8 @@ static const struct zwp_locked_pointer_v1_listener wp_locked_pointer_v1_listener
 static void
 wp_pointer_confined(void *data, struct zwp_confined_pointer_v1 *wp_confined_pointer_v1)
 {
-    struct wsi_pointer *pointer = data;
+    struct wsi_pointer_constraint *cons = data;
+    struct wsi_pointer *pointer = cons->pointer;
 
     pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
     pointer->frame.state = WSI_POINTER_STATE_CONFINED;
@@ -143,15 +160,14 @@ wp_pointer_confined(void *data, struct zwp_confined_pointer_v1 *wp_confined_poin
 static void
 wp_pointer_unconfined(void *data, struct zwp_confined_pointer_v1 *wp_confined_pointer_v1)
 {
-    struct wsi_pointer *pointer = data;
+    struct wsi_pointer_constraint *cons = data;
+    struct wsi_pointer *pointer = cons->pointer;
 
     pointer->frame.mask |= WSI_POINTER_FRAME_EVENT_STATE;
     pointer->frame.state = WSI_POINTER_STATE_NONE;
 
-    if (pointer->constraint_lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
-        zwp_confined_pointer_v1_destroy(pointer->wp_confined_v1);
-        pointer->wp_confined_v1 = NULL;
-        pointer->constraint_lifetime = 0;
+    if (cons->lifetime == ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT) {
+        wsi_pointer_constraint_destroy(cons);
     }
 
     wsi_pointer_frame(pointer);
@@ -438,71 +454,105 @@ static const struct wl_pointer_listener wl_pointer_listener = {
 
 // endregion
 
+static struct wsi_pointer_constraint *
+wsi_pointer_find_constraint(struct wsi_pointer *pointer, struct wl_surface *wl_surface)
+{
+    struct wsi_pointer_constraint *cons;
+    wl_list_for_each(cons, &pointer->constraints, link) {
+        if (cons->wl_surface == wl_surface) {
+            return cons;
+        }
+    }
+    return NULL;
+}
+
 void
 wsi_pointer_constrain(
     struct wsi_pointer *pointer,
     uint32_t type,
     struct wl_surface *wl_surface,
     bool persistent,
-    int32_t pos_hint[2])
+    double pos_hint[2])
 {
     struct wsi_seat *seat = wl_container_of(pointer, seat, pointer);
     struct wsi_platform *platform = seat->global.platform;
 
     assert(platform->wp_pointer_constraints_v1 != NULL);
     assert(pointer->wl_pointer != NULL);
-    assert(pointer->wp_locked_v1 == NULL);
-    assert(pointer->wp_confined_v1 == NULL);
     assert(type == ZWP_POINTER_CONSTRAINTS_V1_LOCK_POINTER ||
            type == ZWP_POINTER_CONSTRAINTS_V1_CONFINE_POINTER);
 
-    pointer->constraint_lifetime = persistent
-                                 ? ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_PERSISTENT
-                                 : ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT;
+    struct wsi_pointer_constraint *cons = wsi_pointer_find_constraint(pointer, wl_surface);
+    if (cons) {
+        return;
+    }
+
+    cons = calloc(1, sizeof(struct wsi_pointer_constraint));
+    if (!cons) {
+        return;
+    }
+
+    cons->pointer = pointer;
+    cons->wl_surface = wl_surface;
+    cons->type = type;
+    cons->lifetime = persistent
+                   ? ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_PERSISTENT
+                   : ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_ONESHOT;
 
     if (type == ZWP_POINTER_CONSTRAINTS_V1_LOCK_POINTER) {
-        pointer->wp_locked_v1 = zwp_pointer_constraints_v1_lock_pointer(
+        cons->wp_locked_pointer_v1 = zwp_pointer_constraints_v1_lock_pointer(
             platform->wp_pointer_constraints_v1,
             wl_surface,
             pointer->wl_pointer,
             NULL,
-            pointer->constraint_lifetime);
+            cons->lifetime);
+        if (!cons->wp_locked_pointer_v1) {
+            free(cons);
+            return;
+        }
+
         zwp_locked_pointer_v1_add_listener(
-            pointer->wp_locked_v1,
+            cons->wp_locked_pointer_v1,
             &wp_locked_pointer_v1_listener,
-            pointer);
-        if (pos_hint != NULL) {
+            cons);
+
+        if (pos_hint) {
             zwp_locked_pointer_v1_set_cursor_position_hint(
-                pointer->wp_locked_v1,
+                cons->wp_locked_pointer_v1,
                 wl_fixed_from_double(pos_hint[0]),
                 wl_fixed_from_double(pos_hint[1]));
         }
-    } else if (type == ZWP_POINTER_CONSTRAINTS_V1_CONFINE_POINTER) {
-         pointer->wp_confined_v1 = zwp_pointer_constraints_v1_confine_pointer(
+    }
+    else if (type == ZWP_POINTER_CONSTRAINTS_V1_CONFINE_POINTER) {
+        cons->wp_confined_pointer_v1 = zwp_pointer_constraints_v1_confine_pointer(
             platform->wp_pointer_constraints_v1,
             wl_surface,
             pointer->wl_pointer,
             NULL,
-            pointer->constraint_lifetime);
+            cons->lifetime);
+        if (!cons->wp_confined_pointer_v1) {
+            free(cons);
+            return;
+        }
+
         zwp_confined_pointer_v1_add_listener(
-            pointer->wp_confined_v1,
+            cons->wp_confined_pointer_v1,
             &wp_confined_pointer_v1_listener,
             pointer);
     }
+
+    wl_list_insert(&pointer->constraints, &cons->link);
 }
 
 void
-wsi_pointer_remove_constraint(struct wsi_pointer *pointer)
+wsi_pointer_remove_constraint(struct wsi_pointer *pointer, struct wl_surface *wl_surface)
 {
-    if (pointer->wp_locked_v1) {
-        zwp_locked_pointer_v1_destroy(pointer->wp_locked_v1);
-        pointer->wp_locked_v1 = NULL;
+    struct wsi_pointer_constraint *cons = wsi_pointer_find_constraint(pointer, wl_surface);
+    if (cons == NULL) {
+        return;
     }
-    if (pointer->wp_confined_v1) {
-        zwp_confined_pointer_v1_destroy(pointer->wp_confined_v1);
-        pointer->wp_confined_v1 = NULL;
-    }
-    pointer->constraint_lifetime = 0;
+
+    wsi_pointer_constraint_destroy(cons);
 }
 
 static bool
@@ -511,6 +561,7 @@ wsi_pointer_init(struct wsi_seat *seat)
     assert(seat->pointer.wl_pointer == NULL);
 
     struct wsi_platform *plat = seat->global.platform;
+    wl_list_init(&seat->pointer.constraints);
 
     seat->pointer.wl_pointer = wl_seat_get_pointer(seat->wl_seat);
     wl_pointer_add_listener(seat->pointer.wl_pointer, &wl_pointer_listener, &seat->pointer);
@@ -546,20 +597,17 @@ wsi_pointer_uninit(struct wsi_pointer *pointer)
 {
     assert(pointer->wl_pointer != NULL);
 
+    struct wsi_pointer_constraint *cons, *tmp;
+    wl_list_for_each_safe(cons, tmp, &pointer->constraints, link) {
+        wsi_pointer_constraint_destroy(cons);
+    }
+
     if (pointer->wp_timestamps_v1) {
         zwp_input_timestamps_v1_destroy(pointer->wp_timestamps_v1);
     }
 
     if (pointer->wp_relative_v1) {
         zwp_relative_pointer_v1_destroy(pointer->wp_relative_v1);
-    }
-
-    if (pointer->wp_locked_v1) {
-        zwp_locked_pointer_v1_destroy(pointer->wp_locked_v1);
-    }
-
-    if (pointer->wp_confined_v1) {
-        zwp_confined_pointer_v1_destroy(pointer->wp_confined_v1);
     }
 
     if (wl_pointer_get_version(pointer->wl_pointer) >= WL_POINTER_RELEASE_SINCE_VERSION) {
