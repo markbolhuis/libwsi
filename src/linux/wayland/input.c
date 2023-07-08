@@ -993,31 +993,29 @@ wsi_seat_restore_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface)
     free(inhibitor);
 }
 
-static void
-wsi_seat_enable_idle_timer(struct wsi_seat *seat, uint32_t time)
+void
+wsi_seat_set_idle_timer(struct wsi_seat *seat, const uint32_t *time)
 {
     struct wsi_platform *platform = seat->global.platform;
-
     assert(platform->ext_idle_notifier_v1 != NULL);
-    assert(seat->ext_idle_notification_v1 == NULL);
+
+    if (seat->ext_idle_notification_v1) {
+        ext_idle_notification_v1_destroy(seat->ext_idle_notification_v1);
+        seat->ext_idle_notification_v1 = NULL;
+    }
+
+    if (!time) {
+        return;
+    }
 
     seat->ext_idle_notification_v1 = ext_idle_notifier_v1_get_idle_notification(
         platform->ext_idle_notifier_v1,
-        time,
+        *time,
         seat->wl_seat);
     ext_idle_notification_v1_add_listener(
         seat->ext_idle_notification_v1,
         &ext_idle_notification_v1_listener,
         seat);
-}
-
-static void
-wsi_seat_disable_idle_timer(struct wsi_seat *seat)
-{
-    assert(seat->ext_idle_notification_v1 != NULL);
-
-    ext_idle_notification_v1_destroy(seat->ext_idle_notification_v1);
-    seat->ext_idle_notification_v1 = NULL;
 }
 
 static bool
@@ -1057,6 +1055,11 @@ wsi_seat_uninit(struct wsi_seat *seat)
         zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor->wp_shortcuts_inhibitor_v1);
         wl_list_remove(&inhibitor->link);
         free(inhibitor);
+    }
+
+    if (seat->ext_idle_notification_v1) {
+        ext_idle_notification_v1_destroy(seat->ext_idle_notification_v1);
+        seat->ext_idle_notification_v1 = NULL;
     }
 
     if (seat->pointer.wl_pointer) {

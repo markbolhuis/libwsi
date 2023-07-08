@@ -142,6 +142,9 @@ wsi_seat_inhibit_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface)
 void
 wsi_seat_restore_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface);
 
+void
+wsi_seat_set_idle_timer(struct wsi_seat *seat, const uint32_t *time);
+
 struct wsi_seat *
 wsi_seat_add(struct wsi_platform *platform, uint32_t name, uint32_t version);
 
