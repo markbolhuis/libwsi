@@ -593,8 +593,9 @@ wsi_pointer_init(struct wsi_seat *seat)
 }
 
 static void
-wsi_pointer_uninit(struct wsi_pointer *pointer)
+wsi_pointer_uninit(struct wsi_seat *seat)
 {
+    struct wsi_pointer *pointer = &seat->pointer;
     assert(pointer->wl_pointer != NULL);
 
     struct wsi_pointer_constraint *cons, *tmp;
@@ -828,8 +829,9 @@ wsi_keyboard_init(struct wsi_seat *seat)
 }
 
 static void
-wsi_keyboard_uninit(struct wsi_keyboard *keyboard)
+wsi_keyboard_uninit(struct wsi_seat *seat)
 {
+    struct wsi_keyboard *keyboard = &seat->keyboard;
     assert(keyboard->wl_keyboard != NULL);
 
     if (keyboard->wp_timestamps_v1) {
@@ -907,13 +909,13 @@ wl_seat_capabilities(void *data, struct wl_seat *wl_seat, uint32_t capabilities)
     if (has_pointer && seat->pointer.wl_pointer == NULL) {
         wsi_pointer_init(seat);
     } else if (!has_pointer && seat->pointer.wl_pointer != NULL) {
-        wsi_pointer_uninit(&seat->pointer);
+        wsi_pointer_uninit(seat);
     }
 
     if (has_keyboard && seat->keyboard.wl_keyboard == NULL) {
         wsi_keyboard_init(seat);
     } else if (!has_keyboard && seat->keyboard.wl_keyboard != NULL) {
-        wsi_keyboard_uninit(&seat->keyboard);
+        wsi_keyboard_uninit(seat);
     }
 }
 
@@ -1063,11 +1065,11 @@ wsi_seat_uninit(struct wsi_seat *seat)
     }
 
     if (seat->pointer.wl_pointer) {
-        wsi_pointer_uninit(&seat->pointer);
+        wsi_pointer_uninit(seat);
     }
 
     if (seat->keyboard.wl_keyboard) {
-        wsi_keyboard_uninit(&seat->keyboard);
+        wsi_keyboard_uninit(seat);
     }
 
     free(seat->name);
