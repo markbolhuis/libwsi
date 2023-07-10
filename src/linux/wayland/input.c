@@ -10,6 +10,7 @@
 #include <input-timestamps-unstable-v1-client-protocol.h>
 #include <relative-pointer-unstable-v1-client-protocol.h>
 #include <pointer-constraints-unstable-v1-client-protocol.h>
+#include <pointer-gestures-unstable-v1-client-protocol.h>
 #include <keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h>
 #include <ext-idle-notify-v1-client-protocol.h>
 
@@ -84,22 +85,116 @@ wsi_pointer_frame(struct wsi_pointer *pointer)
     pointer->frame.mask = WSI_POINTER_FRAME_EVENT_NONE;
 }
 
-// region Wp Pointer Timestamp
+// region Wp Swipe Gesture
 
 static void
-wp_pointer_timestamp(
+wp_pointer_gesture_swipe_v1_begin(
     void *data,
-    struct zwp_input_timestamps_v1 *wp_input_timestamps_v1,
-    uint32_t tv_sec_hi,
-    uint32_t tv_sec_lo,
-    uint32_t tv_nsec)
+    struct zwp_pointer_gesture_swipe_v1 *wp_pointer_gesture_swipe_v1,
+    uint32_t serial,
+    uint32_t time,
+    struct wl_surface *surface,
+    uint32_t fingers)
 {
-    struct wsi_pointer *pointer = data;
-    pointer->frame.time = wsi_tv_to_ns(tv_sec_hi, tv_sec_lo, tv_nsec);
 }
 
-static const struct zwp_input_timestamps_v1_listener wp_pointer_timestamps_v1_listener = {
-    .timestamp = wp_pointer_timestamp,
+static void
+wp_pointer_gesture_swipe_v1_update(
+    void *data,
+    struct zwp_pointer_gesture_swipe_v1 *zwp_pointer_gesture_swipe_v1,
+    uint32_t time,
+    wl_fixed_t dx,
+    wl_fixed_t dy)
+{
+}
+
+static void
+wp_pointer_gesture_swipe_v1_end(
+    void *data,
+    struct zwp_pointer_gesture_swipe_v1 *zwp_pointer_gesture_swipe_v1,
+    uint32_t serial,
+    uint32_t time,
+    int32_t cancelled)
+{
+}
+
+static const struct zwp_pointer_gesture_swipe_v1_listener wp_pointer_gesture_swipe_v1_listenter = {
+    .begin  = wp_pointer_gesture_swipe_v1_begin,
+    .update = wp_pointer_gesture_swipe_v1_update,
+    .end    = wp_pointer_gesture_swipe_v1_end,
+};
+
+// endregion
+
+// region Wp Pinch Gesture
+
+static void
+wp_pointer_gesture_pinch_v1_begin(
+    void *data,
+    struct zwp_pointer_gesture_pinch_v1 *wp_pointer_gesture_pinch_v1,
+    uint32_t serial,
+    uint32_t time,
+    struct wl_surface *surface,
+    uint32_t fingers)
+{
+}
+
+static void
+wp_pointer_gesture_pinch_v1_update(
+    void *data,
+    struct zwp_pointer_gesture_pinch_v1 *zwp_pointer_gesture_pinch_v1,
+    uint32_t time,
+    wl_fixed_t dx,
+    wl_fixed_t dy,
+    wl_fixed_t scale,
+    wl_fixed_t rotation)
+{
+}
+
+static void
+wp_pointer_gesture_pinch_v1_end(
+    void *data,
+    struct zwp_pointer_gesture_pinch_v1 *zwp_pointer_gesture_pinch_v1,
+    uint32_t serial,
+    uint32_t time,
+    int32_t cancelled)
+{
+}
+
+static const struct zwp_pointer_gesture_pinch_v1_listener wp_pointer_gesture_pinch_v1_listenter = {
+    .begin  = wp_pointer_gesture_pinch_v1_begin,
+    .update = wp_pointer_gesture_pinch_v1_update,
+    .end    = wp_pointer_gesture_pinch_v1_end,
+};
+
+// endregion
+
+// region Wp Hold Gesture
+
+static void
+wp_pointer_gesture_hold_v1_begin(
+    void *data,
+    struct zwp_pointer_gesture_hold_v1 *wp_pointer_gesture_hold_v1,
+    uint32_t serial,
+    uint32_t time,
+    struct wl_surface *surface,
+    uint32_t fingers)
+{
+}
+
+static void
+wp_pointer_gesture_hold_v1_end(
+    void *data,
+    struct zwp_pointer_gesture_hold_v1 *zwp_pointer_gesture_hold_v1,
+    uint32_t serial,
+    uint32_t time,
+    int32_t cancelled)
+{
+}
+
+static const struct zwp_pointer_gesture_hold_v1_listener wp_pointer_gesture_hold_v1_listenter = {
+    .begin  = wp_pointer_gesture_hold_v1_begin,
+    .end    = wp_pointer_gesture_hold_v1_end,
 };
 
 // endregion
@@ -213,6 +308,26 @@ wp_pointer_relative_motion(
 
 static const struct zwp_relative_pointer_v1_listener wp_relative_pointer_v1_listener = {
     .relative_motion = wp_pointer_relative_motion,
+};
+
+// endregion
+
+// region Wp Pointer Timestamp
+
+static void
+wp_pointer_timestamp(
+    void *data,
+    struct zwp_input_timestamps_v1 *wp_input_timestamps_v1,
+    uint32_t tv_sec_hi,
+    uint32_t tv_sec_lo,
+    uint32_t tv_nsec)
+{
+    struct wsi_pointer *pointer = data;
+    pointer->frame.time = wsi_tv_to_ns(tv_sec_hi, tv_sec_lo, tv_nsec);
+}
+
+static const struct zwp_input_timestamps_v1_listener wp_pointer_timestamps_v1_listener = {
+    .timestamp = wp_pointer_timestamp,
 };
 
 // endregion
@@ -587,6 +702,37 @@ wsi_pointer_init(struct wsi_seat *seat)
             &seat->pointer);
     }
 
+    if (plat->wp_pointer_gestures_v1) {
+        seat->pointer.wp_swipe_v1 = zwp_pointer_gestures_v1_get_swipe_gesture(
+            plat->wp_pointer_gestures_v1,
+            seat->pointer.wl_pointer);
+        zwp_pointer_gesture_swipe_v1_add_listener(
+            seat->pointer.wp_swipe_v1,
+            &wp_pointer_gesture_swipe_v1_listenter,
+            &seat->pointer);
+
+        seat->pointer.wp_pinch_v1 = zwp_pointer_gestures_v1_get_pinch_gesture(
+            plat->wp_pointer_gestures_v1,
+            seat->pointer.wl_pointer);
+        zwp_pointer_gesture_pinch_v1_add_listener(
+            seat->pointer.wp_pinch_v1,
+            &wp_pointer_gesture_pinch_v1_listenter,
+            &seat->pointer);
+
+        uint32_t version = zwp_pointer_gestures_v1_get_version(plat->wp_pointer_gestures_v1);
+
+        if (version >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION) {
+            printf("hold\n");
+            seat->pointer.wp_hold_v1 = zwp_pointer_gestures_v1_get_hold_gesture(
+                plat->wp_pointer_gestures_v1,
+                seat->pointer.wl_pointer);
+            zwp_pointer_gesture_hold_v1_add_listener(
+                seat->pointer.wp_hold_v1,
+                &wp_pointer_gesture_hold_v1_listenter,
+                &seat->pointer);
+        }
+    }
+
     return true;
 }
 
@@ -599,6 +745,18 @@ wsi_pointer_uninit(struct wsi_seat *seat)
     struct wsi_pointer_constraint *cons, *tmp;
     wl_list_for_each_safe(cons, tmp, &pointer->constraints, link) {
         wsi_pointer_constraint_destroy(cons);
+    }
+
+    if (pointer->wp_swipe_v1) {
+        zwp_pointer_gesture_swipe_v1_destroy(pointer->wp_swipe_v1);
+    }
+
+    if (pointer->wp_pinch_v1) {
+        zwp_pointer_gesture_pinch_v1_destroy(pointer->wp_pinch_v1);
+    }
+
+    if (pointer->wp_hold_v1) {
+        zwp_pointer_gesture_hold_v1_destroy(pointer->wp_hold_v1);
     }
 
     if (pointer->wp_timestamps_v1) {

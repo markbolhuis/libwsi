@@ -74,9 +74,12 @@ struct wsi_pointer_constraint {
 };
 
 struct wsi_pointer {
-    struct wl_pointer              *wl_pointer;
-    struct zwp_input_timestamps_v1 *wp_timestamps_v1;
-    struct zwp_relative_pointer_v1 *wp_relative_v1;
+    struct wl_pointer                   *wl_pointer;
+    struct zwp_input_timestamps_v1      *wp_timestamps_v1;
+    struct zwp_relative_pointer_v1      *wp_relative_v1;
+    struct zwp_pointer_gesture_swipe_v1 *wp_swipe_v1;
+    struct zwp_pointer_gesture_pinch_v1 *wp_pinch_v1;
+    struct zwp_pointer_gesture_hold_v1  *wp_hold_v1;
 
     struct wl_cursor_theme *wl_cursor_theme;
     struct wl_cursor       *wl_cursor;

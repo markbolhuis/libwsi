@@ -10,6 +10,7 @@
 #include <input-timestamps-unstable-v1-client-protocol.h>
 #include <relative-pointer-unstable-v1-client-protocol.h>
 #include <pointer-constraints-unstable-v1-client-protocol.h>
+#include <pointer-gestures-unstable-v1-client-protocol.h>
 #include <keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h>
 #include <idle-inhibit-unstable-v1-client-protocol.h>
 #include <content-type-v1-client-protocol.h>
@@ -31,6 +32,7 @@ const uint32_t WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_INPUT_TIMESTAMPS_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_RELATIVE_POINTER_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_POINTER_CONSTRAINTS_V1_VERSION = 1;
+const uint32_t WSI_WP_POINTER_GESTURES_V1_VERSION = 3;
 const uint32_t WSI_WP_KEYBOARD_SHORTCUTS_INHIBIT_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_IDLE_INHIBIT_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_CONTENT_TYPE_MANAGER_V1_VERSION = 1;
@@ -145,6 +147,20 @@ wsi_platform_destroy_globals(struct wsi_platform *platform)
     ZWSI_GLOBAL_DESTROY(wp_idle_inhibit_manager_v1)
     ZWSI_GLOBAL_DESTROY(xdg_decoration_manager_v1)
     ZWSI_GLOBAL_DESTROY(xdg_output_manager_v1)
+
+    if (platform->wp_pointer_gestures_v1) {
+        struct wsi_global *global = zwp_pointer_gestures_v1_get_user_data(
+            platform->wp_pointer_gestures_v1);
+        wsi_global_destroy(global);
+        if (zwp_pointer_gestures_v1_get_version(platform->wp_pointer_gestures_v1) >=
+            ZWP_POINTER_GESTURES_V1_RELEASE_SINCE_VERSION)
+        {
+            zwp_pointer_gestures_v1_release(platform->wp_pointer_gestures_v1);
+        } else {
+            zwp_pointer_gestures_v1_destroy(platform->wp_pointer_gestures_v1);
+        }
+        platform->wp_pointer_gestures_v1 = NULL;
+    }
 
 #undef WSI_GLOBAL_DESTROY
 #undef ZWSI_GLOBAL_DESTROY
@@ -306,6 +322,15 @@ wl_registry_global(
             version,
             WSI_WP_POINTER_CONSTRAINTS_V1_VERSION);
     }
+    else if ZWSI_MATCH(wp_pointer_gestures_v1) {
+        platform->wp_pointer_gestures_v1 = wsi_global_bind(
+            platform,
+            name,
+            &zwp_pointer_gestures_v1_interface,
+            NULL,
+            version,
+            WSI_WP_POINTER_GESTURES_V1_VERSION);
+    }
     else if ZWSI_MATCH(wp_keyboard_shortcuts_inhibit_manager_v1) {
         platform->wp_keyboard_shortcuts_inhibit_manager_v1 = wsi_global_bind(
             platform,
@@ -439,6 +464,22 @@ wl_registry_global_remove(
 
 #undef WSI_GLOBAL_REMOVE
 #undef ZWSI_GLOBAL_REMOVE
+
+    if (platform->wp_pointer_gestures_v1) {
+        struct wsi_global *global = zwp_pointer_gestures_v1_get_user_data(
+            platform->wp_pointer_gestures_v1);
+        if (global->name == name) {
+            if (zwp_pointer_gestures_v1_get_version(platform->wp_pointer_gestures_v1) >=
+                ZWP_POINTER_GESTURES_V1_RELEASE_SINCE_VERSION)
+            {
+                zwp_pointer_gestures_v1_release(platform->wp_pointer_gestures_v1);
+            } else {
+                zwp_pointer_gestures_v1_destroy(platform->wp_pointer_gestures_v1);
+            }
+            platform->wp_pointer_gestures_v1 = NULL;
+            wsi_global_destroy(global);
+        }
+    }
 
     // TODO: Remove temporary aborts and implement proper platform invalidation
 

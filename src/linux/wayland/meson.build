@@ -14,6 +14,7 @@ wl_protos = [
     [ 'input-timestamps', 'unstable', 1 ],
     [ 'relative-pointer', 'unstable', 1 ],
     [ 'pointer-constraints', 'unstable', 1 ],
+    [ 'pointer-gestures', 'unstable', 1 ],
     [ 'keyboard-shortcuts-inhibit', 'unstable', 1 ],
     [ 'idle-inhibit', 'unstable', 1 ],
     [ 'content-type', 'staging', 1 ],
