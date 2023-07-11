@@ -12,6 +12,7 @@ wsi_extent_equal(WsiExtent a, WsiExtent b)
 static inline int32_t
 wsi_div_round(int32_t a, int32_t b)
 {
+    assert(a > 0 && b > 0);
     return (a + b / 2) / b;
 }
 
