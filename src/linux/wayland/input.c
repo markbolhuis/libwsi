@@ -722,7 +722,6 @@ wsi_pointer_init(struct wsi_seat *seat)
         uint32_t version = zwp_pointer_gestures_v1_get_version(plat->wp_pointer_gestures_v1);
 
         if (version >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION) {
-            printf("hold\n");
             seat->pointer.wp_hold_v1 = zwp_pointer_gestures_v1_get_hold_gesture(
                 plat->wp_pointer_gestures_v1,
                 seat->pointer.wl_pointer);
