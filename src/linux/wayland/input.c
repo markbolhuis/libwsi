@@ -651,7 +651,7 @@ wsi_pointer_constrain(
         zwp_confined_pointer_v1_add_listener(
             cons->wp_confined_pointer_v1,
             &wp_confined_pointer_v1_listener,
-            pointer);
+            cons);
     }
 
     wl_list_insert(&pointer->constraints, &cons->link);
