@@ -669,7 +669,7 @@ wsi_pointer_remove_constraint(struct wsi_pointer *pointer, struct wl_surface *wl
 }
 
 static bool
-wsi_pointer_init(struct wsi_seat *seat)
+wsi_seat_init_pointer(struct wsi_seat *seat)
 {
     assert(seat->pointer.wl_pointer == NULL);
 
@@ -736,7 +736,7 @@ wsi_pointer_init(struct wsi_seat *seat)
 }
 
 static void
-wsi_pointer_uninit(struct wsi_seat *seat)
+wsi_seat_uninit_pointer(struct wsi_seat *seat)
 {
     struct wsi_pointer *pointer = &seat->pointer;
     assert(pointer->wl_pointer != NULL);
@@ -958,7 +958,7 @@ static const struct wl_keyboard_listener wl_keyboard_listener = {
 // endregion
 
 static bool
-wsi_keyboard_init(struct wsi_seat *seat)
+wsi_seat_init_keyboard(struct wsi_seat *seat)
 {
     assert(seat->keyboard.wl_keyboard == NULL);
 
@@ -984,7 +984,7 @@ wsi_keyboard_init(struct wsi_seat *seat)
 }
 
 static void
-wsi_keyboard_uninit(struct wsi_seat *seat)
+wsi_seat_uninit_keyboard(struct wsi_seat *seat)
 {
     struct wsi_keyboard *keyboard = &seat->keyboard;
     assert(keyboard->wl_keyboard != NULL);
@@ -1062,15 +1062,15 @@ wl_seat_capabilities(void *data, struct wl_seat *wl_seat, uint32_t capabilities)
     bool has_keyboard = capabilities & WL_SEAT_CAPABILITY_KEYBOARD;
 
     if (has_pointer && seat->pointer.wl_pointer == NULL) {
-        wsi_pointer_init(seat);
+        wsi_seat_init_pointer(seat);
     } else if (!has_pointer && seat->pointer.wl_pointer != NULL) {
-        wsi_pointer_uninit(seat);
+        wsi_seat_uninit_pointer(seat);
     }
 
     if (has_keyboard && seat->keyboard.wl_keyboard == NULL) {
-        wsi_keyboard_init(seat);
+        wsi_seat_init_keyboard(seat);
     } else if (!has_keyboard && seat->keyboard.wl_keyboard != NULL) {
-        wsi_keyboard_uninit(seat);
+        wsi_seat_uninit_keyboard(seat);
     }
 }
 
@@ -1220,11 +1220,11 @@ wsi_seat_uninit(struct wsi_seat *seat)
     }
 
     if (seat->pointer.wl_pointer) {
-        wsi_pointer_uninit(seat);
+        wsi_seat_uninit_pointer(seat);
     }
 
     if (seat->keyboard.wl_keyboard) {
-        wsi_keyboard_uninit(seat);
+        wsi_seat_uninit_keyboard(seat);
     }
 
     free(seat->name);
