@@ -21,7 +21,7 @@
 #include "platform_priv.h"
 #include "input_priv.h"
 
-const uint32_t WSI_WL_SEAT_VERSION = 9;
+extern const uint32_t WSI_WL_SEAT_VERSION;
 
 static void
 wsi_pointer_set_cursor_image(

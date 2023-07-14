@@ -25,8 +25,10 @@
 #include "input_priv.h"
 #include "output_priv.h"
 
-const uint32_t WSI_WL_COMPOSITOR_VERSION = 5;
+const uint32_t WSI_WL_COMPOSITOR_VERSION = 6;
 const uint32_t WSI_WL_SHM_VERSION = 1;
+const uint32_t WSI_WL_SEAT_VERSION = 9;
+const uint32_t WSI_WL_OUTPUT_VERSION = 4;
 const uint32_t WSI_WP_VIEWPORTER_VERSION = 1;
 const uint32_t WSI_WP_FRACTIONAL_SCALE_MANAGER_V1_VERSION = 1;
 const uint32_t WSI_WP_INPUT_TIMESTAMPS_MANAGER_V1_VERSION = 1;
