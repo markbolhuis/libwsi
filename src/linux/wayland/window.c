@@ -584,8 +584,7 @@ wsi_window_init_state(struct wsi_window *window, const WsiWindowCreateInfo *info
     }
 
     if (info->parent != NULL) {
-        window->parent = info->parent;
-        xdg_toplevel_set_parent(window->xdg_toplevel, window->parent->xdg_toplevel);
+        xdg_toplevel_set_parent(window->xdg_toplevel, info->parent->xdg_toplevel);
     }
 }
 
@@ -732,7 +731,6 @@ wsiSetWindowParent(WsiWindow window, WsiWindow parent)
         xdg_parent = parent->xdg_toplevel;
     }
     xdg_toplevel_set_parent(window->xdg_toplevel, xdg_parent);
-    window->parent = parent;
     return WSI_SUCCESS;
 }
 

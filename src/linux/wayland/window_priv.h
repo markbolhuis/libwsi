@@ -49,7 +49,6 @@ struct wsi_window_state {
 
 struct wsi_window {
     struct wsi_platform *platform;
-    struct wsi_window *parent;
 
     struct wl_list link;
 
