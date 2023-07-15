@@ -30,6 +30,19 @@ wsi_is_transform_a_resize(int32_t before, int32_t after)
 }
 
 WsiExtent
+wsi_window_get_geometry_extent(struct wsi_window *window)
+{
+    return window->current.extent;
+}
+
+WsiExtent
+wsi_window_get_surface_extent(struct wsi_window *window)
+{
+    // Until CSD is implemented surface extent is the same as geometry
+    return wsi_window_get_geometry_extent(window);
+}
+
+WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
     WsiExtent extent = wsi_window_get_surface_extent(window);
@@ -45,12 +58,6 @@ wsi_window_get_buffer_extent(struct wsi_window *window)
         extent.height = wsi_div_round(extent.height, 120);
     }
     return extent;
-}
-
-WsiExtent
-wsi_window_get_surface_extent(struct wsi_window *window)
-{
-    return window->current.extent;
 }
 
 static void
