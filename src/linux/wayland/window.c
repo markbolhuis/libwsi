@@ -645,11 +645,6 @@ wsi_window_init(
     wsi_window_init_state(window, info);
     wl_surface_commit(window->wl_surface);
 
-    int ret = 0;
-    while(!window->configured && ret >= 0) {
-        ret = wl_display_dispatch(platform->wl_display);
-    }
-
     wl_list_insert(&platform->window_list, &window->link);
     return WSI_SUCCESS;
 }

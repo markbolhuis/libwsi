@@ -120,6 +120,7 @@ wsiCreateWindow(
         properties);
 
     xcb_map_window(platform->xcb_connection, window->xcb_window);
+    xcb_flush(platform->xcb_connection);
 
     wsi_list_insert(&platform->window_list, &window->link);
     *pWindow = window;

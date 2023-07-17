@@ -383,6 +383,16 @@ main(int argc, char *argv[])
         goto err_wsi_window;
     }
 
+    while (true) {
+        res = wsiDispatchEvents(g_platform, -1);
+        if (res != WSI_SUCCESS || g_resized) {
+            break;
+        }
+    }
+    if (res != WSI_SUCCESS) {
+        goto err_wsi_dispatch;
+    }
+
     res = wsiCreateWindowEGLSurface(g_window, g_display, g_config, &g_surface);
     if (res != WSI_SUCCESS) {
         fprintf(stderr, "wsiCreateWindowEGLSurface failed: %d", res);
@@ -437,6 +447,7 @@ err_egl_interval:
 err_egl_current:
     wsiDestroyWindowEGLSurface(g_window, g_display, g_surface);
 err_wsi_surface:
+err_wsi_dispatch:
     wsiDestroyWindow(g_window);
 err_wsi_window:
     eglDestroyContext(g_display, g_context);

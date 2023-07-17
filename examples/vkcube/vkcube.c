@@ -1262,6 +1262,15 @@ demo_create_window(struct demo *demo)
     WsiResult res = wsiCreateWindow(demo->platform, &window_info, &demo->window);
     assert(res == WSI_SUCCESS);
 
+    while (true) {
+        res = wsiDispatchEvents(demo->platform, -1);
+        if (res != WSI_SUCCESS || demo->resized) {
+            break;
+        }
+    }
+    assert(res == WSI_SUCCESS);
+    demo->resized = false;
+
     res = wsiCreateWindowSurface(demo->window, demo->instance, NULL, &demo->surface);
     assert(res == WSI_SUCCESS);
 }
