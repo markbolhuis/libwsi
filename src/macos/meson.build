@@ -1,3 +1,5 @@
+add_languages('objc')
+
 dep_cocoa = dependency('Cocoa')
 dep_quartz_core = dependency('QuartzCore')
 
