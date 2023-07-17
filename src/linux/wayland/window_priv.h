@@ -87,4 +87,10 @@ wsi_window_get_surface_extent(struct wsi_window *window);
 WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window);
 
+void
+wsi_window_inhibit_idling(struct wsi_window *window, bool enable);
+
+void
+wsi_window_set_content_type(struct wsi_window *window, uint32_t type);
+
 #endif

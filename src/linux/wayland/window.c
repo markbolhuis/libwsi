@@ -529,7 +529,7 @@ static const struct wl_surface_listener wl_surface_listener = {
 
 // endregion
 
-static void
+void
 wsi_window_inhibit_idling(struct wsi_window *window, bool enable)
 {
     if (enable) {
@@ -546,7 +546,7 @@ wsi_window_inhibit_idling(struct wsi_window *window, bool enable)
     }
 }
 
-static void
+void
 wsi_window_set_content_type(struct wsi_window *window, uint32_t type)
 {
     assert(window->wp_content_type_v1 != NULL);
