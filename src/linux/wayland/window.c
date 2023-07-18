@@ -234,6 +234,8 @@ wsi_window_update_output(struct wsi_window *window, struct wl_output *wl_output,
         return;
     }
 
+    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
+
     int32_t scale = wsi_window_calculate_output_max_scale(window);
     if (window->current.scale != scale) {
         window->event_mask |= WSI_XDG_EVENT_SCALE;
@@ -264,6 +266,8 @@ xdg_toplevel_decoration_v1_configure(
     uint32_t mode)
 {
     struct wsi_window *window = data;
+
+    window->event_mask &= ~WSI_XDG_EVENT_DECORATION;
 
     if (window->current.decoration != mode) {
         window->event_mask |= WSI_XDG_EVENT_DECORATION;
@@ -325,6 +329,8 @@ xdg_toplevel_configure(
         }
     }
 
+    window->event_mask &= ~(WSI_XDG_EVENT_EXTENT | WSI_XDG_EVENT_STATE);
+
     if (window->current.extent.width != width ||
         window->current.extent.height != height)
     {
@@ -364,6 +370,8 @@ xdg_toplevel_configure_bounds(
 {
     struct wsi_window *window = data;
 
+    window->event_mask &= ~WSI_XDG_EVENT_BOUNDS;
+
     if (window->current.bounds.width != max_width ||
         window->current.bounds.height != max_height)
     {
@@ -399,6 +407,8 @@ xdg_toplevel_wm_capabilities(
                 break;
         }
     }
+
+    window->event_mask &= ~WSI_XDG_EVENT_CAPABILITIES;
 
     if (window->current.capabilities != pending) {
         window->event_mask |= WSI_XDG_EVENT_CAPABILITIES;
@@ -446,6 +456,8 @@ wp_fractional_scale_v1_preferred_scale(
 {
     struct wsi_window *window = data;
 
+    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
+
     if (window->current.scale != (int32_t)scale) {
         window->event_mask |= WSI_XDG_EVENT_SCALE;
         window->pending.scale = (int32_t)scale;
@@ -488,6 +500,8 @@ wl_surface_preferred_buffer_scale(void *data, struct wl_surface *wl_surface, int
         return;
     }
 
+    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
+
     if (window->current.scale != factor) {
         window->event_mask |= WSI_XDG_EVENT_SCALE;
         window->pending.scale = factor;
@@ -504,6 +518,8 @@ static void
 wl_surface_preferred_buffer_transform(void *data, struct wl_surface *wl_surface, uint32_t transform)
 {
     struct wsi_window *window = data;
+
+    window->event_mask &= ~WSI_XDG_EVENT_TRANSFORM;
 
     if (window->current.transform != (int32_t)transform) {
         window->event_mask |= WSI_XDG_EVENT_TRANSFORM;
