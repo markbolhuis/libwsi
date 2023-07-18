@@ -154,75 +154,16 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
 
 // region Output
 
-static int32_t
-wsi_window_calculate_output_max_scale(struct wsi_window *window)
-{
-    int32_t max_scale = 1;
-
-    struct wsi_output_ref *ref;
-    wl_list_for_each(ref, &window->output_list, link) {
-        int32_t scale = wsi_output_get_scale(ref->output);
-        if (scale > max_scale) {
-            max_scale = scale;
-        }
-    }
-
-    return max_scale;
-}
-
-static struct wsi_output_ref *
-wsi_window_find_output(struct wsi_window *window, struct wsi_output *output)
-{
-    struct wsi_output_ref *ref;
-    wl_list_for_each(ref, &window->output_list, link) {
-        if (ref->output == output) {
-            return ref;
-        }
-    }
-
-    return NULL;
-}
-
-static bool
-wsi_window_add_output(struct wsi_window *window, struct wsi_output *output)
-{
-    struct wsi_output_ref *ref = wsi_window_find_output(window, output);
-    if (ref) {
-        return false;
-    }
-
-    ref = calloc(1, sizeof(*ref));
-    if (!ref) {
-        return false;
-    }
-
-    ref->output = output;
-    wl_list_insert(&window->output_list, &ref->link);
-    return true;
-}
-
-static bool
-wsi_window_remove_output(struct wsi_window *window, struct wsi_output *output)
-{
-    struct wsi_output_ref *ref = wsi_window_find_output(window, output);
-    if (!ref) {
-        return false;
-    }
-
-    wl_list_remove(&ref->link);
-    free(ref);
-    return true;
-}
-
 static void
 wsi_window_update_output(struct wsi_window *window, struct wl_output *wl_output, bool added)
 {
     struct wsi_output *output = wl_output_get_user_data(wl_output);
     uint32_t version = wl_surface_get_version(window->wl_surface);
+    struct wl_list *list = &window->output_list;
 
     bool updated = added
-                 ? wsi_window_add_output(window, output)
-                 : wsi_window_remove_output(window, output);
+                 ? wsi_output_ref_list_add(list, output)
+                 : wsi_output_ref_list_remove(list, output);
 
     if (!updated||
         version < WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION ||
@@ -236,7 +177,7 @@ wsi_window_update_output(struct wsi_window *window, struct wl_output *wl_output,
 
     window->event_mask &= ~WSI_XDG_EVENT_SCALE;
 
-    int32_t scale = wsi_window_calculate_output_max_scale(window);
+    int32_t scale = wsi_output_ref_list_get_max_scale(list);
     if (window->current.scale != scale) {
         window->event_mask |= WSI_XDG_EVENT_SCALE;
         window->pending.scale = scale;

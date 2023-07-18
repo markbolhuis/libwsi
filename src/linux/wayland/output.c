@@ -27,6 +27,66 @@ wsi_output_get_scale(struct wsi_output *output)
     return output->scale;
 }
 
+int32_t
+wsi_output_ref_list_get_max_scale(const struct wl_list *list)
+{
+    int32_t max_scale = 1;
+
+    struct wsi_output_ref *ref;
+    wl_list_for_each(ref, list, link) {
+        int32_t scale = wsi_output_get_scale(ref->output);
+        if (scale > max_scale) {
+            max_scale = scale;
+        }
+    }
+
+    return max_scale;
+}
+
+struct wsi_output_ref *
+wsi_output_ref_list_find(const struct wl_list *list, struct wsi_output *output)
+{
+    struct wsi_output_ref *ref;
+    wl_list_for_each(ref, list, link) {
+        if (ref->output == output) {
+            return ref;
+        }
+    }
+
+    return NULL;
+}
+
+bool
+wsi_output_ref_list_add(struct wl_list *list, struct wsi_output *output)
+{
+    struct wsi_output_ref *ref = wsi_output_ref_list_find(list, output);
+    if (ref) {
+        return false;
+    }
+
+    ref = calloc(1, sizeof(*ref));
+    if (!ref) {
+        return false;
+    }
+
+    ref->output = output;
+    wl_list_insert(list, &ref->link);
+    return true;
+}
+
+bool
+wsi_output_ref_list_remove(struct wl_list *list, struct wsi_output *output)
+{
+    struct wsi_output_ref *ref = wsi_output_ref_list_find(list, output);
+    if (!ref) {
+        return false;
+    }
+
+    wl_list_remove(&ref->link);
+    free(ref);
+    return true;
+}
+
 static int
 wsi_output_get_required_done_count(struct wsi_output *output)
 {

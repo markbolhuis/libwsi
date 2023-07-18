@@ -39,6 +39,18 @@ struct wsi_output_ref {
 int32_t
 wsi_output_get_scale(struct wsi_output *output);
 
+int32_t
+wsi_output_ref_list_get_max_scale(const struct wl_list *list);
+
+struct wsi_output_ref *
+wsi_output_ref_list_find(const struct wl_list *list, struct wsi_output *output);
+
+bool
+wsi_output_ref_list_add(struct wl_list *list, struct wsi_output *output);
+
+bool
+wsi_output_ref_list_remove(struct wl_list *list, struct wsi_output *output);
+
 void
 wsi_output_init_xdg(struct wsi_output *output);
 
