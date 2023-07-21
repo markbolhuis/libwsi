@@ -1,4 +1,5 @@
-dep_xcb = dependency('xcb', version : '>=1.15')
+dep_xcb = dependency('xcb', version : '>=1.14')
+dep_xcb_xinput = dependency('xcb-xinput', version : '>=1.14')
 
 src_wsi_x11 = files(
   'platform.c',
@@ -17,6 +18,7 @@ lib_wsi_x11 = library('wsi-x11',
     dep_egl,
     dep_vulkan,
     dep_xcb,
+    dep_xcb_xinput,
   ],
 )
 
