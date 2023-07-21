@@ -511,6 +511,7 @@ wl_pointer_axis_discrete(
     }
 }
 
+#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
 static void
 wl_pointer_axis_value120(
     void *data,
@@ -528,6 +529,7 @@ wl_pointer_axis_value120(
         pointer->frame.axis.y.discrete = value / 120.0;
     }
 }
+#endif
 
 #ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
 static void
@@ -559,7 +561,9 @@ static const struct wl_pointer_listener wl_pointer_listener = {
     .axis_source = wl_pointer_axis_source,
     .axis_stop = wl_pointer_axis_stop,
     .axis_discrete = wl_pointer_axis_discrete,
+#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
     .axis_value120 = wl_pointer_axis_value120,
+#endif
 #ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
     .axis_relative_direction = wl_pointer_axis_relative_direction,
 #endif

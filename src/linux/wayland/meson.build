@@ -1,6 +1,6 @@
-dep_wl_client = dependency('wayland-client', version: '>= 1.21.0')
-dep_wl_cursor = dependency('wayland-cursor', version: '>= 1.21.0')
-dep_wl_egl    = dependency('wayland-egl', version: '>= 1.21.0')
+dep_wl_client = dependency('wayland-client', version: '>= 1.20.0')
+dep_wl_cursor = dependency('wayland-cursor', version: '>= 1.20.0')
+dep_wl_egl    = dependency('wayland-egl', version: '>= 1.20.0')
 dep_wl_protos = dependency('wayland-protocols', version: '>=1.31')
 dep_xkbcommon = dependency('xkbcommon', version: '>= 1.4.0')
 
