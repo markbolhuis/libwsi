@@ -5,7 +5,7 @@ project('libwsi', 'c',
     'c_std=c11',
     'warning_level=2',
   ],
-  meson_version : '>= 0.63.0',
+  meson_version : '>= 0.61.0',
 )
 
 cc = meson.get_compiler('c')
