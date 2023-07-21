@@ -1313,12 +1313,14 @@ demo_create_instance(struct demo *demo)
     };
 
     VkInstanceCreateFlags flags = 0;
+#ifdef VK_KHR_portability_enumeration
     for (uint32_t i = 0; i < inst_ext_count; i++) {
         if (strcmp(inst_exts[i], VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0) {
             flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
             break;
         }
     }
+#endif
 
     VkInstanceCreateInfo instance_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
