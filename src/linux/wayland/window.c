@@ -617,6 +617,10 @@ wsi_window_uninit(struct wsi_window *window)
         free(wo);
     }
 
+    if (window->wp_content_type_v1) {
+        wp_content_type_v1_destroy(window->wp_content_type_v1);
+    }
+
     if (window->wp_idle_inhibitor_v1) {
         zwp_idle_inhibitor_v1_destroy(window->wp_idle_inhibitor_v1);
     }
