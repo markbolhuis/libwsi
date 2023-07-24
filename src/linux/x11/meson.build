@@ -7,7 +7,6 @@ src_wsi_x11 = files(
   'window.c',
   'egl.c',
   'vulkan.c',
-  'utils.c',
 )
 
 lib_wsi_x11 = library('wsi-x11',

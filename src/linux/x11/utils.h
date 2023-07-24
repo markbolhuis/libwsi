@@ -8,23 +8,61 @@ struct wsi_list {
     struct wsi_list *next;
 };
 
-void
-wsi_list_init(struct wsi_list *list);
+static inline void
+wsi_list_init(struct wsi_list *list)
+{
+    list->prev = list;
+    list->next = list;
+}
 
-void
-wsi_list_insert(struct wsi_list *list, struct wsi_list *elm);
+static inline void
+wsi_list_insert(struct wsi_list *list, struct wsi_list *elm)
+{
+    elm->prev = list;
+    elm->next = list->next;
+    list->next = elm;
+    elm->next->prev = elm;
+}
 
-void
-wsi_list_remove(struct wsi_list *elm);
+static inline void
+wsi_list_remove(struct wsi_list *elm)
+{
+    elm->prev->next = elm->next;
+    elm->next->prev = elm->prev;
+    elm->next = NULL;
+    elm->prev = NULL;
+}
 
-int
-wsi_list_length(const struct wsi_list *list);
+static inline int
+wsi_list_length(const struct wsi_list *list)
+{
+    int count = 0;
+    struct wsi_list *e = list->next;
+    while (e != list) {
+        e = e->next;
+        count++;
+    }
+    return count;
+}
 
-int
-wsi_list_empty(const struct wsi_list *list);
+static inline int
+wsi_list_empty(const struct wsi_list *list)
+{
+    return list->next == list;
+}
 
-void
-wsi_list_insert_list(struct wsi_list *list, struct wsi_list *other);
+static inline void
+wsi_list_insert_list(struct wsi_list *list, struct wsi_list *other)
+{
+    if (wsi_list_empty(other)) {
+        return;
+    }
+
+    other->next->prev = list;
+    other->prev->next = list->next;
+    list->next->prev = other->prev;
+    list->next = other->next;
+}
 
 #define wsi_container_of(ptr, sample, member) \
 	(__typeof__(sample))((char *)(ptr) - \
