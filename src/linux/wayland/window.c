@@ -152,6 +152,21 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
 
 }
 
+static void
+wsi_window_configure_scale(struct wsi_window *window, int32_t scale)
+{
+    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
+
+    if (window->current.scale != scale) {
+        window->event_mask |= WSI_XDG_EVENT_SCALE;
+        window->pending.scale = scale;
+
+        if (window->configured) {
+            wsi_window_configure(window, 0);
+        }
+    }
+}
+
 // region Output
 
 static void
@@ -175,17 +190,8 @@ wsi_window_update_output(struct wsi_window *window, struct wl_output *wl_output,
         return;
     }
 
-    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
-
     int32_t scale = wsi_output_ref_list_get_max_scale(list);
-    if (window->current.scale != scale) {
-        window->event_mask |= WSI_XDG_EVENT_SCALE;
-        window->pending.scale = scale;
-
-        if (window->configured) {
-            wsi_window_configure(window, 0);
-        }
-    }
+    wsi_window_configure_scale(window, scale);
 }
 
 void
@@ -396,17 +402,7 @@ wp_fractional_scale_v1_preferred_scale(
     uint32_t scale)
 {
     struct wsi_window *window = data;
-
-    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
-
-    if (window->current.scale != (int32_t)scale) {
-        window->event_mask |= WSI_XDG_EVENT_SCALE;
-        window->pending.scale = (int32_t)scale;
-
-        if (window->configured) {
-            wsi_window_configure(window, 0);
-        }
-    }
+    wsi_window_configure_scale(window, (int32_t)scale);
 }
 
 static const struct wp_fractional_scale_v1_listener wp_fractional_scale_listener = {
@@ -441,16 +437,7 @@ wl_surface_preferred_buffer_scale(void *data, struct wl_surface *wl_surface, int
         return;
     }
 
-    window->event_mask &= ~WSI_XDG_EVENT_SCALE;
-
-    if (window->current.scale != factor) {
-        window->event_mask |= WSI_XDG_EVENT_SCALE;
-        window->pending.scale = factor;
-
-        if (window->configured) {
-            wsi_window_configure(window, 0);
-        }
-    }
+    wsi_window_configure_scale(window, factor);
 }
 #endif
 
