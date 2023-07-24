@@ -17,18 +17,6 @@
 #include "output_priv.h"
 #include "window_priv.h"
 
-static inline bool
-wsi_is_transform_vertical(int32_t transform)
-{
-    return (transform & WL_OUTPUT_TRANSFORM_90) == WL_OUTPUT_TRANSFORM_90;
-}
-
-static inline bool
-wsi_is_transform_a_resize(int32_t before, int32_t after)
-{
-    return ((before ^ after) & WL_OUTPUT_TRANSFORM_90) == WL_OUTPUT_TRANSFORM_90;
-}
-
 WsiExtent
 wsi_window_get_geometry_extent(struct wsi_window *window)
 {
@@ -46,7 +34,7 @@ WsiExtent
 wsi_window_get_buffer_extent(struct wsi_window *window)
 {
     WsiExtent extent = wsi_window_get_surface_extent(window);
-    if (wsi_is_transform_vertical(window->current.transform)) {
+    if (wsi_transform_is_vertical(window->current.transform)) {
         int32_t tmp = extent.width;
         extent.width = extent.height;
         extent.height = tmp;
@@ -106,7 +94,7 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
 
     bool transformed = false;
     if (mask & WSI_XDG_EVENT_TRANSFORM) {
-        resized |= wsi_is_transform_a_resize(current->transform, pending->transform);
+        resized |= wsi_transform_has_rotated90(current->transform, pending->transform);
         current->transform = pending->transform;
         transformed = true;
     }

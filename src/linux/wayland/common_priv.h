@@ -4,6 +4,18 @@
 #include "wsi/common.h"
 
 static inline bool
+wsi_transform_is_vertical(int32_t transform)
+{
+    return (transform & 1) == 1;
+}
+
+static inline bool
+wsi_transform_has_rotated90(int32_t before, int32_t after)
+{
+    return ((before ^ after) & 1) == 1;
+}
+
+static inline bool
 wsi_extent_equal(WsiExtent a, WsiExtent b)
 {
     return a.width == b.width && a.height == b.height;
