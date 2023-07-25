@@ -93,4 +93,7 @@ wsi_window_inhibit_idling(struct wsi_window *window, bool enable);
 void
 wsi_window_set_content_type(struct wsi_window *window, uint32_t type);
 
+void
+wsi_window_set_decoration(struct wsi_window *window, uint32_t mode);
+
 #endif

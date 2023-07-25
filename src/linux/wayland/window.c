@@ -486,6 +486,20 @@ wsi_window_set_content_type(struct wsi_window *window, uint32_t type)
     wp_content_type_v1_set_content_type(window->wp_content_type_v1, type);
 }
 
+void
+wsi_window_set_decoration(struct wsi_window *window, uint32_t mode)
+{
+    assert(window->xdg_toplevel_decoration_v1 != NULL);
+    assert(mode < 3);
+
+    if (mode == 0) {
+        zxdg_toplevel_decoration_v1_unset_mode(window->xdg_toplevel_decoration_v1);
+        return;
+    }
+
+    zxdg_toplevel_decoration_v1_set_mode(window->xdg_toplevel_decoration_v1, mode);
+}
+
 static void
 wsi_window_init_state(struct wsi_window *window, const WsiWindowCreateInfo *info)
 {
