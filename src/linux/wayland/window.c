@@ -127,17 +127,18 @@ wsi_window_configure(struct wsi_window *window, uint32_t serial)
     }
 
     uint32_t version = wl_surface_get_version(window->wl_surface);
-    if (rescaled &&
+    if ((rescaled || !window->configured) &&
         window->wp_fractional_scale_v1 == NULL &&
         version >= WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION)
     {
         wl_surface_set_buffer_scale(window->wl_surface, current->scale);
     }
 
-    if (transformed && version >= WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION) {
+    if ((transformed || !window->configured) &&
+        version >= WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION) 
+    {
         wl_surface_set_buffer_transform(window->wl_surface, current->transform);
     }
-
 }
 
 static void
