@@ -199,6 +199,67 @@ static const struct zwp_pointer_gesture_hold_v1_listener wp_pointer_gesture_hold
 
 // endregion
 
+static void
+wsi_pointer_init_gestures(struct wsi_pointer *pointer)
+{
+    struct wsi_pointer_gestures *gestures = &pointer->gestures;
+    struct wsi_seat *seat = wl_container_of(pointer, seat, pointer);
+    struct wsi_platform *platform = seat->global.platform;
+
+    assert(platform->wp_pointer_gestures_v1 != NULL);
+    assert(gestures->wp_swipe_v1 == NULL);
+    assert(gestures->wp_pinch_v1 == NULL);
+    assert(gestures->wp_hold_v1 == NULL);
+
+    gestures->wp_swipe_v1 = zwp_pointer_gestures_v1_get_swipe_gesture(
+        platform->wp_pointer_gestures_v1,
+        pointer->wl_pointer);
+    zwp_pointer_gesture_swipe_v1_add_listener(
+        gestures->wp_swipe_v1,
+        &wp_pointer_gesture_swipe_v1_listenter,
+        gestures);
+
+    gestures->wp_pinch_v1 = zwp_pointer_gestures_v1_get_pinch_gesture(
+        platform->wp_pointer_gestures_v1,
+        pointer->wl_pointer);
+    zwp_pointer_gesture_pinch_v1_add_listener(
+        gestures->wp_pinch_v1,
+        &wp_pointer_gesture_pinch_v1_listenter,
+        gestures);
+
+    if (zwp_pointer_gestures_v1_get_version(platform->wp_pointer_gestures_v1) >= 
+        ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION) 
+    {
+        pointer->gestures.wp_hold_v1 = zwp_pointer_gestures_v1_get_hold_gesture(
+            platform->wp_pointer_gestures_v1,
+            pointer->wl_pointer);
+        zwp_pointer_gesture_hold_v1_add_listener(
+            gestures->wp_hold_v1,
+            &wp_pointer_gesture_hold_v1_listenter,
+            gestures);
+    }
+}
+
+static void
+wsi_pointer_uninit_gestures(struct wsi_pointer *pointer)
+{
+    struct wsi_pointer_gestures *gestures = &pointer->gestures;
+
+    if (gestures->wp_swipe_v1) {
+        zwp_pointer_gesture_swipe_v1_destroy(gestures->wp_swipe_v1);
+    }
+
+    if (gestures->wp_pinch_v1) {
+        zwp_pointer_gesture_pinch_v1_destroy(gestures->wp_pinch_v1);
+    }
+
+    if (gestures->wp_hold_v1) {
+        zwp_pointer_gesture_hold_v1_destroy(gestures->wp_hold_v1);
+    }
+
+    memset(gestures, 0, sizeof(struct wsi_pointer_gestures));
+}
+
 // region Wp Locked Pointer
 
 static void
@@ -707,33 +768,7 @@ wsi_seat_init_pointer(struct wsi_seat *seat)
     }
 
     if (plat->wp_pointer_gestures_v1) {
-        seat->pointer.wp_swipe_v1 = zwp_pointer_gestures_v1_get_swipe_gesture(
-            plat->wp_pointer_gestures_v1,
-            seat->pointer.wl_pointer);
-        zwp_pointer_gesture_swipe_v1_add_listener(
-            seat->pointer.wp_swipe_v1,
-            &wp_pointer_gesture_swipe_v1_listenter,
-            &seat->pointer);
-
-        seat->pointer.wp_pinch_v1 = zwp_pointer_gestures_v1_get_pinch_gesture(
-            plat->wp_pointer_gestures_v1,
-            seat->pointer.wl_pointer);
-        zwp_pointer_gesture_pinch_v1_add_listener(
-            seat->pointer.wp_pinch_v1,
-            &wp_pointer_gesture_pinch_v1_listenter,
-            &seat->pointer);
-
-        uint32_t version = zwp_pointer_gestures_v1_get_version(plat->wp_pointer_gestures_v1);
-
-        if (version >= ZWP_POINTER_GESTURES_V1_GET_HOLD_GESTURE_SINCE_VERSION) {
-            seat->pointer.wp_hold_v1 = zwp_pointer_gestures_v1_get_hold_gesture(
-                plat->wp_pointer_gestures_v1,
-                seat->pointer.wl_pointer);
-            zwp_pointer_gesture_hold_v1_add_listener(
-                seat->pointer.wp_hold_v1,
-                &wp_pointer_gesture_hold_v1_listenter,
-                &seat->pointer);
-        }
+        wsi_pointer_init_gestures(&seat->pointer);
     }
 
     return true;
@@ -750,17 +785,7 @@ wsi_seat_uninit_pointer(struct wsi_seat *seat)
         wsi_pointer_constraint_destroy(cons);
     }
 
-    if (pointer->wp_swipe_v1) {
-        zwp_pointer_gesture_swipe_v1_destroy(pointer->wp_swipe_v1);
-    }
-
-    if (pointer->wp_pinch_v1) {
-        zwp_pointer_gesture_pinch_v1_destroy(pointer->wp_pinch_v1);
-    }
-
-    if (pointer->wp_hold_v1) {
-        zwp_pointer_gesture_hold_v1_destroy(pointer->wp_hold_v1);
-    }
+    wsi_pointer_uninit_gestures(pointer);
 
     if (pointer->wp_timestamps_v1) {
         zwp_input_timestamps_v1_destroy(pointer->wp_timestamps_v1);
