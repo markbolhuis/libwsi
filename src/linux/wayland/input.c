@@ -1119,6 +1119,14 @@ static const struct wl_seat_listener wl_seat_listener = {
 
 // endregion
 
+static void
+wsi_shortcuts_inhibitor_destroy(struct wsi_shortcuts_inhibitor *inhibitor)
+{
+    wl_list_remove(&inhibitor->link);
+    zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor->wp_shortcuts_inhibitor_v1);
+    free(inhibitor);
+}
+
 static struct wsi_shortcuts_inhibitor *
 wsi_seat_find_shortcuts_inhibitor(struct wsi_seat *seat, struct wl_surface *wl_surface)
 {
@@ -1174,9 +1182,7 @@ wsi_seat_restore_shortcuts(struct wsi_seat *seat, struct wl_surface *wl_surface)
         return;
     }
 
-    wl_list_remove(&inhibitor->link);
-    zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor->wp_shortcuts_inhibitor_v1);
-    free(inhibitor);
+    wsi_shortcuts_inhibitor_destroy(inhibitor);
 }
 
 void
@@ -1238,9 +1244,7 @@ wsi_seat_uninit(struct wsi_seat *seat)
 
     struct wsi_shortcuts_inhibitor *inhibitor, *tmp;
     wl_list_for_each_safe(inhibitor, tmp, &seat->shortcut_inhibitors, link) {
-        zwp_keyboard_shortcuts_inhibitor_v1_destroy(inhibitor->wp_shortcuts_inhibitor_v1);
-        wl_list_remove(&inhibitor->link);
-        free(inhibitor);
+        wsi_shortcuts_inhibitor_destroy(inhibitor);
     }
 
     if (seat->ext_idle_notification_v1) {
